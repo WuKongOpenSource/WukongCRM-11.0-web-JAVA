@@ -1,0 +1,140 @@
+/deep/ .el-tabs__header {
+  margin: 0;
+}
+/deep/ .el-tabs__nav-wrap {
+  padding: 0 18px;
+}
+
+/deep/ .el-tabs__nav-wrap::after {
+  height: 1px;
+}
+
+.main {
+  height: 100%;
+  width: 920px;
+  overflow: auto;
+}
+
+.card {
+  background-color: white;
+  border: 1px solid $xr-border-line-color;
+  border-radius: $xr-border-radius-base;
+  margin-bottom: 15px;
+  position: relative;
+
+  .hello-card {
+    padding: 15px;
+    .user-img {
+      margin-right: 25px;
+    }
+
+    .greeting {
+      flex: 1;
+      .hello {
+        font-size: 16px;
+        color: #333;
+        font-weight: bold;
+
+        .status {
+          font-size: 12px;
+          font-weight: 400;
+          .wk {
+            font-size: 12px;
+            margin-right: 1px;
+            margin-left: 15px;
+          }
+
+          .wk-success {
+            color: #20b559;
+          }
+
+          .wk-close {
+            color: #f95a5a;
+          }
+        }
+      }
+      .text {
+        font-size: 13px;
+        margin-top: 10px;
+        color: #999;
+      }
+    }
+
+    .statistics {
+      font-size: 13px;
+      text-align: center;
+      .title {
+        color: #666;
+        .icon {
+          color: $xr-color-primary;
+        }
+      }
+      .info {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        .special {
+          font-size: 24px;
+          font-weight: bold;
+          color: $xr-color-primary;
+          margin-right: 5px;
+        }
+      }
+    }
+  }
+
+  .report-card {
+    border-top: 1px solid $xr-border-line-color;
+    padding: 15px 15px 7px;
+
+    &__label {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+      margin-right: 20px;
+      margin-top: 3px;
+    }
+  }
+
+  &.filter-control {
+    padding: 8px;
+    .xh-user-cell {
+      margin-right: 15px;
+      width: 180px;
+    }
+    .el-date-editor {
+      margin-right: 15px;
+    }
+
+    .el-select {
+      margin-right: 15px;
+      width: 100px;
+    }
+
+    .el-input {
+      margin-right: 15px;
+      width: 200px;
+    }
+  }
+}
+
+.filter-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 20px;
+  line-height: 56px;
+
+  .total-count {
+    font-size: 12px;
+
+    span {
+      color: $xr-color-primary;
+    }
+  }
+
+  .export-btn {
+    margin-left: 5px;
+  }
+}
