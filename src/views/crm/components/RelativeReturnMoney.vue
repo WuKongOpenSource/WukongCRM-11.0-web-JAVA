@@ -1,5 +1,5 @@
 <template>
-  <div class="rc-cont">
+  <div v-loading="loading" class="rc-cont">
     <flexbox
       v-if="!isSeas"
       class="rc-head"
@@ -82,7 +82,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import CRMAllCreate from './CRMAllCreate'
 import {
   crmCustomerQueryReceivablesAPI,
@@ -108,7 +107,7 @@ export default {
     CRMFullScreenDetail: () => import('@/components/CRMFullScreenDetail')
   },
 
-  mixins: [LoadingMixin, CheckStatusMixin],
+  mixins: [CheckStatusMixin],
 
   props: {
     /** 模块ID */
@@ -134,6 +133,7 @@ export default {
 
   data() {
     return {
+      loading: false,
       list: [],
       fieldList: [],
       tableHeight: '250px',

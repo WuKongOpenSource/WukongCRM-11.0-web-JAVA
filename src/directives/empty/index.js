@@ -5,7 +5,7 @@ import {
   removeClass,
   getStyle
 } from 'element-ui/src/utils/dom'
-const Mask = Vue.extend(Empty)
+const EmptyMask = Vue.extend(Empty)
 /**
  * xs-empty-text
  * 在绑定了v-empty指令的元素上添加xs-empty-text属性，其值会被渲染为加载文案，并显示在加载图标的下方
@@ -16,40 +16,40 @@ const Mask = Vue.extend(Empty)
  * xs-empty-custom-class
  * 类选择器样式 多个以空格分开
  */
-const loadingDirective = {}
-loadingDirective.install = Vue => {
+const emptyDirective = {}
+emptyDirective.install = Vue => {
   if (Vue.prototype.$isServer) return
   const toggleEmpty = (el, binding) => {
     /** 如果是数组 判断数组长度  否则 判断是否存在 当做Boolean */
     if ((Object.prototype.toString.call(binding.value) === '[object Array]' && binding.value.length === 0) ||
       (Object.prototype.toString.call(binding.value) !== '[object Array]' && binding.value)) {
       Vue.nextTick(() => {
-        el.originalPosition = getStyle(el, 'position')
+        el.wkEmptyOriginalPosition = getStyle(el, 'position')
         insertDom(el, el, binding)
       })
     } else { // 移除效果
-      el.domVisible = false
+      el.wkEmptyVisible = false
       removeClass(el, 'xs-empty-parent--relative')
       removeClass(el, 'xs-empty-parent--hidden')
-      el.instance.visible = false
+      el.wkEmptyInstance.visible = false
     }
   }
   const insertDom = (parent, el, binding) => {
-    if (!el.domVisible && getStyle(el, 'display') !== 'none' && getStyle(el, 'visibility') !== 'hidden') {
-      Object.keys(el.maskStyle).forEach(property => {
-        el.mask.style[property] = el.maskStyle[property]
+    if (!el.wkEmptyVisible && getStyle(el, 'display') !== 'none' && getStyle(el, 'visibility') !== 'hidden') {
+      Object.keys(el.wkEmptyMaskStyle).forEach(property => {
+        el.wkEmptyMask.style[property] = el.wkEmptyMaskStyle[property]
       })
 
-      if (el.originalPosition !== 'absolute' && el.originalPosition !== 'fixed') {
+      if (el.wkEmptyOriginalPosition !== 'absolute' && el.wkEmptyOriginalPosition !== 'fixed') {
         addClass(parent, 'xs-empty-parent--relative')
       }
-      el.domVisible = true
+      el.wkEmptyVisible = true
 
-      parent.appendChild(el.mask)
+      parent.appendChild(el.wkEmptyMask)
       Vue.nextTick(() => {
-        el.instance.visible = true
+        el.wkEmptyInstance.visible = true
       })
-      el.domInserted = true
+      el.wkEmptyInserted = true
     }
   }
 
@@ -60,7 +60,7 @@ loadingDirective.install = Vue => {
       const backgroundExr = el.getAttribute('xs-empty-background')
       const customClassExr = el.getAttribute('xs-empty-custom-class')
       const vm = vnode.context
-      const mask = new Mask({
+      const mask = new EmptyMask({
         el: document.createElement('div'),
         data: {
           text: vm && vm[textExr] || textExr,
@@ -69,26 +69,26 @@ loadingDirective.install = Vue => {
           customClass: vm && vm[customClassExr] || customClassExr
         }
       })
-      el.instance = mask
-      el.mask = mask.$el
-      el.maskStyle = {}
+      el.wkEmptyInstance = mask
+      el.wkEmptyMask = mask.$el
+      el.wkEmptyMaskStyle = {}
 
       binding.value && toggleEmpty(el, binding)
     },
 
     update: function(el, binding) {
-      el.instance.setText(el.getAttribute('xs-empty-text'))
-      el.instance.setIcon(el.getAttribute('xs-empty-icon'))
+      el.wkEmptyInstance.setText(el.getAttribute('xs-empty-text'))
+      el.wkEmptyInstance.setIcon(el.getAttribute('xs-empty-icon'))
       if (binding.oldValue !== binding.value) {
         toggleEmpty(el, binding)
       }
     },
 
     unbind: function(el, binding) {
-      if (el.domInserted) {
-        el.mask &&
-          el.mask.parentNode &&
-          el.mask.parentNode.removeChild(el.mask)
+      if (el.wkEmptyInserted) {
+        el.wkEmptyMask &&
+          el.wkEmptyMask.parentNode &&
+          el.wkEmptyMask.parentNode.removeChild(el.wkEmptyMask)
         toggleEmpty(el, {
           value: false,
           modifiers: binding.modifiers
@@ -98,4 +98,4 @@ loadingDirective.install = Vue => {
   })
 }
 
-export default loadingDirective
+export default emptyDirective

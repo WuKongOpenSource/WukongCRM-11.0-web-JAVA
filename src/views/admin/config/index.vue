@@ -16,13 +16,13 @@
         <div class="section-content">
           <div class="name">企业名称</div>
           <el-input
-            v-model="systemName"
+            v-model="companyName"
             :maxlength="50"/>
         </div>
         <div class="section-content">
           <div class="name">企业logo</div>
           <el-upload
-            v-if="!systemImage"
+            v-if="!companyLogo"
             :show-file-list="false"
             :http-request="fileUpload"
             drag
@@ -34,10 +34,10 @@
           <div
             v-else
             class="upload-show">
-            <img v-src="systemImage">
+            <img v-src="companyLogo">
             <i
               class="el-icon-remove icon-delete"
-              @click="deleteSystemImage"/>
+              @click="deleteCompanyLogo"/>
           </div>
         </div>
       </div>
@@ -66,6 +66,7 @@
 
 <script>
 import { adminSystemSaveAPI } from '@/api/admin/config'
+import { crmFileSaveAPI } from '@/api/common'
 
 import RadialProgressBar from 'vue-radial-progress'
 import EditImage from '@/components/EditImage'
@@ -86,9 +87,8 @@ export default {
       showEditImage: false,
       editImage: null,
       editFile: null,
-      systemName: '',
-      systemImage: '',
-      editedImage: null // 编辑后的图片
+      companyName: '',
+      companyLogo: ''
     }
   },
   computed: {
@@ -102,7 +102,9 @@ export default {
     this.getDetail()
   },
   methods: {
-    /** 附件上传 */
+    /**
+     * 附件上传
+     */
     fileUpload(content) {
       const reader = new FileReader()
       var self = this
@@ -120,18 +122,26 @@ export default {
       }
       reader.readAsDataURL(content.file)
     },
-    deleteSystemImage() {
-      this.systemImage = ''
-      this.editedImage = null
+
+    /**
+     * 删除图片
+     */
+    deleteCompanyLogo() {
+      this.companyLogo = ''
     },
+
+    /**
+     * 获取详情
+     */
     getDetail() {
       this.loading = true
       this.$store
         .dispatch('SystemLogoAndName')
         .then(res => {
           this.loading = false
-          this.systemName = res.data.companyName ? res.data.companyName : ''
-          this.systemImage = res.data.companyLogo
+          const data = res.data || {}
+          this.companyName = data.companyName ? data.companyName : ''
+          this.companyLogo = data.companyLogo
         })
         .catch(() => {
           this.loading = false
@@ -139,30 +149,28 @@ export default {
     },
 
     submiteImage(data) {
-      this.editedImage = data
-      this.systemImage = data.image
+      this.loading = true
+      crmFileSaveAPI({ file: data.blob }).then(res => {
+        const resData = res.data || {}
+        this.companyLogo = resData.url
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
+      })
     },
+
+    /**
+     * 保存
+     */
     save() {
-      if (!this.systemName) {
+      if (!this.companyName) {
         this.$message.error('企业名称不能为空')
       } else {
         this.loading = true
-        var param = new FormData()
-        param.append('name', this.systemName)
-        // 编辑头像了
-        if (this.editedImage) {
-          param.append(
-            'file',
-            this.editedImage.blob,
-            this.editedImage.file.name
-          )
-        } else {
-          // 头像删除时 传
-          if (!this.systemImage) {
-            param.append('company_logo', '')
-          }
-        }
-        adminSystemSaveAPI(param)
+        adminSystemSaveAPI({
+          companyName: this.companyName,
+          companyLogo: this.companyLogo
+        })
           .then(res => {
             this.loading = false
             this.$message.success('操作成功')

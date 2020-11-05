@@ -32,6 +32,7 @@ import calendarRouter from './modules/calendar'
 export const constantRouterMap = [
   {
     path: '/login',
+    name: 'login',
     component: () => import('@/views/login/index'),
     hidden: true
   },

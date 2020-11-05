@@ -89,7 +89,7 @@ const user = {
         adminIndexAuthListAPI().then((response) => {
           const data = response.data
           Lockr.set('authList', data)
-          data.wkFirstModel = response.firstModel
+          data.wkFirstModel = data.firstModel
           commit('SET_ALLAUTH', data)
           commit('SET_CRM', data.crm)
           commit('SET_BI', data.bi)
@@ -111,10 +111,6 @@ const user = {
     }) {
       return new Promise((resolve, reject) => {
         adminUsersReadAPI().then(response => {
-          // // 开启了小程序
-          // if (response && response.hasOwnProperty('cardAuth')) {
-          //   response.data.cardAuth = response.cardAuth
-          // }
           // 邮件信息 走之前的逻辑
           commit('SET_USERINFO', response.data)
           resolve(response)

@@ -193,28 +193,28 @@ export default {
       coverImg: null,
       coverImgList: [
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-1.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-1.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-2.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-2.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-3.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-3.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-4.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-4.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-5.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-5.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-6.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-6.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-7.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-7.jpg'
         },
         {
-          url: 'https://www.72crm.com/api/uploads/project-cover-8.jpg'
+          url: 'https://file.72crm.com/static/pc/images/pm/project-cover-8.jpg'
         }
       ],
       openType: 0,

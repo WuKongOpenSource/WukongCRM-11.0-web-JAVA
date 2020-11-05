@@ -652,14 +652,15 @@ export default {
             name: o.fieldName
           })
         } else if (o.formType == 'map_address') {
-          let value = ''
+          const value = []
           for (const key in o.address) {
-            if (o.address[key]) {
-              value += o.address[key] + ','
+            const addValue = o.address[key]
+            if (addValue) {
+              value.push(addValue)
             }
           }
           obj.push({
-            values: [value],
+            values: [value.join(',')],
             type: 1,
             formType: o.formType,
             name: o.fieldName

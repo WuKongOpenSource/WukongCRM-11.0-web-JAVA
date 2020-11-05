@@ -268,7 +268,7 @@
                 </members-dep>
               </flexbox>
             </flexbox-item>
-            <flexbox-item class="label">
+            <flexbox-item v-if="labelList" class="label">
               <div class="label-title">标签</div>
               <span
                 v-for="(item, index) in labelList"
@@ -758,7 +758,7 @@ export default {
      */
     labelList() {
       if (!this.taskData) {
-        return []
+        return null
       }
       return this.taskData.labelList || []
     }

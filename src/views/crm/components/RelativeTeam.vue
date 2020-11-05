@@ -1,26 +1,29 @@
 <template>
-  <div class="rc-cont">
+  <div v-loading="loading" class="rc-cont">
     <flexbox
       v-if="!isSeas"
       class="rc-head"
       direction="row-reverse">
-      <el-button
-        class="rc-head-item"
-        type="primary"
-        @click.native="handleClick('exit')">退出团队</el-button>
-      <el-button
-        class="rc-head-item"
-        type="primary"
-        @click.native="handleClick('remove')">移除</el-button>
-      <el-button
-        class="rc-head-item"
-        type="primary"
-        @click.native="handleClick('edit')">编辑</el-button>
-      <el-button
-        class="xr-btn--orange rc-head-item"
-        icon="el-icon-plus"
-        type="primary"
-        @click="handleClick('add')">团队成员</el-button>
+      <template
+        v-if="teamEditAuth">
+        <el-button
+          class="rc-head-item"
+          type="primary"
+          @click.native="handleClick('exit')">退出团队</el-button>
+        <el-button
+          class="rc-head-item"
+          type="primary"
+          @click.native="handleClick('remove')">移除</el-button>
+        <el-button
+          class="rc-head-item"
+          type="primary"
+          @click.native="handleClick('edit')">编辑</el-button>
+        <el-button
+          class="xr-btn--orange rc-head-item"
+          icon="el-icon-plus"
+          type="primary"
+          @click="handleClick('add')">团队成员</el-button>
+      </template>
     </flexbox>
     <el-table
       :data="list"
@@ -29,6 +32,7 @@
       style="width: 100%;border: 1px solid #E6E6E6;"
       @selection-change="handleSelectionChange">
       <el-table-column
+        v-if="teamEditAuth"
         :selectable="handleSelectable"
         show-overflow-tooltip
         type="selection"
@@ -77,8 +81,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
-import TeamsHandle from './SelectionHandle/TeamsHandle' // 操作团队成员
 import {
   crmCustomerTeamMembersAPI,
   crmCustomerUpdateMembersAPI,
@@ -98,12 +100,16 @@ import {
   crmContractExitTeamAPI
 } from '@/api/crm/contract'
 
+import TeamsHandle from './SelectionHandle/TeamsHandle' // 操作团队成员
+
+import { mapGetters } from 'vuex'
+
 export default {
   name: 'RelativeTeam', // 团队成员  可能再很多地方展示 放到客户管理目录下
   components: {
     TeamsHandle
   },
-  mixins: [LoadingMixin],
+  mixins: [],
   props: {
     // 模块ID
     id: [String, Number],
@@ -127,6 +133,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       list: [],
       fieldList: [],
       tableHeight: '400px',
@@ -137,7 +144,12 @@ export default {
     }
   },
   inject: ['rootTabs'],
-  computed: {},
+  computed: {
+    ...mapGetters(['crm']),
+    teamEditAuth() {
+      return this.crm[this.crmType].teamsave
+    }
+  },
   watch: {
     id(val) {
       this.list = []

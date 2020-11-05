@@ -1,5 +1,5 @@
 <template>
-  <div class="b-cont">
+  <div v-loading="loading" class="b-cont">
     <div v-if="showSaveButton" class="b-cont__handle">
       <el-button @click.native="editCancel">取消</el-button>
       <el-button
@@ -185,7 +185,6 @@ import {
   XhReceivablesPlan
 } from '@/components/CreateCom'
 
-import LoadingMixin from '../mixins/Loading'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Sections from '../components/Sections'
 import MapView from '@/components/MapView' // 地图详情
@@ -220,7 +219,7 @@ export default {
   },
   filters: {
   },
-  mixins: [LoadingMixin, CheckStatusMixin],
+  mixins: [CheckStatusMixin],
   props: {
     // 模块ID
     id: [String, Number],
@@ -245,6 +244,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       list: [],
       // 控制展示地图详情
       showMapView: false,

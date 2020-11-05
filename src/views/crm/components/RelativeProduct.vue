@@ -1,5 +1,6 @@
 <template>
   <div
+    v-loading="loading"
     v-empty="nopermission"
     class="rc-cont"
     xs-empty-icon="nopermission"
@@ -34,7 +35,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import { crmBusinessProductAPI } from '@/api/crm/business'
 import { crmContractProductAPI } from '@/api/crm/contract'
 import { separator } from '@/filters/vueNumeralFilter/filters'
@@ -44,7 +44,7 @@ export default {
   components: {
     CRMFullScreenDetail: () => import('@/components/CRMFullScreenDetail')
   },
-  mixins: [LoadingMixin],
+  mixins: [],
   props: {
     /** 模块ID */
     id: [String, Number],
@@ -68,6 +68,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       nopermission: false,
       list: [],
       fieldList: [],

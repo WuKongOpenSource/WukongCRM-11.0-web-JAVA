@@ -373,7 +373,7 @@ export default {
                 if (element.status == 5) {
                   element.checked = true
                 }
-                this.list.splice(index, 1, element)
+                this.list.splice(data.index, 1, element)
                 break
               }
             }

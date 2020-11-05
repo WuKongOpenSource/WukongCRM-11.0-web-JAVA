@@ -1,5 +1,6 @@
 <template>
   <div
+    v-loading="loading"
     v-empty="list"
     class="rc-cont"
     style="padding-right:10%;min-height:500px;">
@@ -31,14 +32,12 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import { crmIndexFieldRecordAPI } from '@/api/crm/common'
 
 export default {
   name: 'RelativeHandle', // 相关操作  可能再很多地方展示 放到客户管理目录下
   components: {},
-  mixins: [LoadingMixin],
   props: {
     /** 模块ID */
     id: [String, Number],
@@ -62,6 +61,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       list: []
     }
   },

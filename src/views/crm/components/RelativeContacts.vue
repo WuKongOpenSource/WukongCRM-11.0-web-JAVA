@@ -1,5 +1,6 @@
 <template>
   <div
+    v-loading="loading"
     v-empty="nopermission"
     class="rc-cont"
     xs-empty-icon="nopermission"
@@ -99,7 +100,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import CRMAllCreate from './CRMAllCreate'
 import {
   crmCustomerQueryContactsAPI,
@@ -120,7 +120,7 @@ export default {
     CRMAllCreate,
     CrmRelative
   },
-  mixins: [LoadingMixin],
+  mixins: [],
   props: {
     // 模块ID
     id: [String, Number],
@@ -146,6 +146,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       nopermission: false,
       list: [],
       fieldList: [],

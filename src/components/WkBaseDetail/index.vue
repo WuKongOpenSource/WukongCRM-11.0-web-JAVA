@@ -18,6 +18,9 @@
       <wk-base-detail-section
         :list="mainItem.list"
       />
+      <div slot="header" class="wk-base-detail__more">
+        <slot name="more"/>
+      </div>
       <slot />
     </create-sections>
   </div>
@@ -63,6 +66,11 @@ export default {
   }
   /deep/ .create-sections-content {
     padding: 0 20px;
+  }
+
+  &__more {
+    position: absolute;
+    right: 15px;
   }
 }
 </style>

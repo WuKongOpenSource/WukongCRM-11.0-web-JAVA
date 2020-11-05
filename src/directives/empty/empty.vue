@@ -67,7 +67,7 @@ export default {
 <style lang="scss" scoped>
 .empty-mask {
   position: absolute;
-  z-index: 2000;
+  z-index: 1;
   background-color: rgba(255, 255, 255, 0.98);
   margin: 0;
   top: 0;

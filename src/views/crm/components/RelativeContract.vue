@@ -1,5 +1,6 @@
 <template>
   <div
+    v-loading="loading"
     v-empty="nopermission"
     class="rc-cont"
     xs-empty-icon="nopermission"
@@ -44,7 +45,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import CRMAllCreate from './CRMAllCreate'
 import { crmCustomerQueryContractAPI } from '@/api/crm/customer'
 import { crmBusinessQueryContractAPI } from '@/api/crm/business'
@@ -57,7 +57,7 @@ export default {
     CRMFullScreenDetail: () => import('@/components/CRMFullScreenDetail'),
     CRMAllCreate
   },
-  mixins: [LoadingMixin, CheckStatusMixin],
+  mixins: [CheckStatusMixin],
   props: {
     /** 模块ID */
     id: [String, Number],
@@ -81,6 +81,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       nopermission: false,
       list: [],
       fieldList: [],

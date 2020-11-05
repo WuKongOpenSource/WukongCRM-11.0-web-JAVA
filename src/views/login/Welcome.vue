@@ -18,8 +18,8 @@
 
         <div class="welcome__main">
           <div class="welcome__tips">你需要通过手机号来<a href="https://www.72crm.com/crm/#/login?type=register" target="_blank">注册悟空ID</a>，该手机号将作为您登录系统的管理员帐号。
-          注册成功后，您需要进入【悟空个人中心】，点击【开源版下载】<a href="https://www.72crm.com/user/company_info" target="_blank">获取您的验证码</a>
-            如您已经注册悟空ID，您只需要点击<a href="https://www.72crm.com/user/company_info" target="_blank">登录个人中心</a>即可查看您的验证码</div>
+          注册成功后，您需要进入【悟空个人中心】，点击【开源版下载】<a href="https://www.72crm.com/user/company_info" target="_blank">获取您的序列号</a>
+            如您已经注册悟空ID，您只需要点击<a href="https://www.72crm.com/user/company_info" target="_blank">登录个人中心</a>即可查看您的序列号</div>
 
           <login-by-welcome />
         </div>

@@ -1,5 +1,6 @@
 <template>
   <div
+    v-loading="loading"
     v-empty="nopermission"
     class="rc-cont"
     xs-empty-icon="nopermission"
@@ -26,7 +27,6 @@
 </template>
 
 <script type="text/javascript">
-import LoadingMixin from '../mixins/Loading'
 import { printQueryPrintRecordAPI } from '@/api/admin/crm'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 
@@ -34,7 +34,7 @@ export default {
   name: 'RelativePrint', // 相关打印
   components: {
   },
-  mixins: [LoadingMixin],
+  mixins: [],
   props: {
     id: [String, Number],
     crmType: {
@@ -50,6 +50,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       nopermission: false,
       list: [],
       fieldList: [

@@ -16,13 +16,13 @@
           @blur="checkFromItem('username', form.username)"
           @keyup.enter.native="debouncedHandleLogin"/>
       </el-form-item>
-      <el-form-item label="验证码">
+      <el-form-item label="序列号">
         <el-input
           ref="code"
           v-model.trim="form.code"
           :maxlength="20"
           :class="{error: !validateRes.code}"
-          placeholder="请输入您的验证码"
+          placeholder="请输入您的序列号"
           type="code"
           @focus="focusKey = 'code'"
           @keyup.enter.native="debouncedHandleLogin"
