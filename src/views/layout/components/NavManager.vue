@@ -7,31 +7,7 @@
       class="nav-manager">
 
       <div class="nav-manager__content">
-        <el-button v-if="isEdit" class="nav-manager__handle" type="primary" @click="saveClick">保存</el-button>
-        <el-button v-else class="nav-manager__handle" @click="isEdit = !isEdit">编辑</el-button>
 
-
-        <div class="nav-section">
-          <div class="nav-section__title">置顶应用<span class="nav-section__tips">（最多可设置8个置顶应用，可通过拖拽进行排列）</span></div>
-          <draggable
-            v-model="topList"
-            :options="{ dragClass: 'sortable-drag', forceFallback: false, disabled:!isEdit }"
-            style="flex-wrap: wrap;"
-            class="vux-flexbox nav-section__content">
-            <div
-              v-for="(item, index) in topList"
-              :key="index"
-              class="nav-section-item"
-              @click="selectClick(item)">
-              <div class="nav-section-item__icon">
-                <i :class="item.icon" />
-              </div>
-              <div class="nav-section-item__label">{{ item.title }}</div>
-              <i v-if="isEdit" class="el-icon-remove is-handle" @click.stop="topModuleDelete(item, index)" />
-            </div>
-          </draggable>
-
-        </div>
         <div class="nav-section">
           <div class="nav-section__title" title="123123">全部应用</div>
           <flexbox
@@ -52,6 +28,32 @@
             </div>
           </flexbox>
         </div>
+
+        <div class="nav-section">
+          <div class="nav-section__title">置顶应用<span class="nav-section__tips">（最多可设置8个置顶应用，可通过拖拽进行排列）</span>
+            <el-button v-if="isEdit" type="primary" @click="saveClick">保存</el-button>
+            <el-button v-else @click="isEdit = !isEdit">编辑</el-button>
+          </div>
+          <draggable
+            v-model="topList"
+            :options="{ dragClass: 'sortable-drag', forceFallback: false, disabled:!isEdit }"
+            style="flex-wrap: wrap;"
+            class="vux-flexbox nav-section__content">
+            <div
+              v-for="(item, index) in topList"
+              :key="index"
+              class="nav-section-item"
+              @click="selectClick(item)">
+              <div class="nav-section-item__icon">
+                <i :class="item.icon" />
+              </div>
+              <div class="nav-section-item__label">{{ item.title }}</div>
+              <i v-if="isEdit" class="el-icon-remove is-handle" @click.stop="topModuleDelete(item, index)" />
+            </div>
+          </draggable>
+
+        </div>
+
       </div>
     </div>
   </transition>
@@ -284,7 +286,7 @@ export default {
      * 选择模块
      */
     selectClick(item) {
-      if (!item.future) {
+      if (!item.future && !this.isEdit) {
         this.$emit('select', item)
       }
     }

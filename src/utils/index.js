@@ -109,6 +109,18 @@ export function compressImage(file, quality, callback) {
   reader.readAsDataURL(file)
 }
 
+/**
+ * 获取date类型展示时间
+ * @param {*} time
+ */
+export function getWkDateTime(time) {
+  if (time) {
+    const temps = time.split(' ')
+    return temps.length > 0 ? temps[0] : ''
+  }
+  return time
+}
+
 /** 根据date URL 创建blob 用于上传 */
 export function createBlob(result) {
   var arr = result.split(',')

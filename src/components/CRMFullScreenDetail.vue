@@ -4,6 +4,7 @@
     class="full-container">
     <component
       v-if="id&&showDetail"
+      v-bind="$attrs"
       :is="tabName"
       :crm-type="crmType"
       :id="id"

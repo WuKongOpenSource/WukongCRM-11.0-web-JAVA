@@ -208,6 +208,7 @@ export default {
   flex-shrink: 0;
   // overflow: hidden;
   padding-bottom: 10px;
+  padding-right: 40px;
 }
 
 .el-form-item /deep/ .el-form-item__label {

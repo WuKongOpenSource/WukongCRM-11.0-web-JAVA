@@ -185,6 +185,7 @@ export default [
         permissions: ['manage', 'crm', 'setting']
       }
     }, {
+      name: 'crmBizGoals',
       path: 'biz-goals',
       component: () => import('@/views/admin/crm/bizGoals'),
       meta: {
@@ -213,6 +214,19 @@ export default [
       meta: {
         title: '其他设置',
         icon: 'manage'
+      }
+    }]
+  },
+  {
+    ...layout({
+      permissions: ['manage', 'init', 'initData']
+    }, '/manage', false),
+    children: [{
+      path: 'init', // 初始化数据
+      component: () => import('@/views/admin/init/Set'),
+      meta: {
+        title: '初始化数据',
+        icon: 'results-solid'
       }
     }]
   }

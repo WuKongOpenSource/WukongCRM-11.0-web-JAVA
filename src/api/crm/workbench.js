@@ -90,6 +90,21 @@ export function crmIndexFunnelAPI(data) {
 }
 
 /**
+ * 销售漏斗详情
+ * @param {*} data
+ */
+export function crmInstrumentSellFunnelBusinessListAPI(data) {
+  return request({
+    url: 'crmInstrument/sellFunnelBusinessList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
  * 销售趋势
  * @param {*} data
  */

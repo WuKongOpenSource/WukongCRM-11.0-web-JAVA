@@ -65,6 +65,8 @@ Vue.component('xr-avatar', XrAvatar)
 
 import FileUpload from '@/components/FileUpload/index.js'
 Vue.use(FileUpload)
+import WkFileSelect from '@/components/NewCom/WkFile/Select/main.js'
+Vue.use(WkFileSelect)
 
 /** 懒加载图片 */
 import VueSrc from './directives/src'

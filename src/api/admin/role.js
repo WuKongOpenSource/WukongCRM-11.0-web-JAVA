@@ -70,13 +70,31 @@ export function roleCopyAPI(data) {
 }
 
 /**
+ * 复制员工角色
+ * @param {*} data
+ */
+export function adminRoleRelatedDeptUserAPI(data) {
+  return request({
+    url: 'adminRole/relatedDeptUser',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    data: data
+  })
+}
+
+/**
  * 添加编辑员工
  * @param {*} data
  */
-export function relatedUserAPI(data) {
+export function adminRoleRelatedUserAPI(data) {
   return request({
     url: 'adminRole/relatedUser',
     method: 'post',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
     data: data
   })
 }

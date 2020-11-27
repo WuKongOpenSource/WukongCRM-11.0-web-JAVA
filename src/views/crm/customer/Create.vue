@@ -30,6 +30,15 @@
       class="handle-button"
       type="primary"
       @click="debouncedSaveField(true)">保存并新建联系人</el-button>
+
+    <!-- 新建 -->
+    <contacts-create
+      v-if="contactsCreateShow"
+      :action="contactsCreateAction"
+      @close="close"
+      @save-success="close"
+    />
+
   </xr-create>
 </template>
 
@@ -46,6 +55,8 @@ import {
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CustomFieldsMixin from '@/mixins/CustomFields'
+import ContactsCreate from '../contacts/Create'
+
 import { debounce } from 'throttle-debounce'
 import { isEmpty } from '@/utils/types'
 
@@ -57,7 +68,8 @@ export default {
     XrCreate,
     CreateSections,
     WkForm,
-    XhCustomerAddress
+    XhCustomerAddress,
+    ContactsCreate
   },
 
   mixins: [CustomFieldsMixin],
@@ -82,7 +94,13 @@ export default {
       baseFields: [],
       fieldList: [],
       fieldForm: {},
-      fieldRules: {}
+      fieldRules: {},
+      contactsCreateAction: {
+        type: 'save',
+        id: '',
+        data: {}
+      },
+      contactsCreateShow: false
     }
   },
 
@@ -209,22 +227,28 @@ export default {
       crmCustomerSaveAPI(params)
         .then(res => {
           this.loading = false
+          this.$store.dispatch('GetMessageNum')
 
-          if (!createContacts) {
+          if (createContacts) {
+            this.contactsCreateAction = {
+              type: 'relative',
+              crmType: 'customer',
+              data: {
+                customer: res.data || {}
+              }
+            }
+            this.contactsCreateShow = true
+          } else {
             this.$message.success(
               this.action.type == 'update' ? '编辑成功' : '添加成功'
             )
+            this.close()
           }
-
-          this.$store.dispatch('GetMessageNum')
-
-          this.close()
 
           // 保存成功
           this.$emit('save-success', {
             type: 'customer',
-            data: res.data || {},
-            createContacts: createContacts
+            data: res.data || {}
           })
         })
         .catch(() => {
@@ -256,6 +280,7 @@ export default {
      * 关闭
      */
     close() {
+      this.contactsCreateShow = false
       this.$emit('close')
     }
   }

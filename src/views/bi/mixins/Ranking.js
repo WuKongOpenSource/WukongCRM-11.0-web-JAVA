@@ -79,7 +79,7 @@ export default {
               color: '#333'
             }
           },
-          barWidth: 20,
+          barMaxWidth: 20,
           data: []
         }]
       },

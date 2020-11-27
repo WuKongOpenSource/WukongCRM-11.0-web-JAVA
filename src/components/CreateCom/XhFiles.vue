@@ -11,13 +11,13 @@
         class="wukong wukong-file f-logo" />
 
       <div class="f-name">附件</div>
-      <input
-        :id="'xhImageInput' + index||'0'"
+      <!-- <input
+        :id="idKey"
         type="file"
         class="bar-iput"
         accept="*.*"
         multiple
-        @change="xhUploadFile" >
+        @change="xhUploadFile" > -->
     </flexbox>
     <div class="f-body">
       <flexbox
@@ -70,10 +70,15 @@ export default {
   methods: {
     selectImage() {
       if (!this.disabled) {
-        document.getElementById('xhImageInput' + this.index || '0').click()
+        this.$wkFile.select().then(ev => {
+          this.xhUploadFile(ev)
+        })
       }
     },
-    /** 图片选择出发 */
+
+    /**
+     * 图片选择出发
+     */
     xhUploadFile(event) {
       var files = event.target.files
       var firstFile = files[0]

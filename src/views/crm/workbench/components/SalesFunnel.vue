@@ -125,6 +125,7 @@ export default {
       },
       chartObj: null,
       loading: false,
+      dataList: [],
       businessOptions: [],
       businessId: null,
       businessName: '',
@@ -140,6 +141,9 @@ export default {
     initChart() {
       this.chartObj = echarts.init(document.getElementById('sales-funnel'))
       this.chartObj.setOption(this.chartOption, true)
+      this.chartObj.on('click', params => {
+        this.$emit('chart-click', params, this.dataList[params.dataIndex])
+      })
     },
     /**
      * 获取统计数据
@@ -154,8 +158,11 @@ export default {
         this.loading = false
         const data = []
         let sumCount = 0
-        for (let index = 0; index < res.data.list.length; index++) {
-          const element = res.data.list[index]
+
+        const resData = res.data || {}
+        this.dataList = resData.list || []
+        for (let index = 0; index < this.dataList.length; index++) {
+          const element = this.dataList[index]
           data.push({
             name: (element.name || '') + '(' + element.money + '元)',
             value: element.count
@@ -169,8 +176,8 @@ export default {
         this.chartObj.setOption(this.chartOption, true)
 
         this.funnelData = {
-          winSingle: res.data.sumYing,
-          loseSingle: res.data.sumShu
+          winSingle: resData.sumYing,
+          loseSingle: resData.sumShu
         }
       }).catch(() => {
         this.loading = false

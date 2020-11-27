@@ -23,6 +23,7 @@
           @click.native="close">取消</el-button>
         <slot name="footer" />
         <el-button
+          v-if="showConfirm"
           type="primary"
           @click.native="debouncedSaveField(false)">{{ confirmButtonText }}</el-button>
       </div>
@@ -48,6 +49,10 @@ export default {
       default: true
     },
     showCancel: {
+      type: Boolean,
+      default: true
+    },
+    showConfirm: {
       type: Boolean,
       default: true
     },

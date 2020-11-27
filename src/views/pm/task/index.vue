@@ -2,7 +2,11 @@
   <div class="my-task">
     <xr-header
       icon-class="wk wk-task"
-      icon-color="#D376FF">
+      icon-color="#D376FF"
+      placeholder="请输入任务/描述"
+      show-search
+      ft-top="0"
+      @search="searchClick">
       <span slot="label">我的任务</span>
       <el-popover
         slot="label"
@@ -16,6 +20,28 @@
           slot="reference"
           class="wk wk-manage set-img" />
       </el-popover>
+      <template slot="ft">
+        <el-dropdown
+          trigger="click"
+          @command="filterClick">
+          <div class="el-dropdown-link">
+            {{ filterObj[filterValue.sort] }}<i class="el-icon-arrow-down el-icon--right"/>
+          </div>
+          <el-dropdown-menu slot="dropdown">
+            <div class="el-dropdown-title">排序</div>
+            <el-dropdown-item
+              v-for="(item, index) in filterList"
+              :key="index"
+              :command="item.value">{{ item.label }}</el-dropdown-item>
+            <flexbox class="el-dropdown-footer">
+              已完成任务默认排在最后<el-switch
+                v-model="filterValue.completedTask"
+                @change="getList"/>
+            </flexbox>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <el-button type="primary" icon="wk wk-screening" class="filter-btn" @click="screeningShow = true">任务筛选</el-button>
+      </template>
     </xr-header>
     <div class="my-task-body">
       <div
@@ -144,18 +170,13 @@
               </div>
             </draggable>
             <!-- 新建任务 -->
-            <list-task-add
-              v-if="item.showTaskAdd"
-              :is-top="item.isTop"
-              @send="getList"
-              @close="item.showTaskAdd = false"/>
-            <div
-              v-else
-              class="new-task"
-              @click="item.showTaskAdd = true">
-              <span class="el-icon-plus"/>
-              <span>新建任务</span>
-            </div>
+            <task-quick-add
+              :params="{
+                isTop: item.isTop
+              }"
+              show-style="hideBorder"
+              style="margin: 0 10px;"
+              @send="getList" />
           </flexbox>
         </div>
       </div>
@@ -170,19 +191,29 @@
       :no-listener-class="['board-item']"
       @on-handle="detailHandle"
       @close="closeBtn"/>
+
+    <!-- 筛选 -->
+    <task-screening
+      v-if="screeningShow"
+      :props="screeningProps"
+      :data="screeningValue"
+      @change="taskScreeningChange"
+      @close="screeningShow = false"/>
   </div>
 </template>
 <script>
 import {
   workTaskMyTaskAPI,
   workTaskUpdateTopAPI,
-  taskWorkbenchExportAPI
+  taskWorkbenchExportAPI,
+  workQueryMemberListAPI
 } from '@/api/pm/task'
 import { workTaskStatusSetAPI } from '@/api/pm/projectTask'
 
-import ListTaskAdd from '@/views/pm/components/ListTaskAdd'
+import TaskQuickAdd from '@/views/taskExamine/task/components/TaskQuickAdd'
 import TaskDetail from '@/views/taskExamine/task/components/TaskDetail'
 import XrHeader from '@/components/XrHeader'
+import TaskScreening from '../project/components/TaskScreening'
 
 import draggable from 'vuedraggable'
 import scrollx from '@/directives/scrollx'
@@ -193,9 +224,10 @@ import { downloadExcelWithResData } from '@/utils'
 export default {
   components: {
     draggable,
-    ListTaskAdd,
+    TaskQuickAdd,
     TaskDetail,
-    XrHeader
+    XrHeader,
+    TaskScreening
   },
 
   directives: {
@@ -212,6 +244,39 @@ export default {
       taskList: [],
       // 加载中
       loading: true,
+      filterObj: {},
+      filterValue: {
+        sort: 2,
+        completedTask: true
+      },
+      filterList: [{
+        label: '按手动拖拽',
+        value: 1
+      }, {
+        label: '按最近创建',
+        value: 2
+      }, {
+        label: '按最近截止',
+        value: 3
+      }, {
+        label: '按最近更新',
+        value: 4
+      }, {
+        label: '按最高优先级',
+        value: 5
+      }],
+      search: '',
+      screeningValue: {
+        userIds: [],
+        timeId: '',
+        tagIds: []
+      },
+      screeningShow: false,
+      screeningProps: {
+        searchShow: false,
+        userRequest: workQueryMemberListAPI
+      },
+
       // 详情数据
       taskID: '',
       detailIndex: -1,
@@ -221,6 +286,9 @@ export default {
   },
 
   created() {
+    this.filterList.forEach(item => {
+      this.filterObj[item.value] = item.label
+    })
     this.getList()
   },
 
@@ -234,11 +302,46 @@ export default {
 
   methods: {
     /**
+     * 搜索操作
+     */
+    searchClick(search) {
+      this.search = search
+      this.getList()
+    },
+
+    /**
+     * 任务筛选
+     */
+    taskScreeningChange(userIds, timeId, tagIds) {
+      this.screeningValue = {
+        userIds,
+        timeId,
+        tagIds
+      }
+      this.getList()
+    },
+
+    /**
+     * 筛选操作
+     */
+    filterClick(command) {
+      this.filterValue.sort = command
+      this.getList()
+    },
+
+    /**
      * 获取数据列表
      */
     getList() {
       this.loading = true
-      workTaskMyTaskAPI()
+      workTaskMyTaskAPI({
+        name: this.search,
+        sort: this.filterValue.sort,
+        completedTask: this.filterValue.completedTask,
+        userIdList: this.screeningValue.userIds,
+        stopTimeType: this.screeningValue.timeId,
+        labelIdList: this.screeningValue.tagIds
+      })
         .then(res => {
           for (const item of res.data) {
             item.checkedNum = 0
@@ -439,9 +542,47 @@ export default {
   user-select: none;
 }
 
+.xr-header {
+  padding-top: 0;
+  .el-dropdown-link {
+    cursor: pointer;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background-color: white;
+  }
+
+  .filter-btn {
+    padding: 6px 12px;
+    /deep/ i {
+      margin-right: 5px;
+    }
+  }
+}
+
+.el-dropdown-menu {
+  .el-dropdown-title {
+    padding: 0px 20px 10px;
+    color: #999;
+    border-bottom: 1px solid $xr-border-color-base;
+  }
+  .el-dropdown-menu__item {
+    color: #333;
+  }
+
+  .el-dropdown-footer {
+    padding: 5px 20px 0;
+    border-top: 1px solid $xr-border-color-base;
+    font-size: 12px;
+    .el-switch {
+      margin-left: 5px;
+    }
+  }
+}
+
 .my-task-body {
   padding-left: 15px;
-  height: calc(100% - 60px);
+  height: calc(100% - 45px);
   position: relative;
   overflow-y: hidden;
   overflow-x: auto;

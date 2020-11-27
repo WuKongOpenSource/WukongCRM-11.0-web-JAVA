@@ -516,14 +516,14 @@ export default {
             name: '合同金额',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '目标',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {

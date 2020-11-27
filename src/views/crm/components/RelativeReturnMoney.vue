@@ -95,7 +95,7 @@ import {
   crmReceivablesPlanDeleteAPI
 } from '@/api/crm/receivables'
 /** 注意  需要删除接口 */
-import { objDeepCopy } from '@/utils'
+import { objDeepCopy, getWkDateTime } from '@/utils'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
 
@@ -208,7 +208,11 @@ export default {
       request(this.getParams())
         .then(res => {
           this.loading = false
-          this.palnList = res.data.list
+          const list = res.data.list || []
+          list.forEach(item => {
+            item.returnDate = getWkDateTime(item.returnDate)
+          })
+          this.palnList = list
         })
         .catch(() => {
           this.loading = false

@@ -28,6 +28,36 @@ export default {
         '#F661AC',
         '#8652EE'
       ],
+      chartXAxisStyle: {
+        axisTick: {
+          alignWithLabel: true,
+          lineStyle: { width: 0 }
+        },
+        axisLabel: {
+          color: '#333'
+        },
+        axisLine: {
+          lineStyle: { color: '#333' }
+        },
+        splitLine: {
+          show: false
+        }
+      },
+      chartYAxisStyle: {
+        axisTick: {
+          alignWithLabel: true,
+          lineStyle: { width: 0 }
+        },
+        axisLabel: {
+          color: '#333'
+        },
+        axisLine: {
+          lineStyle: { color: '#333' }
+        },
+        splitLine: {
+          show: false
+        }
+      },
       currentPage: 1,
       pageSizes: [15, 30, 45, 60],
       pageSize: 0,

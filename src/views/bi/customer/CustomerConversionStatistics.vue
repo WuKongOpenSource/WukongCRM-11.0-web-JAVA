@@ -238,7 +238,6 @@ export default {
             axisLabel: {
               color: '#333'
             },
-            /** 坐标轴轴线相关设置 */
             axisLine: {
               lineStyle: { color: '#333' }
             },
@@ -259,7 +258,6 @@ export default {
               color: '#333',
               formatter: '{value}%'
             },
-            /** 坐标轴轴线相关设置 */
             axisLine: {
               lineStyle: { color: '#333' }
             },

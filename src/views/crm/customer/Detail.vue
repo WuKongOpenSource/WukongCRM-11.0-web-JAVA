@@ -23,7 +23,7 @@
           :detail="detailData"
           :head-details="headDetails"
           :id="id"
-          :pool-id="poolId"
+          :pool-id="seasPoolId"
           :pool-auth="poolAuth"
           :crm-type="crmType"
           @handle="detailHeadHandle"
@@ -56,7 +56,7 @@
                 :detail="detailData"
                 :type-list="logTyps"
                 :id="id"
-                :pool-id="poolId"
+                :pool-id="seasPoolId"
                 :handle="activityHandle"
                 :is-seas="isSeasDetail"
                 :crm-type="crmType"
@@ -77,7 +77,7 @@
                 <chiefly-contacts
                   :contacts-id="firstContactsId"
                   :id="id"
-                  :pool-id="poolId"
+                  :pool-id="seasPoolId"
                   :crm-type="crmType"
                   :is-seas="isSeasDetail"
                   @add="addChieflyContacts" />
@@ -102,7 +102,7 @@
 </template>
 
 <script>
-import { crmCustomerReadAPI, crmCustomerPoolQueryAuthAPI } from '@/api/crm/customer'
+import { crmCustomerReadAPI } from '@/api/crm/customer'
 
 import SlideView from '@/components/SlideView'
 import CRMDetailHead from '../components/CRMDetailHead'
@@ -280,6 +280,16 @@ export default {
     },
 
     /**
+     * 公海id
+     */
+    seasPoolId() {
+      if (this.poolAuth && this.poolAuth.poolId) {
+        return this.poolAuth.poolId
+      }
+      return this.poolId
+    },
+
+    /**
      * 根据记录筛选
      */
     logTyps() {
@@ -341,32 +351,9 @@ export default {
       ]
     }
   },
-  watch: {
-    poolId: {
-      handler(newVal) {
-        if (newVal) {
-          this.getCustomerPoolAuth(newVal)
-        }
-      },
-      deep: true,
-      immediate: true
-    }
-  },
+  watch: {},
   mounted() {},
   methods: {
-    /**
-     * 获取公海权限
-     */
-    getCustomerPoolAuth(poolId) {
-      crmCustomerPoolQueryAuthAPI({
-        poolId: poolId
-      })
-        .then(res => {
-          this.poolAuth = res.data || {}
-        })
-        .catch(() => {})
-    },
-
     /**
      * 详情
      */
@@ -384,9 +371,11 @@ export default {
       crmCustomerReadAPI(params)
         .then(res => {
           this.loading = false
-          this.detailData = res.data || {}
+          const resData = res.data || {}
+          this.detailData = resData
           this.firstContactsId = this.detailData.contactsId
-
+          // 公海权限
+          this.poolAuth = resData.poolAuthList || {}
           // 负责人
           this.headDetails[0].value = this.detailData.level
 

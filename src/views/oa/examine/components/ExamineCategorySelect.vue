@@ -5,13 +5,16 @@
     title="审批类型"
     width="500px"
     @close="closeView">
-    <div class="title">请选择您的审批类型（管理后台可自定义配置审批类型）</div>
+    <div class="title">可拖拽图标调整显示顺序（管理后台可自定义配置审批类型）</div>
     <div
       v-loading="loading"
       class="categorys">
-      <flexbox
-        wrap="wrap"
-        align="stretch">
+      <draggable
+        v-model="categorys"
+        :options="{ dragClass: 'sortable-drag', forceFallback: false }"
+        style="flex-wrap: wrap;"
+        class="vux-flexbox"
+        @end="draggableEnd">
         <div
           v-for="(item, index) in categorys"
           :key="index"
@@ -24,17 +27,21 @@
           </div>
           <div class="category-label text-one-line">{{ item.title }}</div>
         </div>
-      </flexbox>
+      </draggable>
     </div>
   </el-dialog>
 </template>
 
 <script>
-import { oaAllExamineCategoryListAPI } from '@/api/oa/examine'
+import { oaAllExamineCategoryListAPI, oaAllExamineCategorySortAPI } from '@/api/oa/examine'
+
+import Draggable from 'vuedraggable'
 
 export default {
   name: 'ExamineCategorySelect',
-  components: {},
+  components: {
+    Draggable
+  },
   props: {
     show: {
       type: Boolean,
@@ -58,7 +65,9 @@ export default {
   },
   mounted() {},
   methods: {
-    // 审批类型列表
+    /**
+     * 审批类型列表
+     */
     getDetail() {
       this.loading = true
       oaAllExamineCategoryListAPI()
@@ -80,14 +89,31 @@ export default {
           this.loading = false
         })
     },
-    // 审批类型选择
+
+    /**
+     * 审批类型选择
+     */
     selectCategorys(item) {
       this.$emit('select', item)
       this.$emit('close')
     },
-    // 关闭操作
+
+    /**
+     * 关闭操作
+     */
     closeView() {
       this.$emit('close')
+    },
+
+    /**
+     * 拖拽结束
+     */
+    draggableEnd() {
+      oaAllExamineCategorySortAPI(this.categorys.map(item => {
+        return { categoryId: item.categoryId }
+      }))
+        .then(res => {})
+        .catch(() => {})
     }
   }
 }

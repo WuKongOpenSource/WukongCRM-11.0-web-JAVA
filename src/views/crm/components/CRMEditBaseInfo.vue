@@ -200,6 +200,7 @@ import {
 } from '@/utils'
 import { isArray, isObject, isEmpty } from '@/utils/types'
 import { mapGetters } from 'vuex'
+import { getWkDateTime } from '@/utils'
 
 export default {
   // 客户管理 的 基本信息
@@ -317,6 +318,7 @@ export default {
      */
     getBaseInfo(loading) {
       this.loading = !!loading
+
       const params = {
         types: crmTypeModel[this.crmType],
         id: this.id
@@ -334,6 +336,8 @@ export default {
           res.data.forEach(item => {
             if (item.formType === 'floatnumber') {
               item.value = separator(item.value)
+            } else if (item.formType === 'date') {
+              item.value = getWkDateTime(item.value)
             }
             if (item.sysInformation == 1) {
               systemList.push(item)

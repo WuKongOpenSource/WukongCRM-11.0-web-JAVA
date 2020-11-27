@@ -45,6 +45,18 @@ export default [
   },
   {
     ...layout(),
+    hidden: true,
+    children: [{
+      path: 'search',
+      component: () => import('@/views/pm/project/Search'),
+      meta: {
+        title: '搜索',
+        activeMenu: '/project/list'
+      }
+    }]
+  },
+  {
+    ...layout(),
     children: [{
       path: 'list', // 项目封面列表
       component: () => import('@/views/pm/project/Corver'),

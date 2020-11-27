@@ -132,6 +132,9 @@ export default {
 
   computed: {
     title() {
+      if (this.action.title) {
+        return this.action.title
+      }
       return this.action.type === 'update' ? '编辑合同' : '新建合同'
     },
 
@@ -254,7 +257,12 @@ export default {
             this.getItemRadio(item, temp)
 
             // 获取默认值
-            fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+            // 非编辑情况下 填充默认值
+            if (this.action.type != 'update' && item.fieldName === 'orderDate') {
+              fieldForm[temp.field] = this.$moment().format('YYYY-MM-DD')
+            } else {
+              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+            }
             fieldList.push(temp)
           })
 
@@ -343,7 +351,7 @@ export default {
      * 提交上传
      */
     submiteParams(params) {
-      if (this.action.type == 'update') {
+      if (this.action.type == 'update' && !this.action.isCopy) {
         params.entity.contractId = this.action.id
         params.entity.batchId = this.action.batchId
       }
@@ -359,10 +367,14 @@ export default {
       crmContractSaveAPI(params)
         .then(res => {
           this.loading = false
+          if (this.action.isCopy) {
+            this.$message.success('操作成功')
+          } else {
+            this.$message.success(
+              this.action.type == 'update' ? '编辑成功' : '添加成功'
+            )
+          }
 
-          this.$message.success(
-            this.action.type == 'update' ? '编辑成功' : '添加成功'
-          )
 
           this.close()
 

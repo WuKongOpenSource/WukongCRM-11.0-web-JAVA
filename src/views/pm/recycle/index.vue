@@ -182,10 +182,15 @@ export default {
   height: 100%;
   overflow: hidden;
   position: relative;
+
+  .xr-header {
+    padding-top: 0;
+  }
+
   .content {
     background-color: white;
     position: absolute;
-    top: 60px;
+    top: 45px;
     right: 0;
     bottom: 0;
     left: 0;

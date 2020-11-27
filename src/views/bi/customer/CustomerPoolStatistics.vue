@@ -242,14 +242,14 @@ export default {
             name: '进入公海客户数',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '公海池领取客户数',
             type: 'bar',
             yAxisIndex: 1,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

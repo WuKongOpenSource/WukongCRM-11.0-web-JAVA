@@ -1,5 +1,17 @@
 <template>
+  <el-avatar
+    v-if="disabled"
+    slot="reference"
+    v-bind="$attrs"
+    :src="imageCache[src]"
+    :key="src"
+    :style="{ fontSize: fontSize, background: background }"
+    :class="{ 'cursor-pointer': !disabled }"
+    :size="size"
+    fit="fill">{{ showName }}</el-avatar>
+
   <el-popover
+    v-else
     v-model="popoverShow"
     :visible-arrow="false"
     :trigger="trigger"
@@ -21,7 +33,6 @@
       :size="size"
       fit="fill">{{ showName }}</el-avatar>
   </el-popover>
-
 </template>
 
 <script>

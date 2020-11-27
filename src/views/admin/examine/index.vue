@@ -122,7 +122,7 @@ export default {
           width: 150
         },
         {
-          prop: 'userIds',
+          prop: 'userList',
           label: '适用范围',
           width: 150
         },
@@ -211,15 +211,15 @@ export default {
       } else if (column.property === 'categoryType') {
         const findRes = this.categoryTypeList.find(o => o.value === row.categoryType)
         return findRes ? findRes.name : '--'
-      } else if (column.property === 'userIds') {
-        const structures = row['deptIds'] || []
+      } else if (column.property === 'userList') {
+        const structures = row['deptList'] || []
         let strName = structures
           .map(item => {
             return item.name
           })
           .join('、')
 
-        const users = row['userIds'] || []
+        const users = row['userList'] || []
         const userName = users
           .map(item => {
             return item.realname

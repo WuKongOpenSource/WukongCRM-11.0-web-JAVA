@@ -86,6 +86,7 @@ export default {
       type: String,
       default: ''
     },
+    // moduleType
     props: Object
   },
   data() {
@@ -116,7 +117,7 @@ export default {
           contacts: 16,
           leads: 18,
           product: 20
-        }[this.crmType]
+        }[this.crmType] || this.props.moduleType
       })
         .then(res => {
           this.loading = false

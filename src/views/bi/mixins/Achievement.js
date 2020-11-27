@@ -250,7 +250,7 @@ export default {
           name: '当月' + this.typeName,
           type: 'bar',
           yAxisIndex: 0,
-          barWidth: 10,
+          barMaxWidth: 10,
           markPoint: {
             data: [{
               type: 'max',
@@ -268,7 +268,7 @@ export default {
         //   name: '上月' + this.typeName,
         //   type: 'bar',
         //   yAxisIndex: 0,
-        //   barWidth: 10,
+        //   barMaxWidth: 10,
         //   markPoint: {
         //     data: [{
         //       type: 'max',
@@ -286,7 +286,7 @@ export default {
         //   name: '去年当月' + this.typeName,
         //   type: 'bar',
         //   yAxisIndex: 0,
-        //   barWidth: 10,
+        //   barMaxWidth: 10,
         //   markPoint: {
         //     data: [{
         //       type: 'max',

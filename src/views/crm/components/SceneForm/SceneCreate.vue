@@ -46,7 +46,7 @@
                 placeholder="请选择范围"
                 @change="selectChange($event,formItem)">
                 <el-option
-                  v-for="item in calConditionOptions(formItem.formType, formItem)"
+                  v-for="item in getAdvancedFilterOptions(formItem.formType)"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"/>
@@ -86,18 +86,7 @@
                   :value="item.value"/>
               </el-select>
               <el-select
-                v-else-if="formItem.formType === 'select'"
-                v-model="formItem.value"
-                multiple
-                placeholder="请选择筛选条件">
-                <el-option
-                  v-for="item in formItem.setting"
-                  :key="item"
-                  :label="item"
-                  :value="item"/>
-              </el-select>
-              <el-select
-                v-else-if="formItem.formType === 'checkbox'"
+                v-else-if="formItem.formType === 'select' || formItem.formType === 'checkbox'"
                 v-model="formItem.value"
                 multiple
                 placeholder="请选择筛选条件">
@@ -126,7 +115,7 @@
                   :value="item.statusId"/>
               </el-select>
               <xh-user-cell
-                v-else-if="formItem.formType === 'user'"
+                v-else-if="formItem.formType === 'user' || formItem.formType === 'single_user'"
                 :item="formItem"
                 :info-params="{m	:'crm',c: crmType,a: 'index' }"
                 :value="formItem.value"
@@ -152,7 +141,7 @@
               <el-input
                 v-else
                 v-model="formItem.value"
-                placeholder="请输入筛选条件"/>
+                placeholder="多个条件请用；隔开"/>
             </el-col>
             <el-col
               :span="1"
@@ -190,13 +179,16 @@
 </template>
 
 <script>
-import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import { userListAPI, depListAPI } from '@/api/common'
 import { crmSceneSaveAPI, crmSceneUpdateAPI } from '@/api/crm/common'
 import { productCategoryIndexAPI } from '@/api/admin/crm'
-import { objDeepCopy } from '@/utils'
+
+import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import { XhUserCell, XhProuctCate, XhStructureCell } from '@/components/CreateCom'
 import VDistpicker from '@/components/VDistpicker'
-import { userListAPI, depListAPI } from '@/api/common'
+
+import { objDeepCopy } from '@/utils'
+import AdvancedFilterMixin from '@/mixins/AdvancedFilter'
 
 /**
  * fieldList: 高级筛选的字段
@@ -210,6 +202,7 @@ export default {
     VDistpicker,
     XhStructureCell
   },
+  mixins: [AdvancedFilterMixin],
   props: {
     dialogVisible: {
       type: Boolean,
@@ -271,7 +264,7 @@ export default {
               item.fieldName = element.name
               item.formType = element.formType
               item.type = element.type
-              this.calConditionOptions(element.formType, element).forEach(child => {
+              this.getAdvancedFilterOptions(element.formType).forEach(child => {
                 if (element.type === child.type) {
                   item.condition = child.value
                 }
@@ -300,7 +293,7 @@ export default {
                     item.statusOption = []
                   }
                 }
-              } else if (element.formType == 'user') {
+              } else if (element.formType == 'user' || element.formType == 'single_user') {
                 item.value = []
                 this.getEditUserValue(item, element.values[0])
               } else if (element.formType == 'structure') {
@@ -507,7 +500,7 @@ export default {
      * 连接条件的变更
      */
     selectChange(event, formItem) {
-      this.calConditionOptions(formItem.formType, formItem).forEach(item => {
+      this.getAdvancedFilterOptions(formItem.formType).forEach(item => {
         if (item.value === event) {
           formItem.type = item.type
         }
@@ -527,86 +520,6 @@ export default {
         return false
       }
       return true
-    },
-    /** 条件数据源 */
-    calConditionOptions(formType, item) {
-      if (
-        formType == 'checkStatus' ||
-        formType == 'dealStatus'
-      ) {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'isNot', label: '不等于', disabled: false, type: 2 }
-        ]
-      } else if (
-        formType == 'user' ||
-        formType == 'structure'
-      ) {
-        return [
-          { value: 'contains', label: '包含', disabled: false, type: 3 },
-          { value: 'notContains', label: '不包含', disabled: false, type: 4 }
-        ]
-      } else if (
-        formType == 'select'
-      ) {
-        return [
-          { value: 'in', label: '等于', disabled: false, type: 1 },
-          { value: 'isNot', label: '不等于', disabled: false, type: 2 }
-        ]
-      } else if (
-        formType == 'checkbox'
-      ) {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'contains', label: '包含', disabled: false, type: 3 }
-        ]
-      } else if (
-        formType == 'module' ||
-        formType == 'text' ||
-        formType == 'textarea'
-      ) {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'isNot', label: '不等于', disabled: false, type: 2 },
-          { value: 'contains', label: '包含', disabled: false, type: 3 },
-          { value: 'notContains', label: '不包含', disabled: false, type: 4 }
-        ]
-      } else if (formType == 'floatnumber' || formType == 'number') {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'isNot', label: '不等于', disabled: false, type: 2 },
-          { value: 'contains', label: '包含', disabled: false, type: 3 },
-          { value: 'notContains', label: '不包含', disabled: false, type: 4 },
-          { value: 'isNull', label: '为空', disabled: false, type: 5 },
-          { value: 'isNotNull', label: '不为空', disabled: false, type: 6 },
-          { value: 'gt', label: '大于', disabled: false, type: 7 },
-          { value: 'egt', label: '大于等于', disabled: false, type: 8 },
-          { value: 'lt', label: '小于', disabled: false, type: 9 },
-          { value: 'elt', label: '小于等于', disabled: false, type: 10 }
-        ]
-      } else if (formType == 'category') {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'isnot', label: '不等于', disabled: false, type: 2 },
-          { value: 'contains', label: '包含', disabled: false, type: 3 },
-          { value: 'not_contain', label: '不包含', disabled: false, type: 4 }
-        ]
-      } else {
-        return [
-          { value: 'is', label: '等于', disabled: false, type: 1 },
-          { value: 'isNot', label: '不等于', disabled: false, type: 2 },
-          { value: 'contains', label: '包含', disabled: false, type: 3 },
-          { value: 'notContains', label: '不包含', disabled: false, type: 4 },
-          { value: 'startWith', label: '开始于', disabled: false, type: 8 },
-          { value: 'endWith', label: '结束于', disabled: false, type: 10 },
-          { value: 'isNull', label: '为空', disabled: false, type: 5 },
-          { value: 'isNotNull', label: '不为空', disabled: false, type: 6 },
-          { value: 'gt', label: '大于', disabled: false, type: 7 },
-          { value: 'egt', label: '大于等于', disabled: false, type: 8 },
-          { value: 'lt', label: '小于', disabled: false, type: 9 },
-          { value: 'elt', label: '小于等于', disabled: false, type: 10 }
-        ]
-      }
     },
 
     /**
@@ -649,6 +562,7 @@ export default {
           formItem.formType === 'date' ||
           formItem.formType === 'datetime' ||
           formItem.formType === 'user' ||
+          formItem.formType === 'single_user' ||
           formItem.formType === 'structure' ||
           formItem.formType === 'category'
         ) {
@@ -673,6 +587,7 @@ export default {
           formItem.type = 1
         } else if (
           formItem.formType == 'user' ||
+          formItem.formType == 'single_user' ||
           formItem.formType == 'structure'
         ) {
           formItem.condition = 'contains'
@@ -748,6 +663,7 @@ export default {
           o.formType == 'date' ||
           o.formType == 'datetime' ||
           o.formType == 'user' ||
+          o.formType == 'single_user' ||
           o.formType == 'structure' ||
           o.formType == 'category' ||
           o.formType == 'checkbox'
@@ -777,7 +693,7 @@ export default {
             type: 1,
             values: o.statusId ? [o.typeId, o.statusId] : [o.typeId]
           })
-        } else if (o.formType == 'user') {
+        } else if (o.formType == 'user' || o.formType == 'single_user') {
           obj.push({
             type: o.type,
             values: [o.value[0].userId],
@@ -831,9 +747,17 @@ export default {
             name: o.fieldName
           })
         } else {
+          let values = []
+          if (typeof o.value === 'string') {
+            const temp = o.value.replace(/；/g, ';')
+            values = temp.split(';').filter(item => item !== '' && item !== null)
+          } else {
+            values = [o.value]
+          }
+
           obj.push({
             type: o.type,
-            values: [o.value],
+            values: values,
             formType: o.formType,
             name: o.fieldName
           })

@@ -451,6 +451,14 @@
       :show="bulkImportShow"
       @close="bulkImportShow=false"
       @success="refreshUserList" />
+    <!-- 角色编辑 -->
+    <edit-role-dialog
+      v-if="editRoleDialogShow"
+      :user-show="editRoleType === 'copyRole'"
+      :selection-list="selectionList"
+      :visible.sync="editRoleDialogShow"
+      @change="getUserList"
+    />
   </div>
 </template>
 
@@ -478,6 +486,7 @@ import EmployeeDetail from './components/EmployeeDetail'
 import XrHeader from '@/components/XrHeader'
 import Reminder from '@/components/Reminder'
 import SlideVerify from '@/components/SlideVerify'
+import EditRoleDialog from './components/EditRoleDialog'
 
 import { chinaMobileRegex, objDeepCopy } from '@/utils'
 
@@ -489,7 +498,8 @@ export default {
     BulkImportUser,
     XrHeader,
     Reminder,
-    SlideVerify
+    SlideVerify,
+    EditRoleDialog
   },
   data() {
     return {
@@ -660,7 +670,10 @@ export default {
       codeSecond: 60,
       codeTimer: null,
       // 批量导入
-      bulkImportShow: false
+      bulkImportShow: false,
+      // 角色操作
+      editRoleType: '',
+      editRoleDialogShow: false
     }
   },
   computed: {
@@ -693,7 +706,10 @@ export default {
     strucDeleteAuth() {
       return this.currentMenuData && this.currentMenuData.pid !== 0 && this.manage && this.manage.users && this.manage.users.deptDelete
     },
-
+    // 员工编辑角色权限
+    userUpdateRoleAuth() {
+      return this.manage && this.manage.permission
+    },
     /**
      * 部门更多操作
      */
@@ -756,6 +772,23 @@ export default {
           ])
         }
       }
+
+      if (this.userUpdateRoleAuth) {
+        if (this.selectionList.length === 1) {
+          temps.push({
+            name: '复制角色',
+            type: 'copyRole',
+            icon: 'wk wk-icon-double-note'
+          })
+        }
+        temps.push({
+          name: '编辑角色',
+          type: 'editRole',
+          icon: 'wk wk-edit'
+        })
+      }
+
+
       return temps
     },
     /** 添加列表 */
@@ -1280,6 +1313,9 @@ export default {
         detail['userId'] = this.dialogData.userId
         this.formInline = detail
         this.employeeCreateDialog = true
+      } else if (type === 'editRole' || type === 'copyRole') {
+        this.editRoleType = type
+        this.editRoleDialogShow = true
       }
     },
     // 重置密码 -- 关闭按钮

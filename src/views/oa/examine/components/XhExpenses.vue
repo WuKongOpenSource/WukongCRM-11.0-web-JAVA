@@ -30,11 +30,18 @@
             value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="选择日期"
             @change="valueChange"/>
+          <el-input-number
+            v-else-if="subItem.formType == 'number'"
+            v-model="item[subItem.field]"
+            :controls="false"
+            :precision="2"
+            :min="0"
+            @input="calculateValueChange(index, subIndex)"/>
           <el-input
             v-else
-            :type="subItem.formType"
             v-model="item[subItem.field]"
             :maxlength="100"
+            type="text"
             @input="calculateValueChange(index, subIndex)"/>
         </flexbox-item>
         <flexbox-item
@@ -232,6 +239,9 @@ export default {
     },
     deleteItems(index) {
       this.mainList.splice(index, 1)
+      // 更新合计值
+      this.updateTotalValue()
+      this.submitValueChange(true)
     },
     addItems() {
       this.mainList.push(this.getValueItem())
@@ -256,7 +266,17 @@ export default {
       })
       mainItem.money = subTotal
 
-      var total = 0
+      // 更新合计值
+      this.updateTotalValue()
+
+      this.submitValueChange(true)
+    },
+
+    /**
+     * 更新合计
+     */
+    updateTotalValue() {
+      let total = 0
       for (let index = 0; index < this.mainList.length; index++) {
         const element = this.mainList[index]
         total = floatAdd(
@@ -265,10 +285,7 @@ export default {
         )
       }
       this.totalMoney = total
-
-      this.submitValueChange(true)
     },
-
 
     submitValueChange(update) {
       this.$emit('value-change', {
@@ -317,6 +334,7 @@ export default {
     }
 
     &-delete {
+      cursor: pointer;
       padding: 0 10px;
       color: #2362FB;
       font-size: 14px;
@@ -335,6 +353,19 @@ export default {
       flex-shrink: 0;
       font-size: 12px;
       color: #333;
+    }
+
+    .el-date-editor,
+    .el-select {
+      width: 100%;
+    }
+
+    .el-input-number {
+      width: 100%;
+      /deep/ .el-input__inner {
+        padding: 0 8px;
+        text-align: left;
+      }
     }
   }
 }
@@ -361,6 +392,10 @@ export default {
 }
 
 .el-textarea /deep/ .el-textarea__inner {
+  border-color: #ddd !important;
+}
+
+.el-input-number /deep/ .el-input__inner {
   border-color: #ddd !important;
 }
 

@@ -111,9 +111,13 @@ export default {
   position: relative;
 }
 
+.xr-header {
+  padding-top: 0;
+}
+
 .project-body {
   position: absolute;
-  top: 60px;
+  top: 45px;
   right: 0;
   bottom: 0;
   left: 0;

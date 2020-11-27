@@ -551,6 +551,7 @@ export default {
         var message = '请填写' + item.name + '原因：'
         var title = item.name + '原因'
         this.$prompt(message, title, {
+          inputType: 'text',
           confirmButtonText: '确定',
           cancelButtonText: '取消'
         })

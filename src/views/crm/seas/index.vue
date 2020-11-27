@@ -36,6 +36,7 @@
         :is-seas="isSeas"
         :pool-id="poolId"
         :pool-auth="poolAuth"
+        :sort-data="sortData"
         crm-type="customer"
         @filter="handleFilter"
         @handle="handleHandle"

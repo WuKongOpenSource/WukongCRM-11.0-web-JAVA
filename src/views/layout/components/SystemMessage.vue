@@ -12,7 +12,7 @@
         <div class="sm-main__hd">
           <span class="title">{{ title }}</span>
           <el-button
-            v-if="permissionSave"
+            v-if="permissionSave && onlyAnnouncement"
             icon="el-icon-plus"
             class="notice-btn"
             type="text"
@@ -20,6 +20,7 @@
         </div>
 
         <flexbox
+          v-if="!onlyAnnouncement"
           class="menu"
           wrap="wrap">
           <el-badge
@@ -141,6 +142,11 @@ export default {
       type: Boolean,
       default: false
     },
+    // 仅公告
+    onlyAnnouncement: {
+      type: Boolean,
+      default: false
+    },
     unreadNums: Object
   },
   data() {
@@ -174,6 +180,9 @@ export default {
       return this.oa && this.oa.announcement && this.oa.announcement.save
     },
     title() {
+      if (this.onlyAnnouncement) {
+        return this.unreadNums.announceCount && this.unreadNums.announceCount > 0 ? `公告（${this.unreadNums.announceCount}）` : '公告'
+      }
       return this.unreadNums.allCunt > 0 ? `通知（${this.unreadNums.allCunt}）` : '通知'
     },
 
@@ -182,6 +191,9 @@ export default {
     },
 
     labelValue() {
+      if (this.onlyAnnouncement) {
+        return 4
+      }
       return this.menuLabel == 'all' ? '' : this.menuLabel
     },
 
@@ -200,11 +212,11 @@ export default {
       }]
 
       if (this.oa) {
-        menuList.push({
-          name: '公告',
-          label: 4,
-          countKey: 'announceCount'
-        })
+        // menuList.push({
+        //   name: '公告',
+        //   label: 4,
+        //   countKey: 'announceCount'
+        // })
 
         if (this.oa.taskExamine) {
           menuList.push({
@@ -304,7 +316,10 @@ export default {
     },
 
     announcementSubmiteSuccess() {
-      this.refreshList()
+      setTimeout(() => {
+        this.refreshList()
+        this.$emit('update-count')
+      }, 1000)
     },
 
     /**

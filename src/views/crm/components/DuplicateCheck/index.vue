@@ -50,16 +50,23 @@
           :label="item.label"
           :min-width="item.width"
           show-overflow-tooltip />
-          <!-- <el-table-column
+        <el-table-column
+          fixed="right"
+          width="110px"
           label="操作">
-          <template slot-scope="scope">
+          <template v-if="scope.row.poolAuthList" slot-scope="scope">
             <el-button
-              v-if="scope.row.type == poolType"
+              v-if="scope.row.poolAuthList.receive"
               type="text"
               size="small"
-              @click="handleClick(scope.row)">领取</el-button>
+              @click="handleClick('receive', scope.row)">领取</el-button>
+            <el-button
+              v-if="scope.row.poolAuthList.distribute"
+              type="text"
+              size="small"
+              @click="handleClick('distribute', scope.row)">分配</el-button>
           </template>
-        </el-table-column> -->
+        </el-table-column>
       </el-table>
 
       <div
@@ -70,8 +77,16 @@
       <c-r-m-full-screen-detail
         :visible.sync="showFullDetail"
         :crm-type="relationCrmType"
-        :id="relationID"
+        :id="relationId"
+        :pool-id="poolId"
         @handle="getList"/>
+
+      <alloc-handle
+        :pool-id="poolId"
+        :selection-list="[relationData]"
+        :dialog-visible.sync="allocDialogShow"
+        crm-type="customer"
+        @handle="getList" />
     </div>
   </el-dialog>
 </template>
@@ -82,11 +97,14 @@ import {
   crmCustomerReceiveAPI
 } from '@/api/crm/customer'
 
+import AllocHandle from '../SelectionHandle/AllocHandle' // 公海分配操作
+
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 
 export default {
   name: 'DuplicateCheck',
   components: {
+    AllocHandle,
     CRMFullScreenDetail: () =>
       import('@/components/CRMFullScreenDetail')
   },
@@ -104,15 +122,14 @@ export default {
       tableData: null,
 
       showFullDetail: false, // 查看相关客户管理详情
-      relationID: '', // 相关ID参数
-      relationCrmType: '' // 相关类型
+      relationId: '', // 相关ID参数
+      relationData: {}, // 关联数据
+      poolId: '', // 公海Id
+      relationCrmType: '', // 相关类型
+      allocDialogShow: false //  分配弹窗
     }
   },
   computed: {
-    poolType() {
-      return crmTypeModel.pool
-    },
-
     showTable() {
       return this.tableData
     },
@@ -231,12 +248,17 @@ export default {
      */
     handleRowClick(row, column, event) {
       if (column.property == 'name' && row.id) {
-        this.relationID = row.id
+        this.relationId = row.id
+        if (row.poolAuthList) {
+          this.poolId = row.poolAuthList.poolId
+        } else {
+          this.poolId = ''
+        }
         const key = crmTypeModel.convertTypeToKey(row.type)
         this.relationCrmType = key == 'pool' ? 'customer' : key
         this.showFullDetail = true
       } else if (column.property == 'contactsName' && row.contactsId) {
-        this.relationID = row.contactsId
+        this.relationId = row.contactsId
         this.relationCrmType = 'contacts'
         this.showFullDetail = true
       }
@@ -253,22 +275,30 @@ export default {
       }
     },
 
-    handleClick(data) {
-      this.$confirm('确定要领取该客户吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(() => {
-          crmCustomerReceiveAPI({
-            ids: [data.id]
-          })
-            .then(res => {
-              this.getList()
-            })
-            .catch(() => {})
+    handleClick(type, data) {
+      if (type === 'receive') {
+        this.$confirm('确定要领取该客户吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
-        .catch(() => {})
+          .then(() => {
+            crmCustomerReceiveAPI({
+              ids: [data.id],
+              poolId: data.poolAuthList.poolId
+            })
+              .then(res => {
+                this.$message.success('操作成功')
+                this.getList()
+              })
+              .catch(() => {})
+          })
+          .catch(() => {})
+      } else {
+        data['customerId'] = data.id
+        this.relationData = data
+        this.allocDialogShow = true
+      }
     }
   }
 }

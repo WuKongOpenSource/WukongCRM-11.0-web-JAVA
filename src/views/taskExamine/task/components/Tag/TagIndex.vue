@@ -145,14 +145,14 @@ export default {
       }
 
       return 220
-    },
-
-    /**
-     * 项目ID 说明是项目
-     */
-    workId() {
-      return this.taskData.workId
     }
+
+    // /**
+    //  * 项目ID 说明是项目
+    //  */
+    // workId() {
+    //   return this.taskData.workId
+    // }
   },
   watch: {},
   mounted() {},
@@ -188,42 +188,47 @@ export default {
      * 选择标签
      */
     tagSelectClick(value, index) {
-      // 标签点击关联页面
-      if (value.check) {
-        taskDeleteLabelAPI({
-          taskId: this.taskData.taskId,
-          labelId: value.labelId
-        }).then(res => {
-          value.check = false
-          this.updateDetailList(value, 'delete')
-        }).catch(() => {
-          value.check = true
-        })
+      if (this.$listeners.change) {
+        value.check = !value.check
+        this.$emit('change', this.tagList.filter(item => item.check))
       } else {
-        const labelIds = this.tagList.filter(item => {
-          return item.check
-        }).concat(value)
-
-        workTaskLabelSetAPI({
-          taskId: this.taskData.taskId,
-          labelId: labelIds
-            .map(item => {
-              return item.labelId
-            })
-            .join(',')
-        }).then(res => {
-          value.check = true
-          const labelList = []
-          this.tagList.forEach(item => {
-            if (item.check) {
-              item.labelName = item.name
-              labelList.push(item)
-            }
+        // 标签点击关联页面
+        if (value.check) {
+          taskDeleteLabelAPI({
+            taskId: this.taskData.taskId,
+            labelId: value.labelId
+          }).then(res => {
+            value.check = false
+            this.updateDetailList(value, 'delete')
+          }).catch(() => {
+            value.check = true
           })
-          this.taskData.labelList = labelList
-        }).catch(() => {
-          value.check = false
-        })
+        } else {
+          const labelIds = this.tagList.filter(item => {
+            return item.check
+          }).concat(value)
+
+          workTaskLabelSetAPI({
+            taskId: this.taskData.taskId,
+            labelId: labelIds
+              .map(item => {
+                return item.labelId
+              })
+              .join(',')
+          }).then(res => {
+            value.check = true
+            const labelList = []
+            this.tagList.forEach(item => {
+              if (item.check) {
+                item.labelName = item.name
+                labelList.push(item)
+              }
+            })
+            this.taskData.labelList = labelList
+          }).catch(() => {
+            value.check = false
+          })
+        }
       }
     },
 
@@ -231,19 +236,21 @@ export default {
      * 更新/删除任务详情数据
      */
     updateDetailList(value, type) {
-      let changeIndex = -1
-      for (let index = 0; index < this.taskData.labelList.length; index++) {
-        const element = this.taskData.labelList[index]
-        if (element.labelId == value.labelId) {
-          changeIndex = index
-          break
+      if (this.taskData && this.taskData.labelList) {
+        let changeIndex = -1
+        for (let index = 0; index < this.taskData.labelList.length; index++) {
+          const element = this.taskData.labelList[index]
+          if (element.labelId == value.labelId) {
+            changeIndex = index
+            break
+          }
         }
-      }
-      if (changeIndex >= 0) {
-        if (type == 'delete') {
-          this.taskData.labelList.splice(changeIndex, 1)
-        } else {
-          this.taskData.labelList.splice(changeIndex, 1, value)
+        if (changeIndex >= 0) {
+          if (type == 'delete') {
+            this.taskData.labelList.splice(changeIndex, 1)
+          } else {
+            this.taskData.labelList.splice(changeIndex, 1, value)
+          }
         }
       }
     },
@@ -365,7 +372,7 @@ export default {
       // 标签列表
       workTasklableIndexAPI().then(res => {
         const dataList = res.data || []
-        const selectLabels = this.taskData.labelList || []
+        const selectLabels = this.taskData && this.taskData.labelList || []
         const selectIds = selectLabels.map(item => item.labelId)
         for (const item of dataList) {
           item.check = selectIds.includes(item.labelId)

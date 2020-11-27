@@ -234,14 +234,14 @@ export default {
             name: '成交客户数',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '新增客户数',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

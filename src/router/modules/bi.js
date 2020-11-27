@@ -172,7 +172,7 @@ export default [
         component: () => import('@/views/bi/customerPortrayal/CustomerPortrayalStatistics')
       },
       {
-        path: 'customer/industry', // 客户行业分析z
+        path: 'customer/industry', // 客户行业分析
         component: () => import('@/views/bi/customerPortrayal/CustomerPortrayalStatistics'),
         ignore: true, // 路由添加时忽略
         meta: {

@@ -89,6 +89,11 @@ export default {
      * @param {*} data
      */
     detailHeadHandle(data) {
+      // 返回值为false 不继续执行
+      if (this.detailHeadHandleClick(data) === false) {
+        return
+      }
+
       if (data.type === 'edit') {
         this.isCreate = true
       } else if (data.type === 'cancel') {
@@ -105,6 +110,11 @@ export default {
 
       this.$emit('handle', data)
     },
+
+    /**
+     * 详情操作
+     */
+    detailHeadHandleClick() {},
 
     /**
      * 编辑成功

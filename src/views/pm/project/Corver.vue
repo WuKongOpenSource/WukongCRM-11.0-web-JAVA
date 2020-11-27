@@ -3,9 +3,48 @@
     <xr-header
       icon-class="wk wk-project"
       icon-color="#4AB8B8"
-      label="项目" />
+      placeholder="请输入项目/任务/描述"
+      label="项目"
+      show-search
+      ft-top="0"
+      @search="searchClick">
+      <div slot="ft">
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          class="xr-btn--orange"
+          @click="createProjectClick">
+          创建项目
+        </el-button>
+      </div>
+    </xr-header>
     <div v-loading="loading" class="content">
-      <el-tabs v-model="tabName" @tab-click="tabChange">
+      <span class="dropdown-handle">
+        <el-dropdown trigger="click" @command="showTypeChange">
+          <div class="el-dropdown-link" >
+            {{ tabShowType | showTypeName }}<i class="el-icon-arrow-down el-icon--right"/>
+          </div>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="board">卡片视图</el-dropdown-item>
+            <el-dropdown-item command="list">列表视图</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <el-dropdown
+          trigger="click"
+          @command="filterClick">
+          <div class="el-dropdown-link el-dropdown-filter">
+            {{ filterObj[filterValue] }}<i class="el-icon-arrow-down el-icon--right"/>
+          </div>
+          <el-dropdown-menu slot="dropdown">
+            <div class="el-dropdown-title">排序</div>
+            <el-dropdown-item
+              v-for="(item, index) in filterList"
+              :key="index"
+              :command="item.value">{{ item.label }}</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </span>
+      <el-tabs v-model="tabName">
         <el-tab-pane
           v-for="(item, index) in tabList"
           :key="index"
@@ -16,39 +55,62 @@
             :options="{ forceFallback: false, disabled: tabName == 'star' }"
             class="cover-content"
             @end="moveItem">
-            <div
-              v-for="(childItem, childIndex) in item.list"
-              :key="childIndex"
-              class="cover-content-item"
-              @click="enterDetail(childItem)">
+            <template v-if="tabShowType == 'board'">
+              <div
+                v-for="(childItem, childIndex) in item.list"
+                :key="childIndex"
+                class="cover-content-item"
+                @click="enterDetail(childItem)">
 
-              <div v-src:background-image="childItem.coverUrl || defaultCorverUrl" class="cover-content-item__content">
-                <div class="handle-bar">
-                  <div :title="childItem.name" class="title text-one-line">{{ childItem.name }}</div>
-                  <i
-                    v-if="childItem.authList && childItem.authList.project && childItem.authList.project.setWork"
-                    class="wk wk-circle-edit"
-                    @click.stop="editProjectClick(childItem)"/>
-                  <i
-                    :class="{ 'is-collect': childItem.collect == 1 }"
-                    class="wk wk-focus-on"
-                    @click.stop="collectClick(childItem)" />
+                <div v-src:background-image="childItem.coverUrl || defaultCorverUrl" class="cover-content-item__content">
+                  <div class="handle-bar">
+                    <div :title="childItem.name" class="title text-one-line">{{ childItem.name }}</div>
+                    <i
+                      v-if="childItem.authList && childItem.authList.project && childItem.authList.project.setWork"
+                      class="wk wk-circle-edit"
+                      @click.stop="editProjectClick(childItem)"/>
+                    <i
+                      :class="{ 'is-collect': childItem.collect == 1 }"
+                      class="wk wk-focus-on"
+                      @click.stop="collectClick(childItem)" />
+                  </div>
+                  <div class="cover-content-item__content-shadow"/>
                 </div>
-                <div class="cover-content-item__content-shadow"/>
               </div>
-
-            </div>
-            <div
-              v-if="permissonProject"
-              class="cover-content-item content-cross"
-              @click="createProjectClick">
-              <div class="content-cross__content">
-                <flexbox justify="center" align="center" orient="vertical">
+              <div
+                v-if="permissonProject"
+                class="cover-content-item content-cross"
+                @click="createProjectClick">
+                <div class="content-cross__content">
+                  <flexbox justify="center" align="center" orient="vertical">
+                    <i class="wk wk-l-plus" />
+                    <div>创建项目</div>
+                  </flexbox>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <project-cell
+                v-for="(childItem, childIndex) in item.list"
+                :key="childIndex"
+                :data="childItem"
+                :edit-show="childItem.authList && childItem.authList.project && childItem.authList.project.setWork"
+                :delete-show="childItem.authList && childItem.authList.project && childItem.authList.project.setWork"
+                @click.native="enterDetail(childItem)"
+                @handle="cellHandle($event, childItem)"
+              />
+              <project-cell
+                v-if="permissonProject"
+                :edit-show="false"
+                :delete-show="false"
+                :collect-show="false"
+                @click.native="createProjectClick">
+                <div slot="header" class="project-cell__add">
                   <i class="wk wk-l-plus" />
-                  <div>创建新项目</div>
-                </flexbox>
-              </div>
-            </div>
+                </div>
+                <span slot="body" class="project-cell__add--title">创建新项目</span>
+              </project-cell>
+            </template>
           </draggable>
         </el-tab-pane>
       </el-tabs>
@@ -63,10 +125,15 @@
 
 <script>
 import { workIndexWorkListAPI } from '@/api/pm/task'
-import { workWorkCollectAPI, workupdateWorkOrderAPI } from '@/api/pm/project'
+import {
+  workWorkCollectAPI,
+  workupdateWorkOrderAPI,
+  workWorkDeleteAPI
+} from '@/api/pm/project'
 
 import XrHeader from '@/components/XrHeader'
 import AddProject from '../components/AddProject'
+import ProjectCell from './components/ProjectCell'
 
 import Draggable from 'vuedraggable'
 import { mapGetters } from 'vuex'
@@ -77,15 +144,38 @@ export default {
   components: {
     XrHeader,
     AddProject,
-    Draggable
+    Draggable,
+    ProjectCell
+  },
+  filters: {
+    showTypeName(value) {
+      return {
+        board: '卡片视图',
+        list: '列表视图'
+      }[value]
+    }
   },
   props: {},
   data() {
     return {
       loading: true,
+      tabShowType: 'board',
+      search: '',
+      filterObj: {},
+      filterValue: 1,
+      filterList: [{
+        label: '按最早创建',
+        value: 1
+      }, {
+        label: '按最近创建',
+        value: 2
+      }, {
+        label: '按最近更新',
+        value: 3
+      }],
       isCreate: false,
       list: [],
-      defaultCorverUrl: 'https://www.72crm.com/api/uploads/project-cover-1.jpg',
+      defaultCorverUrl: 'https://file.72crm.com/static/pc/images/pm/project-cover-1.jpg',
       tabName: 'all',
       tabList: [
         {
@@ -114,19 +204,43 @@ export default {
   },
   watch: {},
   created() {
+    this.filterList.forEach(item => {
+      this.filterObj[item.value] = item.label
+    })
+
+    if (this.$route.query.type) {
+      this.tabShowType = this.$route.query.type != 'board' ? 'list' : 'board'
+    }
     this.getList()
     this.$bus.on('add-project', () => {
       this.getList()
     })
   },
-  mounted() {},
-
+  beforeRouteUpdate(to, from, next) {
+    if (to.query.type) {
+      this.tabShowType = to.query.type != 'board' ? 'list' : 'board'
+    }
+    next()
+  },
   beforeDestroy() {
     this.$bus.off('add-project')
   },
   methods: {
-    tabChange(tab, event) {
-      console.log(tab, event)
+    /**
+     * 搜索操作
+     */
+    searchClick(search) {
+      this.search = search
+      this.getList()
+      this.$router.push(`/project/search?search=${search || ''}&sort=${this.filterValue}`)
+    },
+
+    /**
+     * 筛选操作
+     */
+    filterClick(command) {
+      this.filterValue = command
+      this.getList()
     },
 
     /**
@@ -134,7 +248,10 @@ export default {
      */
     getList() {
       this.loading = true
-      workIndexWorkListAPI()
+      workIndexWorkListAPI({
+        workSort: this.filterValue,
+        name: this.search
+      })
         .then(res => {
           this.loading = false
           this.list = res.data || []
@@ -217,6 +334,53 @@ export default {
      */
     createSuccess() {
       this.getList()
+    },
+
+    /**
+     * 展示类型修改
+     */
+    showTypeChange(type) {
+      this.$router.push(`/project/list?type=${type}`)
+    },
+
+    /**
+     * 行操作
+     */
+    cellHandle(type, data) {
+      if (type === 'edit') {
+        this.editProjectClick(data)
+      } else if (type === 'delete') {
+        this.deleteProject(data)
+      } else {
+        this.collectClick(data)
+      }
+    },
+
+    /**
+     * 删除项目
+     */
+    deleteProject(data) {
+      this.$confirm(
+        '确定要删除项目吗？删除后此项目中的所有任务将一并彻底删除，无法恢复',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+        .then(() => {
+          workWorkDeleteAPI(data.workId)
+            .then(res => {
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              })
+              this.getList()
+            })
+            .catch(() => {})
+        })
+        .catch(() => {})
     }
   }
 }
@@ -230,7 +394,7 @@ export default {
   .content {
     background-color: white;
     position: absolute;
-    top: 60px;
+    top: 45px;
     right: 0;
     bottom: 0;
     left: 0;
@@ -238,7 +402,38 @@ export default {
     overflow-y: auto;
     border: 1px solid #e6e6e6;
     padding: 10px 12px 15px;
+
+    .dropdown-handle {
+      cursor: pointer;
+      position: absolute;
+      right: 30px;
+      top: 20px;
+      z-index: 2;
+    }
+
+    .el-dropdown-filter {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 8px 10px;
+      background-color: white;
+      margin-left: 15px;
+    }
   }
+}
+
+.el-dropdown-menu {
+  .el-dropdown-title {
+    padding: 0px 20px 10px;
+    color: #999;
+    border-bottom: 1px solid $xr-border-color-base;
+  }
+  .el-dropdown-menu__item {
+    color: #333;
+  }
+}
+
+.xr-header {
+  padding-top: 0 !important;
 }
 
 /deep/ .el-tabs {
@@ -253,7 +448,7 @@ export default {
   }
 
   .el-tabs__content {
-    height: calc(100% - 60px);
+    height: calc(100% - 45px);
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -308,6 +503,10 @@ export default {
         i {
           color: white;
           cursor: pointer;
+
+          &:hover {
+            color: $xr-color-primary;
+          }
         }
 
         .wk-focus-on.is-collect {
@@ -388,7 +587,6 @@ export default {
 
 
   .content-cross {
-
     &__content {
       position: absolute;
       top: 0;
@@ -423,6 +621,22 @@ export default {
     &:hover {
       transform: translateY(0);
     }
+  }
+
+  .project-cell__add {
+    border: 1px #e6e6e6 solid;
+    border-radius: $xr-border-radius-base;
+    background: #f7f7f7;
+    line-height: 75px;
+    text-align: center;
+    &:hover {
+      background: rgba($color: $xr-color-primary, $alpha: 0.1);
+      color: $xr-color-primary;
+    }
+  }
+
+  .project-cell__add--title {
+    color: #999;
   }
 }
 </style>

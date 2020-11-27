@@ -23,6 +23,7 @@
           :head-details="headDetails"
           :id="id"
           :crm-type="crmType"
+          @handle-click="deadHandleClick"
           @handle="detailHeadHandle"
           @close="hideView">
           <template slot="name">
@@ -66,7 +67,7 @@
 
     <c-r-m-all-create
       v-if="isCreate"
-      :action="{type: 'update', id: id, batchId: detailData.batchId}"
+      :action="createAction"
       :crm-type="crmType"
       @save-success="editSaveSuccess"
       @close="isCreate=false"/>
@@ -92,6 +93,7 @@ import ExamineInfo from '@/components/Examine/ExamineInfo'
 import CRMAllCreate from '../components/CRMAllCreate' // 新建页面
 import DetailMixin from '../mixins/Detail'
 import { separator } from '@/filters/vueNumeralFilter/filters'
+import { getWkDateTime } from '@/utils'
 
 export default {
   // 客户管理 的 合同详情
@@ -145,12 +147,13 @@ export default {
         { title: '合同编号', value: '' },
         { title: '客户名称', value: '' },
         { title: '合同金额（元）', value: '' },
-        { title: '签约时间', value: '' },
+        { title: '下单时间', value: '' },
         { title: '回款金额（元）', value: '' },
         { title: '负责人', value: '' }
       ],
       tabCurrentName: 'Activity',
       // 编辑操作
+      createAction: {},
       isCreate: false
     }
   },
@@ -262,14 +265,15 @@ export default {
         .then(res => {
           this.loading = false
           // 创建回款计划的时候使用
-          this.detailData = res.data
+          const resData = res.data || {}
+          this.detailData = resData
 
-          this.headDetails[0].value = res.data.num
-          this.headDetails[1].value = res.data.customerName
-          this.headDetails[2].value = separator(res.data.money || 0)
-          this.headDetails[3].value = res.data.orderDate
-          this.headDetails[4].value = separator(res.data.receivablesMoney || 0)
-          this.headDetails[5].value = res.data.ownerUserName
+          this.headDetails[0].value = resData.num
+          this.headDetails[1].value = resData.customerName
+          this.headDetails[2].value = separator(resData.money || 0)
+          this.headDetails[3].value = getWkDateTime(resData.orderDate)
+          this.headDetails[4].value = separator(resData.receivablesMoney || 0)
+          this.headDetails[5].value = resData.ownerUserName
         })
         .catch(() => {
           this.loading = false
@@ -303,6 +307,33 @@ export default {
         this.getDetial()
       }
       this.$emit('handle', { type: 'examine' })
+    },
+
+    /**
+     * 详情操作
+     */
+    detailHeadHandleClick(data) {
+      if (data.type === 'edit') {
+        if (this.detailData.checkStatus === 1) {
+          this.$message.error('已通过的合同作废后才可编辑')
+          return false
+        } else if (this.detailData.checkStatus === 3) {
+          this.$message.error('审核中的合同撤回后才可编辑')
+          return false
+        } else {
+          this.createAction = { type: 'update', id: this.id, batchId: this.detailData.batchId }
+        }
+      }
+    },
+
+    /**
+     * 详情操作
+     */
+    deadHandleClick(data) {
+      if (data.type === 'copyContract') {
+        this.createAction = { type: 'update', title: '复制合同', id: this.id, isCopy: true }
+        this.isCreate = true
+      }
     }
   }
 }

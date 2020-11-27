@@ -78,22 +78,15 @@
         </el-collapse-item>
         <div :key="'add' + index">
           <!-- 新建任务 -->
-          <list-task-add
-            v-if="createSubTaskClassId == item[tableField]"
-            :work-id="workId"
-            :class-id="item.classId"
-            :user-id="item.userId"
-            :permission="permission"
+          <task-quick-add
+            v-if="permission.saveTask && item[tableField] != -1"
+            :params="{
+              workId,
+              classId: item.classId,
+            }"
+            show-style="hideBorder"
             style="width: 280px;"
-            @send="addSubTaskSuc"
-            @close="createSubTaskClassId = 'hidden'"/>
-          <div
-            v-else-if="permission.saveTask && item[tableField] != -1"
-            class="new-list-task"
-            @click="createSubTaskClick(item)">
-            <span class="el-icon-plus"/>
-            <span>新建任务</span>
-          </div>
+            @send="addSubTaskSuc" />
         </div>
       </template>
     </el-collapse>

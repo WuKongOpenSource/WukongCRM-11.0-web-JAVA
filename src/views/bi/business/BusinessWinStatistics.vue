@@ -282,14 +282,14 @@ export default {
             name: '商机总数',
             type: 'bar',
             yAxisIndex: 1,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '赢单商机数',
             type: 'bar',
             yAxisIndex: 1,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

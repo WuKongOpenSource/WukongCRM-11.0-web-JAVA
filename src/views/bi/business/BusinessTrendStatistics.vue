@@ -237,7 +237,7 @@ export default {
             },
             axisLabel: {
               color: '#333',
-              formatter: '{value}万元'
+              formatter: '{value}元'
             },
             /** 坐标轴轴线相关设置 */
             axisLine: {

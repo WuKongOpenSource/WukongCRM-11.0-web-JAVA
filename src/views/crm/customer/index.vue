@@ -34,6 +34,7 @@
       <c-r-m-table-head
         ref="crmTableHead"
         :crm-type="crmType"
+        :sort-data="sortData"
         @filter="handleFilter"
         @handle="handleHandle"
         @scene="handleScene"/>

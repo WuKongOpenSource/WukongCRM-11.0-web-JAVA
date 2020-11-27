@@ -33,6 +33,13 @@
         class="filter-button"
         icon="wk wk-screening"
         @click="showFilterClick">高级筛选</el-button>
+      <el-button
+        v-if="sortData && sortData.order && sortData.column"
+        type="primary"
+        plain
+        @click="handleCallBack({type: 'clear-sort'})">
+        {{ `${sortData.column.label}${{ascending: '升序', descending: '降序'}[sortData.order]}` }}<i style="margin-left: 5px;" class="el-icon-close"/>
+      </el-button>
       <filter-form
         v-if="showFilterView"
         :field-list="fieldList"
@@ -197,7 +204,9 @@ export default {
     },
     poolId: [String, Number],
     // 公海权限
-    poolAuth: Object
+    poolAuth: Object,
+    // 排序信息
+    sortData: Object
   },
   data() {
     return {
@@ -385,7 +394,7 @@ export default {
         if (type == 'transform') {
           message = '确定将这些线索转换为客户吗?'
         } else if (type == 'delete') {
-          message = this.isSeas ? '若客户下有联系人，联系人将一并删除。确定删除？' : '确定删除?'
+          message = this.isSeas ? '若客户下有联系人，联系人将一并删除。确定删除？' : `确定删除选中的${this.selectionList.length}项吗？`
         } else if (type == 'lock') {
           message = '确定要锁定这些客户吗？锁定后将不会掉入公海。'
         } else if (type == 'unlock') {

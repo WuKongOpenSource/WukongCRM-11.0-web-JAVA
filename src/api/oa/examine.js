@@ -13,6 +13,21 @@ export function oaAllExamineCategoryListAPI(data) {
 }
 
 /**
+ * 审批类型前台排序
+ * @param {*} data
+ */
+export function oaAllExamineCategorySortAPI(data) {
+  return request({
+    url: 'oaExamineCategory/saveOrUpdateOaExamineSort',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
  * 审批新建
  * @param {*} data
  */

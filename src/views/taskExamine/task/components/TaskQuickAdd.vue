@@ -1,7 +1,11 @@
 <template>
   <div
     v-loading="sendLoading"
-    :class="['add', { 'unfold': isUnfold, 'is-close': !isUnfold }]"
+    :class="['add', {
+      'unfold': isUnfold,
+      'is-close': !isUnfold,
+      'hide-border': showStyle === 'hideBorder' && !isUnfold
+    }]"
     class="task-quick-add">
     <i
       v-if="isUnfold"
@@ -34,22 +38,39 @@
           class="select-user">
           <i
             v-if="!createMainUser"
-            class="wk wk-persons add-info--person" />
+            class="wk wk-persons add-info__btn add-info__interval" />
           <xr-avatar
             v-else
             :name="createMainUser.realname"
             :size="24"
-            :src="createMainUser.img" />
+            :src="createMainUser.img"
+            class="add-info__interval" />
         </div>
-
       </xh-user-cell>
+
+      <i
+        class="el-icon-more add-info__btn add-info__interval"
+        @click="moreClick" />
     </flexbox>
 
     <el-button
       v-debounce="send"
+      v-if="showStyle === 'hideBorder'"
+      class="send-btn"
+      type="primary">保存</el-button>
+    <el-button
+      v-debounce="send"
+      v-else
       icon="wk wk-top"
       class="send-btn"
       type="primary">发布</el-button>
+
+    <task-create
+      v-if="taskCreateShow"
+      :action="createAction"
+      @save="createSuccess"
+      @close="taskCreateShow = false"
+    />
   </div>
 </template>
 
@@ -57,15 +78,32 @@
 import { XhUserCell } from '@/components/CreateCom'
 import { setTaskAPI } from '@/api/task/task'
 
+import TaskCreate from '../Create'
+
+import merge from '@/utils/merge'
+
+const DefaultTaskAddProps = {
+  relatedObj: {}, // 关联业务信息
+  relatedObjIds: {} // 关联业务Ids信息
+}
+
+
 export default {
   // 任务快捷添加
   name: 'TaskQuickAdd',
   components: {
-    XhUserCell
+    XhUserCell,
+    TaskCreate
   },
   props: {
+    // default  hideBorder
+    showStyle: {
+      type: String,
+      default: 'default'
+    },
     // 管理业务参数
-    params: Object
+    params: Object,
+    props: Object
   },
   data() {
     return {
@@ -75,7 +113,11 @@ export default {
       isUnfold: false,
       sendContent: '',
       sendStopTime: '',
-      mainUser: []
+      mainUser: [],
+      taskCreateShow: false,
+      createAction: {
+        type: 'save'
+      }
     }
   },
   computed: {
@@ -84,6 +126,9 @@ export default {
      */
     createMainUser() {
       return this.mainUser && this.mainUser.length ? this.mainUser[0] : null
+    },
+    config() {
+      return merge({ ...DefaultTaskAddProps }, this.props || {})
     }
   },
   watch: {},
@@ -146,10 +191,36 @@ export default {
     },
 
     /**
+     * 创建成功
+     */
+    createSuccess() {
+      this.resetSendData()
+      this.$emit('send')
+    },
+
+    /**
      * 关闭
      */
     addClose() {
       this.isUnfold = false
+    },
+
+    /**
+     * 更多点击
+     */
+    moreClick() {
+      this.createAction = {
+        type: 'save',
+        data: {
+          name: this.sendContent,
+          stopTime: this.sendStopTime,
+          mainUserId: this.createMainUser ? this.createMainUser.userId : '',
+          relatedObj: this.config.relatedObj,
+          relatedObjIds: this.config.relatedObjIds
+        },
+        params: this.params
+      }
+      this.taskCreateShow = true
     }
   }
 }
@@ -177,7 +248,6 @@ export default {
     .el-date-editor {
       width: 110px;
       font-size: 12px;
-      margin-right: 8px;
       /deep/ .el-input__prefix {
         left: 0;
         .el-icon-date {
@@ -201,8 +271,7 @@ export default {
       }
     }
 
-    &--person {
-      margin-left: 5px;
+    &__btn {
       border: 1px solid #e6e6e6;
       color: #c0c4cc;
       width: 24px;
@@ -215,9 +284,13 @@ export default {
       cursor: pointer;
     }
 
-    &--person:hover {
+    &__btn:hover {
       border-color: $xr-color-primary;
       color: $xr-color-primary;
+    }
+
+    &__interval {
+      margin-left: 8px;
     }
 
     .no-time-top {
@@ -241,6 +314,23 @@ export default {
         color: $xr-color-primary;
       }
     }
+  }
+
+// 无边框风格
+  &.hide-border {
+    border-color: white;
+    padding: 0;
+    .send-btn {
+      display: none;
+    }
+
+    /deep/ .el-input__icon{
+      color: $xr-color-primary;
+    }
+  }
+
+  &.hide-border:hover {
+    border-color: white !important;
   }
 }
 
@@ -276,12 +366,12 @@ export default {
 
   /deep/ i {
     font-size: 13px;
-    margin-right: 5px;
   }
 }
 
 // 选择负责人
 .select-user {
+  cursor: pointer;
   display: inline-block;
 }
 

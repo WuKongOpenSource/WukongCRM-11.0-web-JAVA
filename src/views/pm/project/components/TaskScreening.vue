@@ -13,7 +13,7 @@
           @click="close"/>
       </p>
       <div class="content">
-        <el-input v-model="search" placeholder="搜索项目内任务" @input="debouncedSeach" />
+        <el-input v-if="config.searchShow" v-model="search" placeholder="搜索项目内任务" @input="debouncedSeach" />
         <div
           v-for="(item, index) in menuList"
           :key="index"
@@ -60,14 +60,23 @@
 <script>
 import { workWorkOwnerListAPI } from '@/api/pm/project'
 import { workTasklableIndexAPI } from '@/api/pm/tag'
+
 import { getMaxIndex } from '@/utils/index'
 import { debounce } from 'throttle-debounce'
+import merge from '@/utils/merge'
+
+const DefaultProps = {
+  searchShow: true, // 是否搜索
+  userRequest: null, // 员工列表请求
+  userParams: null // 空参数
+}
 
 export default {
 
   props: {
     workId: [Number, String],
-    data: Object
+    data: Object,
+    props: Object
   },
   data() {
     return {
@@ -138,6 +147,13 @@ export default {
       ]
     }
   },
+
+  computed: {
+    config() {
+      return merge({ ...DefaultProps }, this.props || {})
+    }
+  },
+
   created() {
     this.debouncedSeach = debounce(500, () => {
       this.searchChange()
@@ -161,9 +177,14 @@ export default {
      */
     getUserList() {
       this.menuList[0].list = []
-      workWorkOwnerListAPI({
-        workId: this.workId
-      }).then(res => {
+      const request = this.config.userRequest || workWorkOwnerListAPI
+      let params = this.config.userParams
+      if (params === null) {
+        params = {
+          workId: this.workId
+        }
+      }
+      request(params).then(res => {
         this.menuList[0].list = res.data.map(item => {
           item.checked = this.data && this.data.userIds && this.data.userIds.includes(item.userId)
           item.name = item.realname

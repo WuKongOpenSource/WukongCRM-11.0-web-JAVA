@@ -78,6 +78,7 @@
             v-model="search"
             placeholder="请输入工作内容"
             prefix-icon="el-icon-search"
+            type="text"
             @blur="refreshList"
             @keyup.enter.native="refreshList"/>
           <div class="filter-right">

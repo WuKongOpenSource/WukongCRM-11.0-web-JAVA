@@ -40,12 +40,19 @@
               :label="item"
               :value="item"/>
           </el-select>
+          <el-input-number
+            v-else-if="subItem.formType == 'number'"
+            v-model="item[subItem.field]"
+            :controls="false"
+            :precision="1"
+            :min="0"
+            @input="calculateValueChange(index, subIndex)"/>
           <el-input
             v-else
-            :type="subItem.formType"
             :maxlength="100"
             :disabled="getInputDisable(subItem.field)"
-            v-model="item[subItem.field]"/>
+            v-model="item[subItem.field]"
+            type="text"/>
         </flexbox-item>
       </flexbox>
       <div class="description">
@@ -151,6 +158,7 @@ export default {
     },
     deleteItems(index) {
       this.mainList.splice(index, 1)
+      this.calculateValueChange()
     },
     addItems() {
       this.mainList.push(this.getValueItem())
@@ -228,6 +236,7 @@ export default {
     }
 
     &-delete {
+      cursor: pointer;
       padding: 0 10px;
       color: #2362FB;
       font-size: 14px;
@@ -246,6 +255,19 @@ export default {
       flex-shrink: 0;
       font-size: 12px;
       color: #333;
+    }
+
+    .el-date-editor,
+    .el-select {
+      width: 100%;
+    }
+
+    .el-input-number {
+      width: 100%;
+      /deep/ .el-input__inner {
+        padding: 0 8px;
+        text-align: left;
+      }
     }
   }
 }
@@ -272,6 +294,10 @@ export default {
 }
 
 .el-textarea /deep/ .el-textarea__inner {
+  border-color: #ddd !important;
+}
+
+.el-input-number /deep/ .el-input__inner {
   border-color: #ddd !important;
 }
 

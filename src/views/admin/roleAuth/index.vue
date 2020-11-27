@@ -106,9 +106,18 @@
                   <template slot-scope="scope">
                     <!-- <span class="el-icon-edit content-table-span"
                       @click="editBtn(scope.row)"></span> -->
-                    <span
-                      class="el-icon-delete content-table-span"
-                      @click="delectEmployees(scope.row)"/>
+                    <i
+                      class="wk wk-edit content-table-span"
+                      title="编辑角色"
+                      @click="employeeHandleClick('editRole',scope.row)"/>
+                    <i
+                      class="wk wk-icon-double-note content-table-span"
+                      title="复制角色"
+                      @click="employeeHandleClick('copyRole',scope.row)"/>
+                    <i
+                      class="wk wk-delete content-table-span"
+                      title="删除"
+                      @click="employeeHandleClick('delete',scope.row)"/>
                   </template>
                 </el-table-column>
               </el-table>
@@ -204,6 +213,14 @@
       :role-id="roleId"
       :label="setFieldLabel"
     />
+    <!-- 角色编辑 -->
+    <edit-role-dialog
+      v-if="editRoleDialogShow"
+      :user-show="editRoleType === 'copyRole'"
+      :selection-list="selectionList"
+      :visible.sync="editRoleDialogShow"
+      @change="getUserList"
+    />
   </div>
 </template>
 
@@ -224,6 +241,7 @@ import RelateEmpoyee from './components/RelateEmpoyee'
 import FieldSetDialog from './components/FieldSetDialog'
 import Reminder from '@/components/Reminder'
 import XrHeader from '@/components/XrHeader'
+import EditRoleDialog from '../employeeDep/components/EditRoleDialog'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 
@@ -232,7 +250,8 @@ export default {
     RelateEmpoyee,
     FieldSetDialog,
     Reminder,
-    XrHeader
+    XrHeader,
+    EditRoleDialog
   },
 
   data() {
@@ -282,7 +301,12 @@ export default {
 
       // 字段授权
       setFieldLabel: '',
-      setFieldShow: false
+      setFieldShow: false,
+
+      // 角色操作
+      selectionList: [],
+      editRoleType: '',
+      editRoleDialogShow: false
     }
   },
 
@@ -433,31 +457,37 @@ export default {
     /**
      * 删除
      */
-    delectEmployees(val) {
-      this.$confirm('此操作将永久删除是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(() => {
-          this.userLoading = true
-          unbindingUserAPI({
-            userId: val.userId,
-            roleId: this.roleActive.roleId
-          }).then(res => {
-            this.userLoading = false
-            this.getUserList()
-            this.$message.success('删除成功')
-          }).catch(() => {
-            this.userLoading = false
-          })
+    employeeHandleClick(type, val) {
+      if (type === 'delete') {
+        this.$confirm('此操作将永久删除是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
-        .catch(() => {
-          this.$message({
-            type: 'info',
-            message: '已取消删除'
+          .then(() => {
+            this.userLoading = true
+            unbindingUserAPI({
+              userId: val.userId,
+              roleId: this.roleActive.roleId
+            }).then(res => {
+              this.userLoading = false
+              this.getUserList()
+              this.$message.success('删除成功')
+            }).catch(() => {
+              this.userLoading = false
+            })
           })
-        })
+          .catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消删除'
+            })
+          })
+      } else if (type === 'editRole' || type === 'copyRole') {
+        this.selectionList = [val]
+        this.editRoleType = type
+        this.editRoleDialogShow = true
+      }
     },
 
     /**

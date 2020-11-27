@@ -468,8 +468,27 @@ export default {
         this.showDview = false
       }
 
-      this.getList()
+      if (data.type == 'clear-sort') {
+        this.getMainTable().clearSort()
+        this.sortChange()
+      } else {
+        this.getList()
+      }
     },
+
+    /**
+     * 获取table
+     */
+    getMainTable() {
+      let table = null
+      this.$children.forEach(item => {
+        if (item.$options && item.$options.name === 'ElTable') {
+          table = item
+        }
+      })
+      return table
+    },
+
     /** 自定义字段管理 */
     setSave() {
       this.getFieldList(true)
@@ -488,7 +507,7 @@ export default {
      */
     sortChange(column, prop, order) {
       this.currentPage = 1
-      this.sortData = column
+      this.sortData = column || {}
       this.getList()
     },
     /** 勾选操作 */

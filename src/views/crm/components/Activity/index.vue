@@ -38,6 +38,7 @@
           v-else
           ref="taskAdd"
           :params="taskParams"
+          :props="taskProps"
           class="task-quick-add"
           @focus="handleType = 'task'"
           @send="refreshLogList" />
@@ -47,10 +48,11 @@
         <!-- 筛选 -->
         <flexbox justify="flex-end" class="log__header">
           <el-input
+            ref="activitySearchInput"
             v-model="filterValue.search"
             placeholder="关键字搜索"
             prefix-icon="el-icon-search"
-            @input="debouncedRefreshLogList"/>
+            @keyup.enter.native="debouncedRefreshLogList(true)"/>
           <time-type-select
             :width="190"
             :options="timeOptions"
@@ -245,6 +247,7 @@ export default {
     return {
       loading: false,
       // 筛选
+      isSearchRequest: false,
       filterValue: {},
       timeOptions: [
         { label: '全部', value: '' },
@@ -304,6 +307,17 @@ export default {
       const params = {}
       params[`${this.crmType}Ids`] = this.id
       return params
+    },
+
+    taskProps() {
+      const relatedObj = {}
+      relatedObj[this.crmType] = [this.detail]
+      const relatedObjIds = {}
+      relatedObjIds[`${this.crmType}Ids`] = [this.id]
+      return {
+        relatedObj,
+        relatedObjIds
+      }
     }
   },
   watch: {
@@ -468,7 +482,8 @@ export default {
     /**
      * 初始化日志
      */
-    refreshLogList() {
+    refreshLogList(isSearchRequest) {
+      this.isSearchRequest = isSearchRequest || false
       this.page = 1
       this.noMore = false
       this.list = []
@@ -534,6 +549,12 @@ export default {
             }
           }
           this.noMore = res.data.lastPage
+
+          if (this.isSearchRequest) {
+            this.$nextTick(() => {
+              this.$refs.activitySearchInput.focus()
+            })
+          }
         })
         .catch(() => {
           this.noMore = true

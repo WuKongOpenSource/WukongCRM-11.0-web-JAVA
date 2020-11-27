@@ -59,7 +59,11 @@
               <div
                 v-if="showCustomContent"
                 class="type-content-custom">
-                <el-input v-model="mapData.radius"/>
+                <el-input
+                  v-wk-number="'positiveInt'"
+                  v-model="mapData.radius">
+                  <template slot="append">米</template>
+                </el-input>
                 <el-button type="primary" @click="radiusChange(null)">确定</el-button>
               </div>
             </div>
@@ -295,6 +299,9 @@ export default {
         this.selectType = item
         this.showCustomContent = false
       } else {
+        if (!this.mapData.radius) {
+          this.mapData.radius = 1000
+        }
         this.showCustomContent = true
       }
       this.getMapInfo()

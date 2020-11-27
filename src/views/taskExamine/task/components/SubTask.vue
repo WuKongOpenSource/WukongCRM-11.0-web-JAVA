@@ -5,8 +5,8 @@
       class="subtasks-content">
       <div class="checkbox-box subtasks-box">
         <el-checkbox
-          v-model="checkboxData"
-          disabled/>
+          v-model="checked"
+          :disabled="checkDisabled"/>
       </div>
       <div class="subtasks-content-box">
         <el-input
@@ -110,12 +110,17 @@ export default {
     checkboxData: {
       type: Boolean,
       default: false
+    },
+    checkDisabled: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
     return {
       // 子任务选择时间
       subtasksDate: '',
+      checked: false,
       // 子任务数据
       xhUserData: [],
       // 子任务人员
@@ -134,7 +139,7 @@ export default {
     },
 
     workId() {
-      return this.taskData.workId
+      return this.taskData ? this.taskData.workId : ''
     },
 
     isChangeUser() {
@@ -156,7 +161,14 @@ export default {
       'userInfo'
     ])
   },
-  watch: {},
+  watch: {
+    checkboxData: {
+      handler(val) {
+        this.checked = val
+      },
+      immediate: true
+    }
+  },
   created() {
     if (this.subTaskCom == 'edit') {
       this.subtasksTextarea = this.text ? this.text : ''
@@ -173,78 +185,90 @@ export default {
   methods: {
     subtasksSubmit(event) {
       this.subtasksTextarea = this.subtasksTextarea.split(/[\n]/).join('')
-      if (this.subtasksTextarea && !this.isRequesting) {
-        this.isRequesting = true
-        if (this.subTaskCom == 'new') {
-          // this.$emit('on-handle', { type: 'add', result: 'success' })
-          workSubTaskAddAPI({
-            pid: this.taskData.taskId,
+      if (this.$listeners.add) {
+        if (this.subtasksTextarea) {
+          this.$emit('add', {
+            checked: this.checked,
             name: this.subtasksTextarea,
             stopTime: this.subtasksDate,
-            mainUserId:
-              this.xhUserData.length != 0 ? this.xhUserData[0].userId : ''
+            mainUser: this.xhUserData.length != 0 ? this.xhUserData[0] : null
           })
-            .then(res => {
-              this.taskData.childTask.push({
-                name: this.subtasksTextarea,
-                stopTime: this.subtasksDate,
-                taskId: res.data.taskId,
-                mainUser: this.xhUserData.length > 0 ? this.xhUserData[0] : this.userInfo
-              })
-              this.$message.success('子任务创建成功')
-              // 创建成功 -- 清除选择
-              this.subtasksTextarea = ''
-              this.subtasksDate = ''
-              this.isRequesting = false
-              this.$emit('on-handle', { type: 'add', result: 'success' })
-            })
-            .catch(() => {
-              this.$emit('on-handle', { type: 'add', result: 'error' })
-              this.$message.error('子任务创建失败')
-              this.isRequesting = true
-            })
-        } else if (this.subTaskCom == 'edit') {
-          if (
-            this.isChangeUser == 1 ||
-            this.text != this.subtasksTextarea ||
-            this.subtasksDate != this.time
-          ) {
-            // this.$emit('on-handle', { type: 'edit', result: 'success' })
-            workSubTaskUpdateAPI({
-              taskId: this.taskId,
+        }
+        this.$emit('close')
+      } else {
+        if (this.subtasksTextarea && !this.isRequesting) {
+          this.isRequesting = true
+          if (this.subTaskCom == 'new') {
+          // this.$emit('on-handle', { type: 'add', result: 'success' })
+            workSubTaskAddAPI({
+              pid: this.taskData.taskId,
+              name: this.subtasksTextarea,
               stopTime: this.subtasksDate,
               mainUserId:
-                this.xhUserData.length > 0 ? this.xhUserData[0].userId : '',
-              name: this.subtasksTextarea
+              this.xhUserData.length != 0 ? this.xhUserData[0].userId : ''
             })
               .then(res => {
-                const dataList = this.taskData.childTask
-                for (const i in dataList) {
-                  if (dataList[i].taskId == this.taskId) {
-                    const list = dataList[i]
-                    list.name = this.subtasksTextarea
-                    list.stopTime = this.subtasksDate
-                    list.mainUser =
-                      this.xhUserData.length > 0 ? this.xhUserData[0] : null
-                    dataList.splice(i, 1, list)
-                    break
-                  }
-                }
+                this.taskData.childTask.push({
+                  name: this.subtasksTextarea,
+                  stopTime: this.subtasksDate,
+                  taskId: res.data.taskId,
+                  mainUser: this.xhUserData.length > 0 ? this.xhUserData[0] : this.userInfo
+                })
+                this.$message.success('子任务创建成功')
+                // 创建成功 -- 清除选择
+                this.subtasksTextarea = ''
+                this.subtasksDate = ''
                 this.isRequesting = false
-                this.$emit('on-handle', { type: 'edit', result: 'success' })
-                this.$message.success('子任务编辑成功')
+                this.$emit('on-handle', { type: 'add', result: 'success' })
               })
               .catch(() => {
-                this.$emit('on-handle', { type: 'edit', result: 'error' })
-                this.$message.error('子任务编辑失败')
-                this.isRequesting = false
+                this.$emit('on-handle', { type: 'add', result: 'error' })
+                this.$message.error('子任务创建失败')
+                this.isRequesting = true
               })
-          } else {
-            this.$emit('on-handle', { type: 'cancel' })
+          } else if (this.subTaskCom == 'edit') {
+            if (
+              this.isChangeUser == 1 ||
+            this.text != this.subtasksTextarea ||
+            this.subtasksDate != this.time
+            ) {
+            // this.$emit('on-handle', { type: 'edit', result: 'success' })
+              workSubTaskUpdateAPI({
+                taskId: this.taskId,
+                stopTime: this.subtasksDate,
+                mainUserId:
+                this.xhUserData.length > 0 ? this.xhUserData[0].userId : '',
+                name: this.subtasksTextarea
+              })
+                .then(res => {
+                  const dataList = this.taskData.childTask
+                  for (const i in dataList) {
+                    if (dataList[i].taskId == this.taskId) {
+                      const list = dataList[i]
+                      list.name = this.subtasksTextarea
+                      list.stopTime = this.subtasksDate
+                      list.mainUser =
+                      this.xhUserData.length > 0 ? this.xhUserData[0] : null
+                      dataList.splice(i, 1, list)
+                      break
+                    }
+                  }
+                  this.isRequesting = false
+                  this.$emit('on-handle', { type: 'edit', result: 'success' })
+                  this.$message.success('子任务编辑成功')
+                })
+                .catch(() => {
+                  this.$emit('on-handle', { type: 'edit', result: 'error' })
+                  this.$message.error('子任务编辑失败')
+                  this.isRequesting = false
+                })
+            } else {
+              this.$emit('on-handle', { type: 'cancel' })
+            }
           }
+        } else {
+          this.$emit('on-handle', { type: 'cancel' })
         }
-      } else {
-        this.$emit('on-handle', { type: 'cancel' })
       }
     },
     xhUserCheckout(data) {

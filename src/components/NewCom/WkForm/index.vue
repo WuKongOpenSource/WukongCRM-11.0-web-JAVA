@@ -57,6 +57,7 @@
         v-else-if="item.formType == 'textarea'"
         v-model="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :rows="3"
         :autosize="{ minRows: 3}"
         :maxlength="800"
         :placeholder="item.placeholder"
@@ -107,10 +108,10 @@
         v-else-if="item.formType == 'dateRange'"
         v-model="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :type="item.dateType || 'daterange'"
+        :value-format="item.dateValueFormat || 'yyyy-MM-dd'"
         clearable
         style="width: 100%;"
-        type="daterange"
-        value-format="yyyy-MM-dd"
         start-placeholder="开始日期"
         end-placeholder="结束日期"
         @change="commonChange(item, index, $event)"/>

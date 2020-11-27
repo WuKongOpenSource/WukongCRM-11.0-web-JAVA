@@ -279,14 +279,14 @@ export default {
             name: '成交周期',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '成交客户数',
             type: 'bar',
             yAxisIndex: 1,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

@@ -13,7 +13,7 @@ import {
   workTaskUpdateClassOrderAPI
 } from '@/api/pm/project'
 
-import ListTaskAdd from '@/views/pm/components/ListTaskAdd'
+import TaskQuickAdd from '@/views/taskExamine/task/components/TaskQuickAdd'
 import TaskDetail from '@/views/taskExamine/task/components/TaskDetail'
 
 import TaskMixin from '@/views/taskExamine/task/mixins/TaskMixin'
@@ -21,7 +21,7 @@ import { throttle } from 'throttle-debounce'
 
 export default {
   components: {
-    ListTaskAdd,
+    TaskQuickAdd,
     TaskDetail
   },
 

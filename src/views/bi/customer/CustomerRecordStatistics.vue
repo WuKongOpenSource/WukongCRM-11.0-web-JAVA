@@ -241,14 +241,14 @@ export default {
             name: '跟进客户数',
             type: 'bar',
             yAxisIndex: 0,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           },
           {
             name: '跟进次数',
             type: 'bar',
             yAxisIndex: 1,
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

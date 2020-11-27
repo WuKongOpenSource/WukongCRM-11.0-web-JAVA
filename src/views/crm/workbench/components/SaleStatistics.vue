@@ -27,15 +27,18 @@
     </flexbox>
     <div class="card-desc">
       近一年的{{ typeName }}目标完成情况柱状图
+      <el-button v-if="hasSetAuth" style="margin-left: 8px;" type="text" @click="enterSetPage">设置目标</el-button>
     </div>
     <div id="sale-statistics" />
   </div>
 </template>
 
 <script>
+import { crmIndexSaletrendAPI } from '@/api/crm/workbench'
+
 import echarts from 'echarts'
 import chartMixins from './chartMixins'
-import { crmIndexSaletrendAPI } from '@/api/crm/workbench'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'SaleStatistics',
@@ -113,7 +116,7 @@ export default {
             name: '当月目标金额',
             type: 'bar',
             stack: 'one',
-            barWidth: 25,
+            barMaxWidth: 25,
             barGap: '0',
             data: []
           },
@@ -121,7 +124,7 @@ export default {
             name: '金额',
             type: 'bar',
             stack: 'two',
-            barWidth: 25,
+            barMaxWidth: 25,
             barGap: '0%',
             data: []
           }
@@ -132,6 +135,11 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['manage']),
+    // 目标设置权限
+    hasSetAuth() {
+      return this.manage && this.manage.crm && this.manage.crm.achievement
+    },
     // 类型名字
     typeName() {
       return {
@@ -191,6 +199,15 @@ export default {
         this.loading = false
       }).catch(() => {
         this.loading = false
+      })
+    },
+
+    /**
+     * 进入设置页面
+     */
+    enterSetPage() {
+      this.$router.push({
+        name: 'crmBizGoals'
       })
     }
   }

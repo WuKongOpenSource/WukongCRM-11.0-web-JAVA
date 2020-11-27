@@ -25,7 +25,7 @@
             @click="download">点击下载《{{ crmTypeName }}导入模板》</span></div>
           <div class="sections__tips">导入文件请勿超过2MB（约10,000条数据）</div>
         </div>
-        <div class="sections">
+        <div v-if="config.repeatHandleShow" class="sections">
           <div class="sections__title">二、请选择数据重复时的处理方式{{ config.repeatRuleShow ? `（查重规则：【${ fieldUniqueInfo }】）` : '' }}</div>
           <div v-if="config.repeatRuleShow" class="sections__tips">查重规则为：添加{{ crmTypeName }}时所需填写的所有唯一字段，当前设置唯一字段为：{{ fieldUniqueInfo }}</div>
           <div class="content">
@@ -41,7 +41,7 @@
           </div>
         </div>
         <div class="sections">
-          <div class="sections__title">三、请选择需要导入的文件</div>
+          <div class="sections__title">{{ config.repeatHandleShow ? '三' : '二' }}、请选择需要导入的文件</div>
           <div class="content">
             <flexbox class="file-select">
               <el-input
@@ -122,6 +122,7 @@
         <c-r-m-import-history
           :show="historyPopoverShow"
           :crm-type="crmType"
+          :props="props"
           @close="historyPopoverShow = false" />
         <el-button
           slot="reference"
@@ -178,8 +179,10 @@ import Lockr from 'lockr'
 import merge from '@/utils/merge'
 
 const DefaultProps = {
+  typeName: '', // 模块名称
   ownerSelectShow: true,
   poolSelectShow: false,
+  repeatHandleShow: true,
   repeatRuleShow: true, // 步骤二的重复规则是否展示
   importRequest: null, // 导入请求
   templateRequest: null // 模板请求
@@ -201,7 +204,12 @@ export default {
       type: String,
       default: ''
     },
-    props: Object,
+    props: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
     // 是有缓存的信息展示的页面 是否完成状态
     cacheShow: {
       type: Boolean,
@@ -257,6 +265,10 @@ export default {
     ...mapGetters(['userInfo']),
 
     crmTypeName() {
+      if (this.props && this.props.typeName) {
+        return this.props.typeName
+      }
+
       return (
         {
           customer: '客户',
@@ -337,7 +349,7 @@ export default {
             this.getPoolList()
           }
 
-          if (this.config.repeatRuleShow) {
+          if (this.config.repeatRuleShow && this.config.repeatHandleShow) {
             this.getField()
           }
         }

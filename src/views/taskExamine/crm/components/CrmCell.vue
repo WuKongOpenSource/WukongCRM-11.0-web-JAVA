@@ -78,7 +78,7 @@
         class="xr-btn--red handle-button"
         icon="wk wk-close"
         type="primary"
-        @click="handleClick('reject')">驳回</el-button>
+        @click="handleClick('reject')">拒绝</el-button>
       <el-button
         v-if="canCheck"
         class="xr-btn--green handle-button"

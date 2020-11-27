@@ -8,7 +8,21 @@ export function workTaskMyTaskAPI(data) {
   return request({
     url: 'workTask/myTask',
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 参与项目的成员
+ * @param {*} data
+ */
+export function workQueryMemberListAPI() {
+  return request({
+    url: 'work/work/queryMemberList',
+    method: 'post'
   })
 }
 
@@ -35,7 +49,25 @@ export function workIndexWorkListAPI(data) {
   return request({
     url: 'work/work/queryWorkNameList',
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 公共搜索任务
+ * @param {*} data
+ */
+export function workQueryWorkTaskListAPI(data) {
+  return request({
+    url: 'work/work/queryWorkTaskList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
   })
 }
 

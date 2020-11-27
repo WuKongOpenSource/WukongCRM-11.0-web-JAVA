@@ -1,101 +1,106 @@
 <template>
   <div ref="workbench" class="crm-workbench">
-    <flexbox class="head">
-      <xr-radio-menu
-        :options="rangeOptions"
-        v-model="filterDataType"
-        width="170"
-        @select="radioMenuSelect">
-        <flexbox slot="reference" class="user-box">
-          <i v-if="avatarData.showIcon" class="wk wk-multi-user user-icon" />
-          <xr-avatar
-            v-else
-            :name="avatarData.realname"
-            :size="28"
-            :src="avatarData.img" />
-          <span class="username">{{ avatarData.realname }}</span>
-          <span class="el-icon-caret-bottom icon" />
-        </flexbox>
-      </xr-radio-menu>
+    <div class="head">
+      <flexbox class="head__body">
+        <xr-radio-menu
+          :options="rangeOptions"
+          v-model="filterDataType"
+          width="170"
+          @select="radioMenuSelect">
+          <flexbox slot="reference" class="user-box">
+            <i v-if="avatarData.showIcon" class="wk wk-multi-user user-icon" />
+            <xr-avatar
+              v-else
+              :name="avatarData.realname"
+              :size="28"
+              :src="avatarData.img" />
+            <span class="username">{{ avatarData.realname }}</span>
+            <span class="el-icon-caret-bottom icon" />
+          </flexbox>
+        </xr-radio-menu>
 
-      <time-type-select
-        :width="190"
-        default-type="month"
-        @change="timeTypeChange"/>
-      <el-button
-        class="sort-btn"
-        icon="wk wk-manage"
-        @click="setSortShow = true" />
-    </flexbox>
-
-    <div
-      v-loading="loading"
-      class="brief-box">
-      <div class="brief-title">
-        <span class="icon wk wk-briefing" />
-        <span class="text">销售简报</span>
-      </div>
-      <div class="brief">
-        <flexbox
-          v-for="(item, index) in briefList"
-          :key="index"
-          :span="2"
-          class="brief-item"
-          @click.native="reportClick(item)">
-          <flexbox class="brief-item__body">
-            <div
-              :style="{backgroundColor: item.color}"
-              class="icon-box">
-              <span :class="item.icon" class="icon wk" />
-            </div>
-            <div class="info">
-              <div class="title">
-                {{ item.label }}
-              </div>
+        <time-type-select
+          :width="190"
+          default-type="month"
+          @change="timeTypeChange"/>
+        <el-button
+          class="sort-btn"
+          icon="wk wk-manage"
+          @click="setSortShow = true" />
+      </flexbox>
+    </div>
+    <div class="crm-workbench__body">
+      <div
+        v-loading="loading"
+        class="brief-box">
+        <div class="brief-title">
+          <span class="icon wk wk-briefing" />
+          <span class="text">销售简报</span>
+        </div>
+        <div class="brief">
+          <flexbox
+            v-for="(item, index) in briefList"
+            :key="index"
+            :span="2"
+            class="brief-item"
+            @click.native="reportClick(item)">
+            <flexbox class="brief-item__body">
               <div
-                v-fit-text="{ fontSize: 24 }"
-                class="number">
-                {{ item.num }}
+                :style="{backgroundColor: item.color}"
+                class="icon-box">
+                <span :class="item.icon" class="icon wk" />
+              </div>
+              <div class="info">
+                <div class="title">
+                  {{ item.label }}
+                </div>
+                <div
+                  v-fit-text="{ fontSize: 24 }"
+                  class="number">
+                  {{ item.num }}
+                </div>
+              </div>
+            </flexbox>
+            <div v-if="rateText !== ''" class="brief-item__others">
+              <div class="text">
+                {{ rateText }}
+              </div>
+              <div :class="item.status" class="rate text-one-line">
+                <span class="rate__num">{{ item.rate }}%</span>
+                <span
+                  :class="`el-icon-${item.status}`"
+                  class="rate__icon" />
               </div>
             </div>
           </flexbox>
-          <div v-if="rateText !== ''" class="brief-item__others">
-            <div class="text">
-              {{ rateText }}
-            </div>
-            <div :class="item.status" class="rate text-one-line">
-              <span class="rate__num">{{ item.rate }}%</span>
-              <span
-                :class="`el-icon-${item.status}`"
-                class="rate__icon" />
-            </div>
-          </div>
-        </flexbox>
+        </div>
       </div>
-    </div>
 
-    <flexbox
-      class="section"
-      align="stretch">
-      <div class="left">
-        <component
-          v-for="(item, index) in sortLeft"
-          :key="index"
-          :is="item.component"
-          :filter-value="filterValue"
-          class="left-content"
-        />
-      </div>
-      <div class="right">
-        <component
-          v-for="(item, index) in sortRight"
-          :key="index"
-          :is="item.component"
-          :filter-value="filterValue"
-          class="right-content"
-        />
-      </div>
-    </flexbox>
+      <flexbox
+        class="section"
+        align="stretch">
+        <div class="left">
+          <component
+            v-for="(item, index) in sortLeft"
+            :key="index"
+            :is="item.component"
+            :filter-value="filterValue"
+            class="left-content"
+            @chart-click="chartClick"
+          />
+        </div>
+        <div class="right">
+          <component
+            v-for="(item, index) in sortRight"
+            :key="index"
+            :is="item.component"
+            :filter-value="filterValue"
+            class="right-content"
+            @chart-click="chartClick"
+          />
+        </div>
+      </flexbox>
+    </div>
 
     <!-- 销售简报列表 -->
     <report-list
@@ -134,7 +139,8 @@ import {
   crmIndexIndexListAPI,
   crmQueryRecordConuntAPI,
   crmIndexGetRecordListAPI,
-  crmIndexSortAPI
+  crmIndexSortAPI,
+  crmInstrumentSellFunnelBusinessListAPI
 } from '@/api/crm/workbench'
 
 import SaleStatistics from './components/SaleStatistics'
@@ -190,9 +196,9 @@ export default {
         { label: '新增跟进记录(条)', title: '新增跟进记录', type: 'record', labelValue: '', field: 'recordCount', icon: 'wk-record', num: '', rate: '', status: '', color: '#4A5BFD' }
       ],
       rangeOptions: [
-        { label: '本人', command: 1 },
+        { label: '仅本人', command: 1 },
         { label: '本人及下属', command: 2 },
-        { label: '本部门', command: 3 },
+        { label: '仅本部门', command: 3 },
         { label: '本部门及下属部门', command: 4 },
         { label: '自定义', command: 'custom' }
       ],
@@ -256,9 +262,9 @@ export default {
       return {
         showIcon: true,
         realname: {
-          1: '本人',
+          1: '仅本人',
           2: '本人及下属',
-          3: '本部门',
+          3: '仅本部门',
           4: '本部门及下属部门'
 
         }[this.filterValue.dataType]
@@ -549,6 +555,29 @@ export default {
           return item.isHidden == 0
         })
       }).catch()
+    },
+
+    /**
+     * 图标点击 目前仅商机漏斗
+     */
+    chartClick(chartData, data) {
+      this.reportData.title = `销售漏斗-${data.name}`
+      this.reportData.placeholder = '请输入商机名称'
+      this.reportData.crmType = 'business'
+      this.reportData.params = this.getBaseParams()
+      this.reportData.params.entity = {
+        formType: 'business_type',
+        name: 'statusId',
+        type: 1,
+        values: [data.typeId, data.statusId]
+      }
+      this.fieldReportList = null
+      this.reportData.request = crmInstrumentSellFunnelBusinessListAPI
+      this.reportData.paging = true
+      this.reportData.sortable = 'custom'
+      this.reportData.params.label = 5
+      this.reportListShow = true
+      console.log(chartData, data)
     }
   }
 }
@@ -560,47 +589,61 @@ export default {
     min-width: 1200px;
     height: 100%;
     padding: 15px 20px 20px;
-    overflow: auto;
+    position: relative;
+
+    &__body {
+      height: 100%;
+      overflow: auto;
+      padding-top: 55px;
+    }
 
     .head {
-      margin-bottom: 10px;
-      position: relative;
+      position: absolute;
+      padding: 15px 20px;
+      top: 0;
+      right: 0;
+      left: 0;
+      background: #f5f6f9;
+      z-index: 1;
 
-      .user-box {
-        width: unset;
-        height: 36px;
-        padding: 4px 7px;
-        border: 1px solid #E1E1E1;
-        border-radius: $xr-border-radius-base;
-        background-color: white;
-        margin-right: 20px;
-        display: flex;
-        cursor: pointer;
-        .user-icon {
-          background: $xr-color-primary;
-          color: white;
-          padding: 5px 6px;
-          border-radius: 50%;
+      &__body {
+        position: relative;
+        .user-box {
+          width: unset;
+          height: 36px;
+          padding: 4px 7px;
+          border: 1px solid #E1E1E1;
+          border-radius: $xr-border-radius-base;
+          background-color: white;
+          margin-right: 20px;
+          display: flex;
+          cursor: pointer;
+          .user-icon {
+            background: $xr-color-primary;
+            color: white;
+            padding: 5px 6px;
+            border-radius: 50%;
+          }
+          .username {
+            font-size: 12px;
+            margin: 0 8px;
+          }
         }
-        .username {
-          font-size: 12px;
-          margin: 0 8px;
-        }
-      }
       .el-radio-group {
         /deep/ .el-radio-button__inner {
-          font-size: 12px;
-          padding: 11px 12px;
+            font-size: 12px;
+            padding: 11px 12px;
+          }
         }
-      }
-      /deep/ .type-select {
-        height: 36px;
-      }
+        /deep/ .type-select {
+          height: 36px;
+        }
 
       .sort-btn {
-        position: absolute;
-        right: 0;
-        top: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+        }
       }
     }
 

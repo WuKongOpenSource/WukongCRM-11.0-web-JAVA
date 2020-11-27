@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import { relatedUserAPI } from '@/api/admin/role'
+import { adminRoleRelatedUserAPI } from '@/api/admin/role'
 import { XhUserCell } from '@/components/CreateCom'
 
 export default {
@@ -88,11 +88,9 @@ export default {
       if (this.selectUsers.length == 0) {
         this.$message.error('请选择员工')
       } else {
-        relatedUserAPI({
-          userIds: this.selectUsers.map(function(data) {
-            return data.userId
-          }).join(','),
-          roleIds: this.roleId
+        adminRoleRelatedUserAPI({
+          userIds: this.selectUsers.map(item => item.userId),
+          roleIds: [this.roleId]
         })
           .then(res => {
             this.$message.success('操作成功')

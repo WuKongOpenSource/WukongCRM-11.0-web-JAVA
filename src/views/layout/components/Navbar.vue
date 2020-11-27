@@ -27,18 +27,27 @@
     </div>
 
     <el-badge
+      :value="unreadNums.announceCount"
+      :hidden="!unreadNums.announceCount || unreadNums.announceCount == 0"
+      :max="99">
+      <i
+        class="wk wk-announcement"
+        @click="checkMessageDetail(true)"/>
+    </el-badge>
+
+    <el-badge
       :value="unreadNums.allCount"
       :hidden="!unreadNums.allCount || unreadNums.allCount == 0"
-      :max="99"
-      class="bell-message-hook">
+      :max="99">
       <i
         class="wk wk-bell"
-        @click="sysMessageShow = true"/>
+        @click="checkMessageDetail(false)"/>
     </el-badge>
 
     <system-message
       :visible.sync="sysMessageShow"
       :unread-nums="unreadNums"
+      :only-announcement="mesOnlyAnnouncement"
       @update-count="sendSystemUnreadNum"/>
 
     <el-dropdown
@@ -122,6 +131,7 @@ export default {
         logCount: 0,
         taskCount: 0
       },
+      mesOnlyAnnouncement: false,
       sysMessageShow: false,
       intervalId: null,
       type: 0,
@@ -503,6 +513,14 @@ export default {
         var res = c.join('')
         return res
       }
+    },
+
+    /**
+     * 查看消息详情
+     */
+    checkMessageDetail(onlyAnnouncement) {
+      this.mesOnlyAnnouncement = onlyAnnouncement
+      this.sysMessageShow = true
     }
   }
 }
@@ -647,6 +665,7 @@ export default {
 }
 
 // 系统消息
+.wk-announcement,
 .wk-bell {
   color: #9DA9C2;
   cursor: pointer;
@@ -654,9 +673,10 @@ export default {
 }
 
 .el-badge {
-  margin-right: 30px;
+  margin-right: 20px;
 }
 
+.wk-announcement:hover,
 .wk-bell:hover {
   color: $xr-color-primary;
 }

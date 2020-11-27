@@ -194,7 +194,7 @@ export default {
           {
             name: '成交客户数',
             type: 'bar',
-            barWidth: 10,
+            barMaxWidth: 10,
             label: {
               show: true,
               position: 'top',

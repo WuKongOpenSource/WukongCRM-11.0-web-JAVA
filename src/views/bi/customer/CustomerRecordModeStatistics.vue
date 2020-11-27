@@ -226,7 +226,7 @@ export default {
           {
             name: '',
             type: 'bar',
-            barWidth: 15,
+            barMaxWidth: 15,
             data: []
           }
         ]

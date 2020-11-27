@@ -152,6 +152,7 @@ import CreateExamineInfo from '@/components/Examine/CreateExamineInfo'
 import XhExpenses from './XhExpenses' // 报销事项
 import XhLeaves from './XhLeaves' // 出差事项
 import RelatedBusiness from './RelatedBusiness'
+import { isEmpty } from '@/utils/types'
 
 import axios from 'axios'
 
@@ -451,7 +452,6 @@ export default {
           if (item.formType == 'business_cause') {
             var validateFunction = (rule, value, callback) => {
               if (!value.list) {
-                this.$message.error('请完善明细')
                 callback(new Error('请完善明细'))
               } else {
                 var hasError = false
@@ -466,9 +466,14 @@ export default {
                   ]
                   for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
                     const key = keys[keyIndex]
-                    if (!item[key]) {
+                    if (key == 'duration') {
+                      if (item.duration <= 0) {
+                        hasError = true
+                        callback(new Error(`行程明细（${index + 1}）时长应大于0`))
+                        break
+                      }
+                    } else if (isEmpty(item[key])) {
                       hasError = true
-                      this.$message.error('请完善明细')
                       callback(new Error('请完善明细'))
                       break
                     }
@@ -487,7 +492,6 @@ export default {
           } else if (item.formType == 'examine_cause') {
             var validateFunction = (rule, value, callback) => {
               if (!value.list) {
-                this.$message.error('请完善明细')
                 callback(new Error('请完善明细'))
               } else {
                 var hasError = false
@@ -505,12 +509,17 @@ export default {
                   ]
                   for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
                     const key = keys[keyIndex]
-                    if (!item[key]) {
+                    if (isEmpty(item[key])) {
                       hasError = true
-                      this.$message.error('请完善明细')
                       callback(new Error('请完善明细'))
                       break
                     }
+                  }
+
+                  if (item.money <= 0) {
+                    hasError = true
+                    callback(new Error(`费用明细（${index + 1}）合计应大于0`))
+                    break
                   }
                 }
                 if (!hasError) {
@@ -524,11 +533,21 @@ export default {
               trigger: []
             })
           } else {
-            tempList.push({
-              required: true,
-              message: item.name + '不能为空',
-              trigger: ['blur', 'change']
-            })
+            // 出差审批 差旅报销 提示修改
+            if ((item.fieldName == 'duration' && this.type == 3) ||
+          (item.fieldName == 'money' && this.type == 5)) {
+              tempList.push({
+                required: true,
+                message: '请完善明细',
+                trigger: ['blur', 'change']
+              })
+            } else {
+              tempList.push({
+                required: true,
+                message: item.name + '不能为空',
+                trigger: ['blur', 'change']
+              })
+            }
           }
         }
 

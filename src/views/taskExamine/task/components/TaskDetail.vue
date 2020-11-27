@@ -409,6 +409,7 @@
 
                         <div
                           v-if="item.stopTime"
+                          style="margin-left: 8px;"
                           class="bg-color task-bg-color">{{ item.stopTime | moment("YYYY-MM-DD") }} 截止</div>
                         <xr-avatar
                           v-if="item.mainUser"
@@ -639,13 +640,6 @@ export default {
       canShowDetail: true,
       // 紧急弹出框
       priorityVisible: false,
-      // 优先级列表
-      // priorityList: [
-      //   { id: 3, label: '高', color: '#F95A5A' },
-      //   { id: 2, label: '中', color: '#F7AD3D' },
-      //   { id: 1, label: '低', color: '#67C23A' },
-      //   { id: 0, label: '无', color: '#D8D8D8' }
-      // ],
 
       /**
      * 限制时间选择`
@@ -772,7 +766,7 @@ export default {
     },
 
     labelList(newValue, oldValue) {
-      if (oldValue) {
+      if (oldValue && newValue) {
         this.$emit('on-handle', {
           type: 'change-label',
           value: newValue,
@@ -847,7 +841,7 @@ export default {
               }
             }
           }
-          this.fileList = res.data.file
+          this.fileList = taskData.file || []
 
           this.allData = {
             business: (taskData.businessList || []).map(item => {
@@ -1633,9 +1627,7 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
-$btn-b-color: #f8faff;
-$btn-color: #333333;
-$btn-b-hover-color: #eff4ff;
+@import './taskDetail';
 
 // 框架
 .main {
@@ -1915,104 +1907,7 @@ $btn-b-hover-color: #eff4ff;
   }
 }
 
-//参与人
-.participant {
-  &-title {
-    color: #999999;
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
 
-  &-bd {
-    min-height: 28px;
-
-    .owner-list {
-      position: relative;
-      margin-right: 10px;
-      display: inline-block;
-      .el-icon-close {
-        opacity: 0;
-        color: #fff;
-        background: #ccc;
-        border-radius: 50%;
-        cursor: pointer;
-        position: absolute;
-        z-index: 3;
-        top: -7px;
-        right: -5px;
-      }
-    }
-    .owner-list:hover {
-      .el-icon-close {
-        opacity: 1;
-      }
-    }
-  }
-
-  &-add {
-    cursor: pointer;
-    background-color: $btn-b-color;
-    width: 32px;
-    height: 32px;
-    border-radius: 16px;
-    color: $btn-color;
-    font-size: 12px;
-    display: inline-block;
-    text-align: center;
-    line-height: 32px;
-  }
-
-  &-add:hover {
-    color: $xr-color-primary;
-    background-color: $btn-b-hover-color;
-  }
-}
-
-// 标签
-.label {
-  &-title {
-    color: #999999;
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
-  white-space: normal;
-  .item-color {
-    padding: 0 10px;
-    color: #fff;
-    font-size: 12px;
-    margin-right: 5px;
-    border-radius: 3px;
-    display: inline-block;
-    height: 22px;
-    line-height: 22px;
-    margin-bottom: 5px;
-  }
-
-  .add-tag {
-    display: inline-block;
-  }
-}
-
-// 添加btn
-.add-btn {
-  margin-top: 8px;
-  font-size: 12px;
-  color: $btn-color;
-  background-color: $btn-b-color;
-  border-radius: $xr-border-radius-base;
-  display: inline-block;
-  padding: 3px 10px;
-  cursor: pointer;
-
-  .wk-l-plus {
-    font-size: 12px;
-  }
-}
-
-.add-btn:hover {
-  color: $xr-color-primary;
-  background-color: $btn-b-hover-color;
-}
 
 // 详情其他模块
 .section {
@@ -2042,95 +1937,6 @@ $btn-b-hover-color: #eff4ff;
   margin-top: 15px;
 }
 
-// 描述
-.description {
-  position: relative;
-  cursor: pointer;
-  &-content {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    line-height: 18px;
-    color: #333;
-    font-size: 14px;
-  }
-  &-empty {
-    color: #2362fb;
-    .color-label {
-      color: #999;
-    }
-    button {
-      margin-left: 5px;
-    }
-  }
-  .btn-box {
-    margin-top: 10px;
-  }
-  .el-textarea /deep/.el-textarea__inner {
-    resize: none;
-  }
-}
-
-// 子任务
-.sub-task {
-  font-size: 14px;
-  padding: 8px;
-  background-color: #f8faff;
-  border-radius: $xr-border-radius-base;
-  margin: 3px 0;
-  position: relative;
-
-  &__hd {
-    // 解决多选框样式
-    .el-checkbox /deep/ .el-checkbox__inner {
-      width: 16px;
-      height: 16px;
-    }
-    .el-checkbox /deep/ .el-checkbox__inner::after {
-      border-width: 2px;
-      height: 10px;
-      width: 4px;
-      left: 4px;
-      top: 0;
-    }
-  }
-
-  &__bd {
-    padding-left: 5px;
-    position: relative;
-    flex: 1;
-  }
-
-  &__bd.is-checked {
-    color: #8f8f8f;
-    text-decoration: line-through;
-  }
-
-  .edit-del-box {
-    opacity: 0;
-    flex-shrink: 0;
-    margin-left: 8px;
-  }
-
-  .bg-color {
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-  .user-img {
-    flex-shrink: 0;
-    margin-left: 10px;
-  }
-}
-
-.sub-task:hover {
-  .edit-del-box {
-    opacity: 1;
-  }
-}
-
-// 附件
-.upload-file /deep/ .el-upload-list--picture {
-  display: none;
-}
 
 // 活动
 

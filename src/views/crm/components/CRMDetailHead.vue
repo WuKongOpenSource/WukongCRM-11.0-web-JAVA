@@ -32,6 +32,20 @@
           @click.native="handleTypeClick('edit')">编辑</el-button>
 
         <el-button
+          v-if="showGet"
+          class="head-handle-button"
+          icon="wk wk-receive"
+          type="primary"
+          @click.native="handleTypeClick('get')">领取</el-button>
+
+        <el-button
+          v-if="showAlloc"
+          class="head-handle-button xr-btn--green"
+          type="primary"
+          icon="wk wk-alloc"
+          @click.native="handleTypeClick('alloc')">分配</el-button>
+
+        <el-button
           v-if="showDealStatus"
           class="head-handle-button"
           type="primary"
@@ -209,8 +223,6 @@ export default {
     // 展示转移
     showTransfer() {
       if (
-        this.crmType === 'receivables' ||
-        this.crmType === 'product' ||
         this.crmType === 'customer' ||
          this.crmType === 'visit' ||
         this.isSeas
@@ -229,16 +241,18 @@ export default {
       return this.crm[this.crmType].transfer
     },
     showEdit() {
-      if (this.crmType === 'contract') {
-        //  8 已作废
-        return (
-          this.detail &&
-          this.detail.checkStatus != 8 &&
-          this.crm[this.crmType].update
-        )
-      }
-
+      //  8 已作废 的合同可以编辑
       return this.isSeas ? false : this.crm[this.crmType].update
+    },
+
+    // 展示领取
+    showGet() {
+      return this.isSeas && this.whetherTypeShowByPermision('get')
+    },
+
+    // 展示分配
+    showAlloc() {
+      return this.isSeas && this.whetherTypeShowByPermision('alloc')
     },
 
     /**
@@ -343,6 +357,8 @@ export default {
         const id = this.detail[`${this.crmType}Id`]
         const routeData = this.$router.resolve(`/print/?module=${this.crmType}&id=${id}`)
         window.open(routeData.href, '_blank')
+      } else if (type == 'copyContract') {
+        this.$emit('handle-click', { type })
       }
     },
     confirmHandle(type) {
@@ -527,6 +543,11 @@ export default {
           name: '打印',
           type: 'print',
           icon: 'print'
+        },
+        copyContract: {
+          name: '复制合同',
+          type: 'copyContract',
+          icon: 'icon-double-note'
         }
       }
       if (this.crmType == 'leads') {
@@ -537,8 +558,6 @@ export default {
       } else if (this.crmType == 'customer') {
         if (this.isSeas) {
           return this.forSelectionHandleItems(handleInfos, [
-            'alloc',
-            'get',
             'delete'
           ])
         } else {
@@ -551,15 +570,15 @@ export default {
           ])
         }
       } else if (this.crmType == 'contacts') {
-        return this.forSelectionHandleItems(handleInfos, ['transfer', 'delete'])
+        return this.forSelectionHandleItems(handleInfos, ['delete'])
       } else if (this.crmType == 'business') {
-        return this.forSelectionHandleItems(handleInfos, ['print', 'transfer', 'delete'])
+        return this.forSelectionHandleItems(handleInfos, ['print', 'delete'])
       } else if (this.crmType == 'contract') {
-        return this.forSelectionHandleItems(handleInfos, ['print', 'transfer', 'delete', 'cancel'])
+        return this.forSelectionHandleItems(handleInfos, ['print', 'delete', 'cancel', 'copyContract'])
       } else if (this.crmType == 'receivables') {
-        return this.forSelectionHandleItems(handleInfos, ['print', 'transfer', 'delete'])
+        return this.forSelectionHandleItems(handleInfos, ['print', 'delete'])
       } else if (this.crmType == 'product') {
-        return this.forSelectionHandleItems(handleInfos, ['transfer', 'delete', 'start', 'disable'])
+        return this.forSelectionHandleItems(handleInfos, ['delete', 'start', 'disable'])
       } else if (this.crmType == 'visit') {
         return this.forSelectionHandleItems(handleInfos, [
           'delete'
@@ -595,7 +614,7 @@ export default {
       } else if (type == 'delete') {
         if (this.isSeas) {
           if (this.poolId) {
-            return this.poolAuth.delete
+            return this.poolAuth && this.poolAuth.delete
           }
           return this.crm.pool.delete && this.poolId
         }
@@ -612,13 +631,13 @@ export default {
       } else if (type == 'alloc') {
         // 分配(公海)
         if (this.poolId) {
-          return this.poolAuth.distribute
+          return this.poolAuth && this.poolAuth.distribute
         }
         return this.crm.pool.distribute
       } else if (type == 'get') {
         // 领取(公海)
         if (this.poolId) {
-          return this.poolAuth.receive
+          return this.poolAuth && this.poolAuth.receive
         }
         return this.crm.pool.receive && this.poolId
       } else if (type == 'start' || type == 'disable') {
@@ -636,6 +655,9 @@ export default {
       } else if (type == 'print') {
         // 打印
         return this.crm[this.crmType].print
+      } else if (type == 'copyContract') {
+        // 合同复制
+        return this.crm[this.crmType].save
       }
 
       return true
