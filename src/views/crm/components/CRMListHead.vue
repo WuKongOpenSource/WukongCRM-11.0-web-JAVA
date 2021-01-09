@@ -212,7 +212,7 @@ export default {
     padding-left: 28px;
     font-size: 16px;
     font-weight: 600;
-    margin-top: 15px;
+    height: 100%;
   }
   .sc-container {
     width: 300px;

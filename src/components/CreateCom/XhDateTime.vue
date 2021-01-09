@@ -10,14 +10,14 @@
     @change="valueChange"/>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 import { getDateFromTimestamp } from '@/utils'
 import moment from 'moment'
 
 export default {
   name: 'XhInput', // 新建 datetime
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {
     value: {
       type: String,

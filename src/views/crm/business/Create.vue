@@ -35,6 +35,7 @@
           <el-select
             v-if="data && data.formType == 'business_status'"
             v-model="fieldForm[data.field]"
+            :disabled="data.disabled"
             style="width: 100%;">
             <el-option
               v-for="(item, index) in data.setting"
@@ -99,7 +100,8 @@ export default {
       baseFields: [],
       fieldList: [],
       fieldForm: {},
-      fieldRules: {}
+      fieldRules: {},
+      editStatusValue: null // 记录 赢单输单无效状态
     }
   },
 
@@ -177,6 +179,10 @@ export default {
 
             // 特殊字段允许多选
             this.getItemRadio(item, temp)
+
+            if (item.formType === 'business_status') {
+              temp.disabled = this.action.type === 'update'
+            }
 
             // 获取默认值
             fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
@@ -272,16 +278,46 @@ export default {
       if (field.formType === 'business_type') {
         const statusItem = this.fieldList.find(item => item.formType === 'business_status')
         if (statusItem) {
-          if (isEmpty(data.value)) {
-            this.fieldForm[field.field] = ''
-          } else {
-            if (data.type != 'init') {
-              // 编辑初始化时 不重置
-              this.fieldForm[field.field] = ''
+          const statusOptions = data.data
+          for (let index = 0; index < statusOptions.length; index++) {
+            const item = statusOptions[index]
+            if (item.typeId == data.value) {
+              let statusList = item.statusList || []
+              // 如果状态是赢单输单 更改 阶段值
+              if (data.type == 'init' && (this.fieldForm[statusItem.field] == 1 ||
+              this.fieldForm[statusItem.field] == 2 ||
+              this.fieldForm[statusItem.field] == 3)) {
+                this.editStatusValue = this.fieldForm[statusItem.field]
+                statusList = [{
+                  statusId: 1,
+                  name: '赢单'
+                }, {
+                  statusId: 2,
+                  name: '输单'
+                }, {
+                  statusId: 3,
+                  name: '无效'
+                }]
+              }
+              item.statusList = statusList
+              statusItem.setting = statusList
+              break
             }
+          }
+          // const typeObj = statusOptions.find(item => item.typeId == data.value)
+          // statusItem.setting = typeObj.statusList || []
 
-            const typeObj = data.data.find(item => item.typeId == data.value)
-            statusItem.setting = typeObj.statusList || []
+          if (data.type != 'init') {
+            if (isEmpty(data.value)) {
+              this.$set(this.fieldForm, statusItem.field, '')
+            } else {
+              let statusValue = statusItem.setting.length > 0 ? statusItem.setting[0].statusId : ''
+              // 编辑初始化时 不重置
+              if (statusValue && statusValue <= 3) {
+                statusValue = this.editStatusValue
+              }
+              this.$set(this.fieldForm, statusItem.field, statusValue)
+            }
           }
         }
       } else if (field.formType === 'product') {
@@ -305,6 +341,7 @@ export default {
 .wk-form {
   /deep/ .el-form-item.is-product {
     flex: 0 0 100%;
+    width: 0;
   }
 }
 </style>

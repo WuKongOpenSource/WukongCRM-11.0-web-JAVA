@@ -25,7 +25,7 @@
             class="category-icon">
             <i :class="item.iconClass" />
           </div>
-          <div class="category-label text-one-line">{{ item.title }}</div>
+          <div class="category-label text-one-line">{{ item.categoryTitle }}</div>
         </div>
       </draggable>
     </div>
@@ -33,7 +33,8 @@
 </template>
 
 <script>
-import { oaAllExamineCategoryListAPI, oaAllExamineCategorySortAPI } from '@/api/oa/examine'
+import { examinesQueryPartListAPI } from '@/api/examine'
+import { oaAllExamineCategorySortAPI } from '@/api/oa/examine'
 
 import Draggable from 'vuedraggable'
 
@@ -70,11 +71,18 @@ export default {
      */
     getDetail() {
       this.loading = true
-      oaAllExamineCategoryListAPI()
+      examinesQueryPartListAPI({
+        pageType: 0,
+        label: 0 // oa
+      })
         .then(res => {
           this.loading = false
-          this.categorys = res.data.map(item => {
-            const temps = item.icon ? item.icon.split(',') : []
+          const resData = res.data || {}
+          const list = resData.list || []
+          this.categorys = list.map(item => {
+            const temps = item.examineIcon ? item.examineIcon.split(',') : []
+            item.categoryTitle = item.examineName
+            item.categoryId = item.examineId
             if (temps.length > 1) {
               item.iconClass = temps[0]
               item.iconColor = temps[1]

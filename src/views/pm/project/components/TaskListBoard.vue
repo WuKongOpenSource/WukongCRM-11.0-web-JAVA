@@ -71,6 +71,7 @@
           <task-cell
             v-for="(item, sIndex) in item.list"
             :key="sIndex"
+            :checkbox-disabled="!permission.setTaskStatus"
             :data-section="index"
             :data="item"
             :data-index="sIndex"

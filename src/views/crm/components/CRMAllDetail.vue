@@ -13,7 +13,7 @@
 </template>
 
 <script type="text/javascript">
-import { getMaxIndex } from '@/utils/index'
+// import { getMaxIndex } from '@/utils/index'
 import LeadsDetail from '../leads/Detail'
 import CustomerDetail from '../customer/Detail'
 import ContactsDetail from '../contacts/Detail'
@@ -102,16 +102,20 @@ export default {
     }
   },
   mounted() {
-    if (this.visible) {
-      document.body.appendChild(this.$el)
-      this.$el.style.zIndex = getMaxIndex()
-    }
+    // if (this.visible) {
+    //   this.$nextTick(() => {
+    //     console.log(this.$el, 'this.$el----')
+
+    //     document.body.appendChild(this.$el)
+    //     this.$el.style.zIndex = getMaxIndex()
+    //   })
+    // }
   },
   destroyed() {
     // remove DOM node after destroy
-    if (this.$el && this.$el.parentNode) {
-      this.$el.parentNode.removeChild(this.$el)
-    }
+    // if (this.$el && this.$el.parentNode) {
+    //   this.$el.parentNode.removeChild(this.$el)
+    // }
   },
   methods: {
     hiddenView() {

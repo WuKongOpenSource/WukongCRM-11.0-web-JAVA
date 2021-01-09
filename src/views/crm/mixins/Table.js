@@ -1,12 +1,5 @@
 /** crm自定义列表 公共逻辑 */
 import {
-  mapGetters
-} from 'vuex'
-import crmTypeModel from '@/views/crm/model/crmTypeModel'
-import CRMListHead from '../components/CRMListHead'
-import CRMTableHead from '../components/CRMTableHead'
-import FieldSet from '../components/FieldSet'
-import {
   filedGetTableFieldAPI,
   filedGetPoolTableFieldAPI,
   crmFieldColumnWidthAPI,
@@ -50,7 +43,16 @@ import {
   crmReturnVisitIndexAPI
 } from '@/api/crm/visit'
 
+import WkEmpty from '@/components/WkEmpty'
+import CRMListHead from '../components/CRMListHead'
+import CRMTableHead from '../components/CRMTableHead'
+import FieldSet from '../components/FieldSet'
+import ApprovalFlowUpdateDialog from '@/components/ApprovalFlow/ApprovalFlowUpdateDialog'
 
+import {
+  mapGetters
+} from 'vuex'
+import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Lockr from 'lockr'
 import { Loading } from 'element-ui'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
@@ -61,7 +63,9 @@ export default {
   components: {
     CRMListHead,
     CRMTableHead,
-    FieldSet
+    FieldSet,
+    WkEmpty,
+    ApprovalFlowUpdateDialog
   },
   data() {
     return {
@@ -95,7 +99,14 @@ export default {
   mixins: [CheckStatusMixin],
 
   computed: {
-    ...mapGetters(['crm'])
+    ...mapGetters(['crm']),
+    saveAuth() {
+      if (this.isSeas) {
+        return false
+      }
+
+      return this.crm[this.crmType].save
+    }
   },
   watch: {},
   mounted() {
@@ -472,6 +483,7 @@ export default {
         this.getMainTable().clearSort()
         this.sortChange()
       } else {
+        this.getMainTable().clearSelection()
         this.getList()
       }
     },

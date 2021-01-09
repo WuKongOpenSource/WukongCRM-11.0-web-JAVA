@@ -22,7 +22,7 @@
           </span>
           <!-- 编辑 -->
           <el-dropdown
-            v-if="showHandle && data.permission && (data.permission.isChecked || data.permission.isUpdate || data.permission.isDelete)"
+            v-if="showHandle && data.permission && (data.permission.isCheck || data.permission.isUpdate || data.permission.isDelete)"
             trigger="click"
             @command="handleCommand">
             <i
@@ -30,7 +30,7 @@
               class="el-icon-arrow-down el-icon-more"/>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item
-                v-if="data.permission && data.permission.isChecked"
+                v-if="data.permission && data.permission.isCheck"
                 command="withdraw">撤回</el-dropdown-item>
               <el-dropdown-item
                 v-if="data.permission && data.permission.isUpdate"

@@ -1,7 +1,7 @@
 <template>
   <div>
     <xr-header
-      style="padding: 15px 23px;"
+      style="padding: 15px 28px;"
       icon-class="wk wk-invoice"
       icon-color="#13BF97"
       label="发票管理" >
@@ -59,6 +59,7 @@
         :height="tableHeight"
         :cell-class-name="cellClassName"
         :header-cell-class-name="headerCellClassName"
+        :row-key="`${crmType}Id`"
         use-virtual
         class="n-table--border"
         stripe
@@ -69,6 +70,7 @@
         @selection-change="handleSelectionChange">
         <el-table-column
           show-overflow-tooltip
+          reserve-selection
           type="selection"
           align="center"
           width="55"/>
@@ -104,6 +106,14 @@
           </template>
         </el-table-column>
         <el-table-column />
+        <wk-empty
+          slot="empty"
+          :props="{
+            buttonTitle: '新建发票',
+            showButton: canSave
+          }"
+          @click="createClick"
+        />
       </el-table>
       <div class="p-contianer">
         <el-pagination
@@ -142,6 +152,9 @@
       :selection-list="selectionList"
       :dialog-visible.sync="transferDialogShow"
       @handle="refreshList" />
+
+    <!-- 审批流升级提醒 -->
+    <approval-flow-update-dialog />
   </div>
 </template>
 
@@ -160,6 +173,8 @@ import TransferHandle from '../components/SelectionHandle/TransferHandle' // 转
 import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
 import FilterForm from '../components/FilterForm'
 import FilterContent from '../components/FilterForm/FilterContent'
+import WkEmpty from '@/components/WkEmpty'
+import ApprovalFlowUpdateDialog from '@/components/ApprovalFlow/ApprovalFlowUpdateDialog'
 
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
@@ -178,7 +193,9 @@ export default {
     TransferHandle,
     CRMAllDetail,
     FilterForm,
-    FilterContent
+    FilterContent,
+    WkEmpty,
+    ApprovalFlowUpdateDialog
   },
   mixins: [CheckStatusMixin],
   props: {},

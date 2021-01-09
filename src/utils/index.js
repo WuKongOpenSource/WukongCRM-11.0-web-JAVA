@@ -228,13 +228,9 @@ export function canPreviewFile(name) {
 /**
  * 预览文件
  */
+import axios from 'axios'
 export function wkPreviewFile(path, name) {
-  // const urlS = path.split('?')
-  // const url = urlS.length > 1 ? urlS[1] : ''
-  // https://file.72crm.com/onlinePreview?fileId=949051ca66ed45ca8a1bacae0e862d32
-  // window.open(`${WKConfig.getLocationOrigin()}/file/onlinePreview?${url}`)
-  // http://dev.5kcrm.cn/file/preview?id=xxx
-  window.open(`${WKConfig.getLocationOrigin()}/file/preview?url=${path}?fullfilename=${name || ''}`)
+  window.open(`${WKConfig.getLocationOrigin()}/file/preview?url=${encodeURIComponent(`${path}?fullfilename=${name || ''}&c=${axios.defaults.headers['Admin-Token']}`)}`)
 }
 
 export function getFileIconWithSuffix(ext) {

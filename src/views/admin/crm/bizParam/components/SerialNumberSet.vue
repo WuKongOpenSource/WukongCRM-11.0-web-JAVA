@@ -10,7 +10,7 @@
     </div>
     <div class="content-body">
       <reminder
-        content="1、商机编号、回款编号、发票编号、回访编号的日期类型编号都从创建时间获取，合同编号的日期编号从下单时间获取，若下单时间为空，则从创建时间获取<br />2、若自动生成的编号与系统现有编号重复时，自动跳过此编号，依次往下生成<br />3、编号规则至少设置两级<br />4、文本类型的最多支持12个字符，数字类型编号起始编号位数1-9" />
+        content="1、回款编号、发票编号、回访编号的日期类型编号都从创建时间获取，合同编号的日期编号从下单时间获取，若下单时间为空，则从创建时间获取<br />2、若自动生成的编号与系统现有编号重复时，自动跳过此编号，依次往下生成<br />3、编号规则至少设置两级<br />4、文本类型的最多支持12个字符，数字类型编号起始编号位数1-9" />
       <div v-for="(listItem, index) in list" :key="index" class="rule-section">
         <div class="rule-header">
           <span class="rule-header-title">{{ listItem.label | labelName }}</span>

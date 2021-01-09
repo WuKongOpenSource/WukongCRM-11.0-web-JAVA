@@ -569,6 +569,8 @@ export default {
     display: inline-block;
     font-size: 12px;
     padding: 6px;
+    width: 25px;
+    height: 25px;
     border-radius: $xr-border-radius-base;
     color: white;
     margin-right: 10px;

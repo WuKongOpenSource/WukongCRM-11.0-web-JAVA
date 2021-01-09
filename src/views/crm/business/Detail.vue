@@ -553,7 +553,8 @@ export default {
         this.$prompt(message, title, {
           inputType: 'text',
           confirmButtonText: '确定',
-          cancelButtonText: '取消'
+          cancelButtonText: '取消',
+          closeOnClickModal: false
         })
           .then(({ value }) => {
             this.loading = true

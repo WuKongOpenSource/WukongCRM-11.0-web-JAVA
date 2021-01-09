@@ -6,7 +6,7 @@
     <xr-header
       icon-class="wk wk-workbench"
       icon-color="#5864FF"
-      label="审批流（办公）" />
+      label="办公审批流" />
     <div class="main__bd">
       <component :is="leftType"/>
     </div>

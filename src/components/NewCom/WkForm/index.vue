@@ -19,7 +19,14 @@
       :class="[item.className || '', `is-${item.formType}`]">
       <template slot="label">
         {{ item.name }}
-        <span style="color:#999;">
+        <el-tooltip
+          v-if="item.tipType == 'tooltip'"
+          effect="dark"
+          placement="top">
+          <div slot="content" v-html="getTips(item)"/>
+          <i class="wk wk-help wk-help-tips"/>
+        </el-tooltip>
+        <span v-else style="color:#999;">
           {{ getTips(item) }}
         </span>
       </template>
@@ -45,7 +52,7 @@
         :placeholder="item.placeholder"
         :disabled="item.disabled"
         :controls="false"
-        @input="commonChange(item, index, $event)" />
+        @change="commonChange(item, index, $event)" />
       <el-input-number
         v-else-if="item.formType == 'floatnumber'"
         v-model="fieldFrom[item.field]"
@@ -59,7 +66,7 @@
         :disabled="item.disabled"
         :rows="3"
         :autosize="{ minRows: 3}"
-        :maxlength="800"
+        :maxlength="item.maxlength || 800"
         :placeholder="item.placeholder"
         :type="item.formType"
         resize="none"
@@ -175,7 +182,7 @@
         @value-change="oldChange($event, item, index)"
       />
       <template v-else>
-        <slot :data="item" />
+        <slot :data="item" :index="index" />
       </template>
     </el-form-item>
     <slot name="suffix" />

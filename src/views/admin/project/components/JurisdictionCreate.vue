@@ -188,6 +188,7 @@ export default {
         systemRoleSetWorkRoleAPI(params)
           .then(res => {
             this.loading = false
+            this.$message.success('操作成功')
             this.$emit('submite')
             this.closeView()
           })

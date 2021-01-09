@@ -60,7 +60,7 @@ export const invoiceFilterFields = [{
 }, {
   formType: 'text',
   fieldName: 'customerName',
-  name: '客户姓名'
+  name: '客户名称'
 }, {
   formType: 'text',
   fieldName: 'logisticsNumber',

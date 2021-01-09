@@ -1,5 +1,6 @@
 <template>
   <el-select
+    ref="select"
     v-bind="$attrs"
     v-model="selectValue"
     class="role-employee-select"
@@ -9,7 +10,8 @@
     <div class="role-employee-select__body">
       <el-tabs
         ref="roleTabs"
-        v-model="activeName">
+        v-model="activeName"
+        :class="{ 'el-tabs__header--hidden': config.onlyShowRole }">
         <el-tab-pane ref="roleTabPane" label="自选角色" name="role">
           <div
             v-for="group in roleOption"
@@ -63,6 +65,11 @@ import { userListAPI } from '@/api/common'
 
 import { valueEquals } from 'element-ui/lib/utils/util'
 import PinyinMatch from 'pinyin-match'
+import merge from '@/utils/merge'
+
+const DefaultProps = {
+  onlyShowRole: false // 仅展示角色
+}
 
 export default {
   // 角色员工选择
@@ -71,6 +78,12 @@ export default {
   components: {},
 
   props: {
+    props: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
     value: [Array, Number, String]
   },
 
@@ -84,7 +97,14 @@ export default {
     }
   },
 
-  computed: {},
+  computed: {
+    config() {
+      return merge({ ...DefaultProps }, this.props || {})
+    },
+    select() {
+      return this.$refs.select
+    }
+  },
 
   watch: {
     value: {
@@ -147,6 +167,13 @@ export default {
   }
 }
 </script>
+<style lang="scss" >
+.el-tabs__header--hidden {
+  .el-tabs__header {
+    display: none;
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 .role-employee-select {

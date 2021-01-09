@@ -54,6 +54,7 @@
     <div
       :style="{ 'background-color':variables.menuBg }"
       class="sidebar-bottom">
+      <slot name="sidebar-bottom"/>
       <div class="sidebar-container">
         <img
           :style="{ 'right': buttonCollapse ? '3px' : '0' }"
@@ -208,6 +209,10 @@ export default {
       display: none;
     }
   }
+
+  /deep/ .menu-item-content {
+    text-overflow: clip;
+  }
 }
 
 // 创建
@@ -264,7 +269,7 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 48px;
+  // height: 48px;
 
   .sidebar-container {
     position: relative;

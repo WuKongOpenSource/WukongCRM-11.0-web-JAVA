@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :title="businessTitle"
     :visible.sync="businessDialogVisible"
     :before-close="businessClose"
@@ -100,9 +101,11 @@ import {
   businessGroupUpdateAPI
 } from '@/api/admin/crm'
 
-import { Loading } from 'element-ui'
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
+import { isEmpty } from '@/utils/types'
 
 export default {
+  mixins: [ElDialogLoadingMixin],
   props: {
     businessDialogVisible: Boolean,
     businessTitle: String,
@@ -116,6 +119,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       optionsDep: [],
       businessDep: [],
       settingList: [],
@@ -156,16 +160,14 @@ export default {
         var pass = true
         for (let index = 0; index < this.settingList.length; index++) {
           const item = this.settingList[index]
-          if (!item.name || !item.rate) {
+          if (isEmpty(item.name) || isEmpty(item.rate)) {
             pass = false
             this.$message.error('请完善阶段信息')
             break
           }
         }
         if (pass) {
-          const loading = Loading.service({
-            target: document.querySelector(`.el-dialog[aria-label="${this.businessTitle}"]`)
-          })
+          this.loading = true
           let request = null
           const params = {
             crmBusinessType: {
@@ -184,10 +186,10 @@ export default {
             .then(res => {
               this.$message.success('操作成功')
               this.$emit('businessSubmit')
-              loading.close()
+              this.loading = false
             })
             .catch(() => {
-              loading.close()
+              this.loading = false
             })
         }
       }

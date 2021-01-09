@@ -37,12 +37,12 @@
 import { crmIndexSaletrendAPI } from '@/api/crm/workbench'
 
 import echarts from 'echarts'
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 import { mapGetters } from 'vuex'
 
 export default {
   name: 'SaleStatistics',
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       options: [

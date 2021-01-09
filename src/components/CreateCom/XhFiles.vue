@@ -35,7 +35,7 @@
   </div>
 </template>
 <script type="text/javascript">
-import arrayMixin from './arrayMixin'
+import ArrayMixin from './ArrayMixin'
 import { crmFileDeleteAPI } from '@/api/common'
 import { fileSize } from '@/utils/index'
 
@@ -48,7 +48,7 @@ export default {
       return name + '(' + fileSize(file.size) + ')'
     }
   },
-  mixins: [arrayMixin],
+  mixins: [ArrayMixin],
   props: {},
   data() {
     return {

@@ -61,6 +61,7 @@
         :data="list"
         :height="tableHeight"
         :cell-class-name="cellClassName"
+        :row-key="`${crmType}Id`"
         class="n-table--border"
         use-virtual
         stripe
@@ -73,6 +74,7 @@
         @selection-change="handleSelectionChange">
         <el-table-column
           show-overflow-tooltip
+          reserve-selection
           type="selection"
           align="center"
           width="55"/>

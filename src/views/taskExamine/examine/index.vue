@@ -39,7 +39,7 @@
       v-if="isCreate"
       :category-id="createInfo.categoryId"
       :type="createInfo.type"
-      :category-title="createInfo.title"
+      :category-title="createInfo.categoryTitle"
       :action="createAction"
       @save-success="refreshList"
       @hiden-view="createHideView" />
@@ -74,12 +74,14 @@
 
 <script>
 import {
-  oaAllExamineCategoryListAPI,
-  oaExamineMyExamineIndexAPI,
   oaExamineMyCreateIndexAPI,
   oaExamineDeleteAPI,
   oaExamineExportAPI
 } from '@/api/oa/examine'
+import {
+  examinesQueryPartListAPI,
+  examineWaitingQueryOaExamineListAPI
+} from '@/api/examine'
 import ExamineTabsHead from './components/ExamineTabsHead'
 import ExamineCell from './components/ExamineCell'
 import ExamineMixin from './components/ExamineMixin'
@@ -239,7 +241,7 @@ export default {
         request = oaExamineMyCreateIndexAPI
       } else if (this.examineType == 'wait') {
         params.status = status
-        request = oaExamineMyExamineIndexAPI
+        request = examineWaitingQueryOaExamineListAPI
       }
 
       request(params)
@@ -274,12 +276,17 @@ export default {
      * 获取审批类型
      */
     getSelectList() {
-      oaAllExamineCategoryListAPI()
+      examinesQueryPartListAPI({
+        label: 0
+      })
         .then(res => {
-          this.selectList = res.data.map(item => {
-            const iconItem = this.getCategoryIcon(item.icon)
-            iconItem.label = item.title
-            iconItem.command = item.categoryId
+          const resData = res.data || {}
+          const list = resData.list || []
+          this.selectList = list.map(item => {
+            const iconItem = this.getCategoryIcon(item.examineIcon)
+            item.categoryTitle = item.examineName
+            iconItem.label = item.examineName
+            iconItem.command = item.examineId
             return iconItem
           })
           this.selectList.unshift({
@@ -419,7 +426,7 @@ export default {
       //   params.status = this.status
       // }
 
-      // oaExamineMyExamineIndexAPI(params)
+      // examineWaitingQueryOaExamineListAPI(params)
       // .then(res => {
       //   const examine = this.list[this.detailIndex]
       //   for (let index = 0; index < res.data.list.length; index++) {

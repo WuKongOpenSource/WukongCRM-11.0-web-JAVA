@@ -10,12 +10,12 @@
     @input="valueChange"/>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 
 export default {
   name: 'XhTextarea', // 新建 textarea
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {},
   data() {
     return {}

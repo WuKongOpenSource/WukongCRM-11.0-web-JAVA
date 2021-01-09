@@ -58,14 +58,15 @@
   }
 }
 
-.el-menu {
+/deep/  .el-menu {
   display: inline-block;
   background-color: initial;
-  /deep/ .el-menu-item {
+  margin: 0 28px;
+
+  .el-menu-item {
     padding: 0;
-    margin: 0 20px;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: bold;
     color: #2a304d;
 
     &:hover {
@@ -78,6 +79,15 @@
 
     img {
       width: 30px;
+      margin-right: 5px;
     }
+
+    * {
+      transform: translateY(-1.5px);
+    }
+  }
+
+  .el-menu-item + .el-menu-item {
+    margin-left: 40px;
   }
 }

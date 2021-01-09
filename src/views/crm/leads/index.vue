@@ -11,6 +11,7 @@
       @on-search="crmSearch"
       @on-export="exportInfos">
       <el-menu
+        v-if="menuItems.length > 1"
         slot="icon"
         ref="elMenu"
         :default-active="crmType"
@@ -45,6 +46,7 @@
         :data="list"
         :height="tableHeight"
         :cell-class-name="cellClassName"
+        :row-key="`${crmType}Id`"
         class="n-table--border"
         use-virtual
         stripe
@@ -57,6 +59,7 @@
         @selection-change="handleSelectionChange">
         <el-table-column
           show-overflow-tooltip
+          reserve-selection
           type="selection"
           align="center"
           width="55"/>
@@ -97,6 +100,14 @@
               @change="setSave"/>
           </template>
         </el-table-column>
+        <wk-empty
+          slot="empty"
+          :props="{
+            buttonTitle: '新建线索',
+            showButton: saveAuth
+          }"
+          @click="createClick"
+        />
       </el-table>
       <div class="p-contianer">
         <el-pagination
@@ -163,7 +174,9 @@ export default {
   },
   mounted() {},
   deactivated: function() {
-    this.$refs.elMenu.activeIndex = this.crmType
+    if (this.$refs.elMenu) {
+      this.$refs.elMenu.activeIndex = this.crmType
+    }
   },
   methods: {
     /**

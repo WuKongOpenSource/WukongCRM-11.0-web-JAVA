@@ -59,13 +59,13 @@
 </template>
 
 <script>
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 import { queryDataInfo } from '@/api/crm/workbench'
 
 export default {
   name: 'DataStatistics',
   filters: {},
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       data: null,

@@ -608,7 +608,7 @@ export default {
           if (this.poolId) {
             return this.poolAuth.excelexport
           }
-          return this.crm.pool.excelexport
+          return this.crm.pool && this.crm.pool.excelexport
         }
         return this.crm[this.crmType].excelexport
       } else if (type == 'delete') {
@@ -616,7 +616,7 @@ export default {
           if (this.poolId) {
             return this.poolAuth && this.poolAuth.delete
           }
-          return this.crm.pool.delete && this.poolId
+          return this.crm.pool && this.crm.pool.delete && this.poolId
         }
         return this.crm[this.crmType].delete
       } else if (type == 'put_seas') {
@@ -633,13 +633,13 @@ export default {
         if (this.poolId) {
           return this.poolAuth && this.poolAuth.distribute
         }
-        return this.crm.pool.distribute
+        return this.crm.pool && this.crm.pool.distribute
       } else if (type == 'get') {
         // 领取(公海)
         if (this.poolId) {
           return this.poolAuth && this.poolAuth.receive
         }
-        return this.crm.pool.receive && this.poolId
+        return this.crm.pool && this.crm.pool.receive && this.poolId
       } else if (type == 'start' || type == 'disable') {
         // 上架 下架(产品)
         return this.crm[this.crmType].status

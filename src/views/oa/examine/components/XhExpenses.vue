@@ -104,13 +104,13 @@
 </template>
 <script type="text/javascript">
 import { crmFileSaveAPI, crmFileDeleteAPI } from '@/api/common'
-import objMixin from '@/components/CreateCom/objMixin'
+import ObjMixin from '@/components/CreateCom/ObjMixin'
 import { guid, floatAdd } from '@/utils'
 
 export default {
   name: 'XhExpenses', // 差旅报销事项
   components: {},
-  mixins: [objMixin],
+  mixins: [ObjMixin],
   props: {},
   data() {
     return {

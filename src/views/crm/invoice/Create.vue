@@ -54,7 +54,7 @@
             @changeCheckout="titleSelectChange"/>
           <el-button
             slot="reference"
-            :disabled="!baseFrom.customerId"
+            :disabled="!(baseFrom.customerId && baseFrom.customerId.length > 0)"
             type="primary"
             @click="showSelectView=true">选择发票信息</el-button>
         </el-popover>
@@ -118,17 +118,21 @@
     </create-sections>
 
     <create-sections
-      v-if="isOpenExamine"
+      v-if="wkFlowList"
       title="审核信息">
-      <div
-        v-if="examineInfo.examineType===1 || examineInfo.examineType===2"
-        slot="header"
-        class="examine-type">{{ examineInfo.examineType===1 ? '固定审批流' : '授权审批人' }}</div>
-      <create-examine-info
-        ref="examineInfo"
-        :types-id="editId"
-        types="crm_invoice"
-        @value-change="examineValueChange" />
+      <template slot="header">
+        <el-tooltip
+          v-if="flowRemarks"
+          :content="flowRemarks"
+          effect="dark"
+          placement="top">
+          <i class="wk wk-help wk-help-tips" style="margin-left: 8px;"/>
+        </el-tooltip>
+      </template>
+      <wk-approval-flow-apply
+        :data="wkFlowList"
+        style="padding: 15px;"
+      />
     </create-sections>
   </xr-create>
 </template>
@@ -139,7 +143,8 @@ import { crmCustomerInvoiceInfoAPI } from '@/api/crm/customer'
 
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
-import CreateExamineInfo from '@/components/Examine/CreateExamineInfo'
+import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
+import WkApprovalFlowApplyMixin from '@/components/Examine/mixins/WkApprovalFlowApply'
 
 import {
   XhInput,
@@ -156,13 +161,13 @@ export default {
   components: {
     XrCreate,
     CreateSections,
-    CreateExamineInfo,
     XhInput,
     XhTextarea,
     XhSelect,
     XhDate,
     CrmRelativeCell,
-    CrmRelative
+    CrmRelative,
+    WkApprovalFlowApply
   },
   filters: {
     /** 根据type 找到组件 */
@@ -180,6 +185,7 @@ export default {
       }
     }
   },
+  mixins: [WkApprovalFlowApplyMixin],
   props: {
     detail: Object
   },
@@ -220,7 +226,8 @@ export default {
       mailRules: {},
       mailFrom: {},
       // 审批信息
-      examineInfo: {}
+      flowRemarks: '',
+      wkFlowList: null // 有值有审批流
     }
   },
   computed: {
@@ -239,16 +246,8 @@ export default {
       return !!this.editId
     },
 
-    isOpenExamine() {
-      if (this.examineInfo) {
-        // 初始状态是空对象默认展示，请求之后，根据status判断
-        return Object.keys(this.examineInfo).length > 0 ? this.examineInfo.status == 1 : true
-      }
-      return false
-    },
-
     confirmButtonText() {
-      if (this.isOpenExamine) {
+      if (this.wkFlowList) {
         return '提交审核'
       }
       return '保存'
@@ -309,6 +308,15 @@ export default {
       mailFrom.contactsAddress = this.detail.contactsAddress
       this.mailFrom = mailFrom
     }
+
+    // 审核信息
+    this.initWkFlowData({
+      params: { label: 3 },
+      fieldForm: this.baseFrom
+    }, res => {
+      this.wkFlowList = res.list
+      this.flowRemarks = res.resData ? res.resData.remarks : ''
+    })
   },
   mounted() {},
 
@@ -521,17 +529,28 @@ export default {
         } else {
           contractItem.disabled = true
           contractItem['relation'] = {}
+          // 重置发票信息
+          this.otherFields.forEach(item => {
+            if (item.field !== 'titleType') {
+              this.otherFrom[item.field] = ''
+            }
+          })
         }
 
         this.$set(this.baseFrom, 'contractId', [])
         this.$set(this.baseFrom, 'invoiceMoney', '')
         this.$set(this.baseFrom, 'contractMoney', '')
         this.$refs.crmForm.validateField(item.field)
+        this.debouncedGetWkFlowList('invoiceMoney', this.baseFrom)
       } else if (item.formType == 'contract') {
         const contractValue = dataValue && dataValue.length ? dataValue[0] : null
         this.$set(this.baseFrom, 'contractMoney', contractValue ? contractValue.money : '')
         this.$set(this.baseFrom, 'invoiceMoney', contractValue ? contractValue.money : '')
         this.$refs.crmForm.validateField(item.field)
+        this.debouncedGetWkFlowList('invoiceMoney', this.baseFrom)
+      } else {
+        // 审批流逻辑
+        this.debouncedGetWkFlowList(item.field, this.baseFrom)
       }
     },
 
@@ -554,10 +573,6 @@ export default {
       this.$set(this.mailFrom, item.field, dataValue)
     },
 
-    // 审批信息值更新
-    examineValueChange(data) {
-      this.examineInfo = data
-    },
 
     close() {
       this.$emit('close')
@@ -566,77 +581,66 @@ export default {
     saveClick() {
       this.$refs.crmForm.validate(valid => {
         if (valid) {
-          const params = {}
-          for (let index = 0; index < this.baseFields.length; index++) {
-            const element = this.baseFields[index]
-            if (!element.disabled) {
-              if (element.formType == 'customer') {
-                const customerValue = this.baseFrom.customerId && this.baseFrom.customerId.length ? this.baseFrom.customerId[0] : null
-                params[element.field] = customerValue ? customerValue.customerId : ''
-              } else if (element.formType == 'contract') {
-                const contractValue = this.baseFrom.contractId && this.baseFrom.contractId.length ? this.baseFrom.contractId[0] : null
-                params[element.field] = contractValue ? contractValue.contractId : ''
-              } else {
-                params[element.field] = this.baseFrom[element.field]
+          const wkFlowResult = this.validateWkFlowData(this.wkFlowList)
+          if (wkFlowResult.pass) {
+            const params = {}
+
+            if (wkFlowResult.data) {
+              params.examineFlowData = wkFlowResult.data
+            }
+
+            for (let index = 0; index < this.baseFields.length; index++) {
+              const element = this.baseFields[index]
+              if (!element.disabled) {
+                if (element.formType == 'customer') {
+                  const customerValue = this.baseFrom.customerId && this.baseFrom.customerId.length ? this.baseFrom.customerId[0] : null
+                  params[element.field] = customerValue ? customerValue.customerId : ''
+                } else if (element.formType == 'contract') {
+                  const contractValue = this.baseFrom.contractId && this.baseFrom.contractId.length ? this.baseFrom.contractId[0] : null
+                  params[element.field] = contractValue ? contractValue.contractId : ''
+                } else {
+                  params[element.field] = this.baseFrom[element.field]
+                }
               }
             }
-          }
 
-          for (let index = 0; index < this.otherFields.length; index++) {
-            const element = this.otherFields[index]
-            if (!element.disabled) {
-              params[element.field] = this.otherFrom[element.field]
-            }
-          }
-
-          for (let index = 0; index < this.mailFields.length; index++) {
-            const element = this.mailFields[index]
-            if (!element.disabled) {
-              params[element.field] = this.mailFrom[element.field]
-            }
-          }
-
-          if (this.isEdit) {
-            params.invoiceId = this.detail.invoiceId
-            params.batchId = this.detail.batchId
-          }
-
-          this.getExamineValidateResult((result) => {
-            if (result) {
-              if (this.examineInfo.examineType === 2) {
-                params['checkUserId'] = this.examineInfo.value[0].userId
+            for (let index = 0; index < this.otherFields.length; index++) {
+              const element = this.otherFields[index]
+              if (!element.disabled) {
+                params[element.field] = this.otherFrom[element.field]
               }
-
-              console.log(params)
-              const request = this.isEdit ? crmInvoiceUpdateAPI : crmInvoiceSaveAPI
-              this.loading = true
-              request(params)
-                .then(res => {
-                  this.loading = false
-                  this.close()
-                  // 回到保存成功
-                  this.$emit('save-success')
-                })
-                .catch(() => {
-                  this.loading = false
-                })
             }
-          })
+
+            for (let index = 0; index < this.mailFields.length; index++) {
+              const element = this.mailFields[index]
+              if (!element.disabled) {
+                params[element.field] = this.mailFrom[element.field]
+              }
+            }
+
+            if (this.isEdit) {
+              params.invoiceId = this.detail.invoiceId
+              params.batchId = this.detail.batchId
+            }
+
+            const request = this.isEdit ? crmInvoiceUpdateAPI : crmInvoiceSaveAPI
+            this.loading = true
+            request(params)
+              .then(res => {
+                this.loading = false
+                this.close()
+                // 回到保存成功
+                this.$emit('save-success')
+              })
+              .catch(() => {
+                this.loading = false
+              })
+          } else {
+            this.loading = false
+            this.$message.error('请完善审批信息')
+          }
         }
       })
-    },
-
-    /**
-     * 获取审批验证结果
-     */
-    getExamineValidateResult(callBack) {
-      if (this.isOpenExamine) {
-        this.$refs.examineInfo.validateField((result) => {
-          callBack(result)
-        })
-      } else {
-        callBack(true)
-      }
     }
   }
 }

@@ -52,7 +52,7 @@
 
 <script>
 import { workIndexWorkListAPI } from '@/api/pm/task'
-import { workWorkCollectAPI, workupdateWorkOrderAPI } from '@/api/pm/project'
+import { workWorkCollectAPI, workUpdateWorkOrderAPI } from '@/api/pm/project'
 
 import ProjectCell from '../components/ProjectCell'
 import SectionHead from '../components/SectionHead'
@@ -142,9 +142,7 @@ export default {
           return
         }
 
-        workupdateWorkOrderAPI({
-          workIds: this.list.map(item => item.workId)
-        })
+        workUpdateWorkOrderAPI(this.list.map(item => item.workId))
           .then(res => {})
           .catch(() => {})
       }

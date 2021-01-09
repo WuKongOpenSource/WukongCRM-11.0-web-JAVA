@@ -37,13 +37,14 @@
             :key="index"
             class="wk-user-select__item">
             <el-checkbox
+              v-if="(item.isDep && config.canSelectDep) || !item.isDep"
               v-model="item.isCheck"
               :disabled="item.disabled"
               @change="dataCheckboxChange($event, item)"/>
             <template v-if="item.isDep">
-              <div class="dep-name text-one-line">{{ `${item[config.depLabel]}${item.allNum > 0 ? `(${item.allNum})` : ''}` }}</div>
+              <div class="dep-name text-one-line">{{ `${item[config.depLabel]}${item.currentNum > 0 ? `(${item.currentNum})` : ''}` }}</div>
               <el-button
-                v-if="item.hasChildren == 1"
+                v-if="item.hasChildren == 1 || item.currentNum > 0"
                 :disabled="item.isCheck"
                 type="text"
                 icon="wk wk-icon-structure"
@@ -56,7 +57,7 @@
                 :src="item.img"
                 class="user-img" />
               <div class="user-info">
-                <div class="user-name">{{ item[config.label] }}</div>
+                <div class="user-name text-one-line">{{ item[config.label] }}</div>
                 <div class="user-post">{{ item.post || '暂无岗位' }}</div>
               </div>
             </template>
@@ -69,7 +70,7 @@
         <span
           v-for="(item, index) in selectDeps"
           :key="`dep${index}`"
-          class="user-item text-one-line">{{ `${item[config.depLabel]}${item.allNum > 0 ? `(${item.allNum})` : ''}` }}
+          class="user-item text-one-line">{{ `${item[config.depLabel]}${item.currentNum > 0 ? `(${item.currentNum})` : ''}` }}
           <i
             class="delete-icon el-icon-close"
             @click.stop="deleteDepUser('dep', index, item, selectDeps)" />
@@ -106,6 +107,18 @@ export default {
       default: () => {
         return {}
       }
+    },
+    depValue: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    },
+    userValue: {
+      type: Array,
+      default: () => {
+        return []
+      }
     }
   },
   data() {
@@ -127,7 +140,12 @@ export default {
         value: 'userId',
         label: 'realname',
         depValue: 'id',
-        depLabel: 'name'
+        depLabel: 'name',
+        canSelectDep: true,
+        userOptions: null,
+        radio: false, // 仅员工
+        request: null,
+        searchParams: null
       }
       const config = this.props || {}
 
@@ -146,7 +164,15 @@ export default {
     }
   },
   created() {
-    this.getDepUserList(0)
+    this.selectUsers = this.userValue
+    this.depValue = this.depValue
+    if (this.config.userOptions) {
+      const employeeList = this.config.userOptions
+      this.handleArrayCheckValue('user', employeeList, this.selectUsers)
+      this.showDataList = employeeList
+    } else {
+      this.getDepUserList(0)
+    }
   },
   mounted() {},
 
@@ -156,14 +182,20 @@ export default {
      * 列效果进行搜索
      */
     searchListUser(queryString, cb) {
-      if (this.searchUserList && this.searchUserList.length) {
+      if (this.searchUserList && this.searchUserList.length || this.config.userOptions) {
+        const searchUserList = this.config.userOptions || this.searchUserList
         if (queryString) {
-          cb(this.searchUserList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString)))
+          cb(searchUserList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString)))
         } else {
-          cb(this.searchUserList)
+          cb(searchUserList)
         }
       } else {
-        userListAPI({ pageType: 0 }).then(res => {
+        const request = userListAPI
+        let params = { pageType: 0 }
+        if (this.config.searchParams) {
+          params = { ...params, ...this.config.searchParams }
+        }
+        request(params).then(res => {
           this.searchUserList = res.data.hasOwnProperty('list') ? (res.data.list || []) : (res.data || [])
           if (queryString) {
             cb(this.searchUserList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString)))
@@ -201,7 +233,11 @@ export default {
      */
     getDepUserList(deptId, depInfo) {
       this.loading = true
-      adminUserQueryByDeptAPI(deptId).then(res => {
+      let request = adminUserQueryByDeptAPI
+      if (this.config.request) {
+        request = this.config.request
+      }
+      request(deptId).then(res => {
         const data = res.data || {}
         const deptList = data.deptList || []
         deptList.forEach(item => {
@@ -265,7 +301,12 @@ export default {
         }
       } else {
         if (isCheck) {
-          this.selectUsers.push(data)
+          if (this.config.radio) {
+            this.selectUsers = [data]
+            this.handleArrayCheckValue('user', this.showDataList, this.selectUsers)
+          } else {
+            this.selectUsers.push(data)
+          }
         } else {
           const index = this.getArrayIndexWithItem(this.selectUsers, data, this.config.value)
           if (index >= 0) {
@@ -352,6 +393,7 @@ export default {
       border-radius: $xr-border-radius-base;
       margin: 3px;
       position: relative;
+      max-width: 200px;
     }
     .delete-icon {
       color: #999;
@@ -424,6 +466,10 @@ export default {
       &-info {
         flex: 1;
         padding: 0 8px;
+      }
+
+      &-name {
+        max-width: 200px;
       }
 
       &-post {

@@ -5,11 +5,11 @@
       class="header-icon">
       <i :class="iconClass" />
     </div>
-    <Xh-icon-popover
+    <xh-icon-popover
       :select-icon="selectIcon"
       @select="iconSelect">
       <el-button slot="reference" type="primary" plain>选择图标</el-button>
-    </Xh-icon-popover>
+    </xh-icon-popover>
   </div>
 </template>
 

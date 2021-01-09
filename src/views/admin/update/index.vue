@@ -47,7 +47,7 @@
       <div class="info">
         <!-- 提示 -->
         <div class="login-box-title">
-          <span @click="dialogVisible = true">请点击登</span>
+          <span @click="dialogVisible = true">请点击登录</span>
           <p>更新前需要先登录悟空账号</p>
         </div>
       </div>
@@ -56,7 +56,7 @@
     </div>
 
     <div v-loading="checkLoading" class="last-time">
-      <el-button :disabled="isClick" type="primary" plain @click="checkHandle">检查更新</el-button>
+      <el-button type="primary" plain @click="checkHandle">检查更新</el-button>
     </div>
 
     <!-- 检查更新后展示 -->
@@ -76,8 +76,8 @@
         element-loading-background="#fff"
       >
         <p class="text">有新的版本可升级</p>
-        当前版本：{{ serverVersion }}，您可以升级到
-        <span>{{ version }}</span>
+        当前版本：{{ version }}，您可以升级到
+        <span>{{ serverVersion }}</span>
 
         <div class="update-wrap">
           <el-badge :value="1" class="update-badge">
@@ -210,7 +210,7 @@ export default {
     Reminder
   },
   data() {
-    var checkPort = (rule, value, callback) => {
+    const checkPort = (rule, value, callback) => {
       if (!value) {
         return callback(new Error('请输入数据库端口号'))
       }
@@ -227,7 +227,6 @@ export default {
       }, 1000)
     }
     return {
-      isClick: false,
       isCanUpdate: false,
       isLogin: false, // 是否登录悟空账号
       dialogVisible: false, // 登录弹窗
@@ -286,31 +285,19 @@ export default {
   },
 
   created() {
-    const _this = this
-    async function decorator() {
-      var { data } = await crmCheckVersionAPI()
-      _this.checkIsNewest(data.version, data.serverVersion)
-
-      _this.checkLoading = false
-
-      _this.version = data.version
-      _this.serverVersion = data.serverVersion
-
-      _this.isCheckUpdate = true
-    }
-    decorator()
+    this.checkHandle()
   },
 
   methods: {
     loginHandle(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          var param = {
+          const param = {
             username: this.loginForm.username,
             password: this.loginForm.password
           }
           loginWKAPI(param).then(res => {
-            var { data } = res
+            const { data } = res
             if (res.code === 0) {
               this.userData = data
               this.dialogVisible = false
@@ -333,45 +320,41 @@ export default {
 
     async checkHandle() {
       this.checkLoading = true
-      var { data } = await crmCheckVersionAPI()
-
-      this.isNewest = this.checkIsNewest(data.version, data.serverVersion)
+      const { data } = await crmCheckVersionAPI()
       this.checkLoading = false
+      this.isNewest = this.checkIsNewest(data.version, data.serverVersion)
 
       this.version = data.version
       this.serverVersion = data.serverVersion
 
       this.isCheckUpdate = true
-      this.isClick = true
     },
 
-    checkIsNewest(a, b) {
-      var a = toNum(a)
-      var b = toNum(b)
-
-      if (a > b) {
-        return false
-      } else {
-        return true
-      }
-
-      function toNum(a) {
-        var a = a.toString()
-        var c = a.split('.')
-        var num_place = ['', '0', '00', '000', '0000']
-        var r = num_place.reverse()
-        for (var i = 0; i < c.length; i++) {
-          var len = c[i].length
-          c[i] = r[len] + c[i]
+    checkIsNewest(preVersion, lastVersion) {
+      const sources = preVersion.split('.')
+      const dests = lastVersion.split('.')
+      const maxL = Math.max(sources.length, dests.length)
+      let result = true
+      for (let i = 0; i < maxL; i++) {
+        const preValue = sources.length > i ? sources[i] : 0
+        const preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
+        const lastValue = dests.length > i ? dests[i] : 0
+        const lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue)
+        if (preNum < lastNum) {
+          result = false
+          break
+        } else if (preNum > lastNum) {
+          result = true
+          break
         }
-        var res = c.join('')
-        return res
       }
+      console.log(preVersion, lastVersion, result)
+      return result
     },
 
     async queryDatabaseHandle() {
       this.isCustom = 1
-      var res = await crmQueryDatabaseAPI()
+      const res = await crmQueryDatabaseAPI()
       this.databaseList = res.data
       this.isShowDatabase = res.code === 0
     },
@@ -390,7 +373,7 @@ export default {
       if (!this.isLogin) {
         this.$message({
           showClose: true,
-          message: '请登陆悟空账号',
+          message: '请登录悟空账号',
           type: 'warning'
         })
         return
@@ -407,7 +390,7 @@ export default {
 
 
       this.backLoading = true
-      var data = this.isCustom
+      const data = this.isCustom
         ? {
           backupType: this.backupType,
           databaseName: this.database,
@@ -416,7 +399,7 @@ export default {
           isCustom: this.isCustom
         }
         : Object.assign(this.customDatabase, this.loginForm)
-      var res = await crmBackupDatabaseAPI(data)
+      const res = await crmBackupDatabaseAPI(data)
 
       this.backLoading = false
       if (res.code === 0) {
@@ -429,7 +412,7 @@ export default {
     async updateHandle() {
       if (!this.isLogin) {
         this.$message({
-          message: '未进行登陆',
+          message: '请先登录悟空账号',
           type: 'warning'
         })
         return
@@ -443,7 +426,7 @@ export default {
       }
 
       this.updateLoading = true
-      var data = this.isCustom
+      const data = this.isCustom
         ? {
           backupType: this.backupType,
           databaseName: this.database,
@@ -452,14 +435,14 @@ export default {
           isCustom: this.isCustom
         }
         : Object.assign(this.customDatabase, this.loginForm)
-      var res = await crmUpdateAPI(data)
+      const res = await crmUpdateAPI(data)
       if (res.code === 0) {
         this.progressTooltip = '更新准备中'
-        var _this = this
-        var timer = setInterval(function() {
+        const _this = this
+        const timer = setInterval(function() {
           fn()
           async function fn() {
-            var res = await updateProgressAPI()
+            const res = await updateProgressAPI()
             switch (res.data) {
               case 5:
                 _this.progressTooltip = '获取更新信息中'
@@ -739,7 +722,7 @@ $linkColor: #3b6ff1;
   }
 }
 
-// 登陆表单
+// 登录表单
 .login-form {
   .el-button {
     width: 100%;

@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -35,7 +36,7 @@ import {
   crmCustomerPoolSetNameListAPI
 } from '@/api/crm/customer'
 
-import { Loading } from 'element-ui'
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   /**
@@ -44,7 +45,7 @@ export default {
   name: 'PoolTransfer',
   components: {
   },
-  mixins: [],
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -55,6 +56,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       selectId: '',
       allList: []
     }
@@ -86,16 +88,14 @@ export default {
      * 获取数据源
      */
     getList() {
-      const loading = Loading.service({
-        target: document.querySelector(`.el-dialog[aria-label="转移"]`)
-      })
+      this.loading = true
       crmCustomerPoolSetNameListAPI()
         .then(res => {
           this.allList = res.data || []
-          loading && loading.close()
+          this.loading = false
         })
         .catch(() => {
-          loading && loading.close()
+          this.loading = false
         })
     },
 
@@ -111,9 +111,7 @@ export default {
      */
     handleConfirm() {
       if (this.selectId) {
-        const loading = Loading.service({
-          target: document.querySelector(`.el-dialog[aria-label="转移"]`)
-        })
+        this.loading = true
         crmCustomerPoolSetTransferAPI({
           prePoolId: this.id,
           postPoolId: this.selectId
@@ -123,12 +121,12 @@ export default {
               type: 'success',
               message: '操作成功'
             })
-            loading.close()
+            this.loading = false
             this.$emit('transfer')
             this.handleCancel()
           })
           .catch(() => {
-            loading.close()
+            this.loading = false
           })
       }
     }

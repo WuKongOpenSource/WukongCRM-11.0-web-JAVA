@@ -1,6 +1,7 @@
 <template>
   <div :class="{ 'is-close': collapse }" class="menu-item-content">
     <i
+      v-if="icon"
       :class="['wk', `wk-${icon}`]"/>
     <span class="side-bar-label">{{ title }}</span>
     <span v-if="count">({{ count }})</span>
@@ -41,8 +42,10 @@ export default {
   border-radius: $xr-border-radius-base;
   line-height: 36px;
   margin: 5px 0;
-  padding-left: 10px;
+  padding: 0 10px;
   position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 

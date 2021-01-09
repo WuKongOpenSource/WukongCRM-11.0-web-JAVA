@@ -267,3 +267,18 @@ export function crmContractQueryVisitAPI(data) {
     }
   })
 }
+
+/**
+ * 产品下合同
+ * @param {*} data
+ */
+export function crmContractQueryListByProductIdAPI(data) {
+  return request({
+    url: 'crmContract/queryListByProductId',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}

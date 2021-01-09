@@ -37,14 +37,14 @@
 </template>
 <script type="text/javascript">
 import XhStructure from './XhStructure'
-import arrayMixin from './arrayMixin'
+import ArrayMixin from './ArrayMixin'
 
 export default {
   name: 'XhStructureCell', // 新建 structure-cell
   components: {
     XhStructure
   },
-  mixins: [arrayMixin],
+  mixins: [ArrayMixin],
   props: {
     placeholder: {
       type: String,

@@ -92,7 +92,7 @@
 <script>
 import { crmIndexRankingAPI } from '@/api/crm/workbench'
 
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -106,7 +106,7 @@ export default {
       ][sort - 1]
     }
   },
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       data: [],

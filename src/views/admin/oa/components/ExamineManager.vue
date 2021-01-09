@@ -12,12 +12,10 @@
       id="examine-table"
       :data="list"
       :height="tableHeight"
-      :cell-class-name="cellClassName"
       class="main-table"
       stripe
       highlight-current-row
-      style="width: 100%"
-      @row-click="handleRowClick">
+      style="width: 100%">
       <el-table-column
         width="100"
         label="审批流图标">
@@ -59,7 +57,7 @@
           <el-button
             type="text"
             size="small"
-            @click="handleClick('change', scope)">{{ scope.row['status'] === 0 ? '启用' : '停用' }}</el-button>
+            @click="handleClick('change', scope)">{{ scope.row['status'] === 2 ? '启用' : '停用' }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -75,33 +73,32 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"/>
     </div>
-    <create-examine-category
-      v-if="showHandleView"
-      :handle="createHandleInfo"
-      @save="saveSuccess"
-      @hiden-view="showHandleView=false"/>
-    <examine-category-detail
-      v-if="showDetail"
-      :data="detailData"
-      @refresh="getList"
-      @hide-view="showDetail=false"/>
+    <oa-approve-flow-create
+      v-if="createShow"
+      :detail="rowDetail"
+      @success="saveSuccess"
+      @close="createShow = false"
+    />
+
+    <!-- 审批流升级提醒 -->
+    <approval-flow-update-dialog />
   </div>
 </template>
 
 <script>
 import {
-  oaExamineCategoryListAPI,
-  oaExamineCategoryEnablesAPI,
-  oaExamineCategoryDeleteAPI
-} from '@/api/admin/oa'
-import CreateExamineCategory from './CreateExamineCategory'
-import ExamineCategoryDetail from './ExamineCategoryDetail'
+  examinesQueryListAPI,
+  examinesUpdateStatusAPI
+} from '@/api/examine'
+
+import OaApproveFlowCreate from './Create'
+import ApprovalFlowUpdateDialog from '@/components/ApprovalFlow/ApprovalFlowUpdateDialog'
 
 export default {
   name: 'ExamineManager',
   components: {
-    CreateExamineCategory,
-    ExamineCategoryDetail
+    OaApproveFlowCreate,
+    ApprovalFlowUpdateDialog
   },
   data() {
     return {
@@ -110,23 +107,23 @@ export default {
       list: [],
       fieldList: [
         {
-          prop: 'title',
-          label: '审批名称',
-          width: 150
-        },
-        {
-          prop: 'examineType',
-          label: '流程类型',
+          prop: 'examineName',
+          label: '审批类型名称',
           width: 150
         },
         {
           prop: 'userList',
-          label: '可见范围',
+          label: '发起人范围',
+          width: 150
+        },
+        {
+          prop: 'recheckType',
+          label: '审批被拒后重新提交',
           width: 150
         },
         {
           prop: 'remarks',
-          label: '审批说明',
+          label: '审批类型说明',
           width: 150
         },
         {
@@ -144,41 +141,42 @@ export default {
       pageSize: 10,
       pageSizes: [10, 20, 30, 40],
       total: 0,
-      showHandleView: false, // 审批类型操作
-      // 创建的相关信息
-      createHandleInfo: { action: 'save', type: 'examine', id: '' },
-      // 详情展示
-      showDetail: false,
-      detailData: {}
+      rowDetail: null,
+      createShow: false // 审批类型操作
     }
   },
   watch: {},
   mounted() {
-    var self = this
-    /** 控制table的高度 */
-    window.onresize = function() {
-      self.tableHeight = document.documentElement.clientHeight - 240
+    window.onresize = () => {
+      this.tableHeight = document.documentElement.clientHeight - 240
     }
 
     this.getList()
   },
   methods: {
-    /** 新建成功 */
+    /**
+     * 新建成功
+     */
     saveSuccess() {
       this.currentPage = 1
       this.getList()
     },
-    /** 获取列表数据 */
-    /** 获取列表数据 */
+
+    /**
+     * 获取列表数据
+     */
     getList() {
       this.loading = true
-      oaExamineCategoryListAPI({
+      examinesQueryListAPI({
         page: this.currentPage,
-        limit: this.pageSize
+        limit: this.pageSize,
+        label: 0 // oa
       })
         .then(res => {
-          res.data.list.forEach(item => {
-            const temps = item.icon ? item.icon.split(',') : []
+          const resData = res.data || {}
+          const list = resData.list || []
+          list.forEach(item => {
+            const temps = item.examineIcon ? item.examineIcon.split(',') : []
             if (temps.length > 1) {
               item.iconClass = temps[0]
               item.iconColor = temps[1]
@@ -187,9 +185,9 @@ export default {
               item.iconColor = '#9376FF'
             }
           })
-          this.list = res.data.list
+          this.list = list
 
-          this.total = res.data.totalRow
+          this.total = resData.totalRow
 
           this.loading = false
         })
@@ -198,18 +196,12 @@ export default {
         })
     },
 
-    /** 格式化字段 */
+    /**
+     * 格式化字段
+     */
     fieldFormatter(row, column) {
       // 如果需要格式化
-      if (column.property === 'examineType') {
-        if (row[column.property] === 1) {
-          return '固定审批流'
-        } else if (row[column.property] === 2) {
-          return '授权审批人'
-        } else {
-          return ''
-        }
-      } else if (column.property === 'userList') {
+      if (column.property === 'userList') {
         const structures = row['deptList'] || []
         let strName = structures
           .map(item => {
@@ -230,44 +222,39 @@ export default {
         const name = strName + userName
         return name || '全公司'
       } else if (column.property === 'status') {
-        if (row[column.property] === 0) {
+        // status    1 正常 2 停用 3 删除
+        if (row[column.property] === 2) {
           return '停用'
         }
         return '启用'
+      } else if (column.property === 'recheckType') {
+        return {
+          1: '返回审批流初始层级',
+          2: '跳过审批流已通过的层级，返回拒绝的层级'
+        }[row[column.property]]
       }
       return row[column.property]
     },
-    /**
-     * 通过回调控制class
-     */
-    cellClassName({ row, column, rowIndex, columnIndex }) {
-      if (column.property === 'title') {
-        return 'can-visit--underline'
-      } else {
-        return ''
-      }
-    },
+
     /**
      *  添加审批流
      */
     addExamine() {
-      this.createHandleInfo = { action: 'save', type: 'examine', id: '' }
-      this.showHandleView = true
+      this.rowDetail = null
+      this.createShow = true
     },
-    /** 列表操作 */
-    // 当某一行被点击时会触发该事件
-    handleRowClick(row, column, event) {
-      if (column.property) {
-        this.detailData = row
-        this.showDetail = true
-      }
-    },
-    // 更改每页展示数量
+
+    /**
+     * 更改每页展示数量
+     */
     handleSizeChange(val) {
       this.pageSize = val
       this.getList()
     },
-    // 更改当前页数
+
+    /**
+     * 更改当前页数
+     */
     handleCurrentChange(val) {
       this.currentPage = val
       this.getList()
@@ -279,14 +266,12 @@ export default {
           params: {
             type: 'oa_examine',
             label: '10',
-            id: scope.row.categoryId
+            id: scope.row.examineId
           }
         })
       } else if (type === 'edit') {
-        this.createHandleInfo.action = 'update'
-        this.createHandleInfo.id = scope.row.categoryId
-        this.createHandleInfo.data = scope.row
-        this.showHandleView = true
+        this.rowDetail = scope.row
+        this.createShow = true
       } else if (type === 'delete') {
         // 启用停用
         this.$confirm('您确定要删除该审批流?', '提示', {
@@ -296,8 +281,9 @@ export default {
         })
           .then(() => {
             this.loading = true
-            oaExamineCategoryDeleteAPI({
-              id: scope.row['categoryId']
+            examinesUpdateStatusAPI({
+              examineId: scope.row['examineId'],
+              status: 3
             })
               .then(res => {
                 this.list.splice(scope.$index, 1)
@@ -326,7 +312,7 @@ export default {
         // 启用停用
         this.$confirm(
           '您确定要' +
-            (scope.row['status'] === 0 ? '启用' : '停用') +
+            (scope.row['status'] === 2 ? '启用' : '停用') +
             '该审批流?',
           '提示',
           {
@@ -336,16 +322,16 @@ export default {
           }
         )
           .then(() => {
-            oaExamineCategoryEnablesAPI({
-              id: scope.row['categoryId'],
-              status: scope.row['status'] === 0 ? 1 : 0
+            examinesUpdateStatusAPI({
+              examineId: scope.row['examineId'],
+              status: scope.row['status'] === 2 ? 1 : 2
             })
               .then(res => {
-                scope.row['status'] = scope.row['status'] === 0 ? 1 : 0
                 this.$message({
                   type: 'success',
                   message: '操作成功'
                 })
+                this.getList()
               })
               .catch(() => {})
           })

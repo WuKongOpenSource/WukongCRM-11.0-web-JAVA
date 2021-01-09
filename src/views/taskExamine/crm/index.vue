@@ -48,8 +48,8 @@
 
 <script>
 import {
-  crmExamineMyExamineAPI
-} from '@/api/crm/common'
+  examineWaitingQueryCrmExamineListAPI
+} from '@/api/examine'
 import BaseTabsHead from '@/components/BaseTabsHead'
 import CrmCell from './components/CrmCell'
 import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
@@ -151,14 +151,14 @@ export default {
 
       // 1合同 2 回款 3 发票
       if (this.crmType == 'contract') {
-        params.categoryType = 1
+        params.label = 1
       } else if (this.crmType == 'receivables') {
-        params.categoryType = 2
+        params.label = 2
       } else if (this.crmType == 'invoice') {
-        params.categoryType = 3
+        params.label = 3
       }
 
-      crmExamineMyExamineAPI(params)
+      examineWaitingQueryCrmExamineListAPI(params)
         .then(res => {
           this.loading = false
           const status = this.tabsSelectValue == 'all' ? '' : this.tabsSelectValue
@@ -193,7 +193,7 @@ export default {
 
       if (type == 'detail') {
         this.detailCrmType = this.crmType
-        this.rowID = data.catagoryId
+        this.rowID = data.categoryId
         this.showCrmDetail = true
       } else if (type == 'relate-detail') {
         this.showDview = false
@@ -202,7 +202,7 @@ export default {
         this.showCrmDetail = true
       } else if (type == 'reject' || type == 'pass' || type == 'withdraw') {
         // 审核操作 1 审核通过 2 审核拒绝 4 已撤回
-        this.rowID = data.catagoryId
+        this.rowID = data.categoryId
         this.examineStatus = {
           pass: 1,
           reject: 2,
@@ -239,9 +239,9 @@ export default {
       // }
 
       // if (this.crmType == 'contract') {
-      //   params.categoryType = 1
+      //   params.label = 1
       // } else if (this.crmType == 'receivables') {
-      //   params.categoryType = 2
+      //   params.label = 2
       // }
 
       // crmExamineMyExamineAPI(params)
@@ -249,7 +249,7 @@ export default {
       //     const crmData = this.list[this.detailIndex]
       //     for (let index = 0; index < res.data.list.length; index++) {
       //       const element = res.data.list[index]
-      //       if (element.catagoryId == crmData.catagoryId) {
+      //       if (element.categoryId == crmData.categoryId) {
       //         this.list.splice(this.detailIndex, 1, element)
       //         break
       //       }

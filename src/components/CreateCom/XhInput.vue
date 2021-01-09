@@ -17,12 +17,12 @@
     @input="valueChange"/>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 
 export default {
   name: 'XhInput', // 新建 input
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {},
   data() {
     return {}

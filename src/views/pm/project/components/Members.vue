@@ -35,8 +35,19 @@
             :size="24"
             :src="item.img"
             class="user-img" />
-          <span>{{ item.realname }}
-          </span>
+          <span class="user-name">{{ item.realname }}</span>
+          <el-select
+            v-if="permission.manageTaskOwnerUser"
+            v-model="item.roleId"
+            style="width: 120px;"
+            size="mini"
+            @change="userAuthChange">
+            <el-option
+              v-for="val in optionList"
+              :key="val.roleId"
+              :label="val.roleName"
+              :value="val.roleId"/>
+          </el-select>
           <i
             v-if="canUpdateWork"
             class="el-icon-close"
@@ -48,12 +59,15 @@
 </template>
 
 <script>
-// API
 import {
   workWorkOwnerDelAPI,
-  workWorkUpdateAPI
+  workWorkUpdateAPI,
+  workWorkGroupListAPI,
+  workWorkAddUserGroupAPI
 } from '@/api/pm/project'
+
 import MembersDep from '@/components/SelectEmployee/MembersDep'
+
 import { getMaxIndex } from '@/utils/index'
 
 export default {
@@ -83,7 +97,8 @@ export default {
     return {
       zIndex: getMaxIndex(),
       loading: false,
-      userList: []
+      userList: [],
+      optionList: []
     }
   },
 
@@ -100,6 +115,7 @@ export default {
     visible(val) {
       if (val) {
         this.userList = this.list || []
+        this.getGroupList()
       } else {
         this.$emit('close')
       }
@@ -117,6 +133,17 @@ export default {
   },
 
   methods: {
+    /**
+     * 获取项目角色列表
+     */
+    getGroupList() {
+      workWorkGroupListAPI()
+        .then(res => {
+          this.optionList = res.data || []
+        })
+        .catch(() => {})
+    },
+
     /**
      * 编辑成员
      */
@@ -136,6 +163,32 @@ export default {
           this.loading = false
         })
     },
+
+    /**
+     * 编辑成员权限
+     */
+    userAuthChange(members, dep) {
+      for (let index = 0; index < this.userList.length; index++) {
+        const element = this.userList[index]
+        if (!element.roleId) {
+          return
+        }
+      }
+      this.loading = true
+      workWorkAddUserGroupAPI({
+        list: this.userList,
+        workId: this.workId
+      })
+        .then(res => {
+          this.loading = false
+          this.$message.success('操作成功')
+          this.$emit('handle', 'member', this.userList)
+        })
+        .catch(() => {
+          this.loading = false
+        })
+    },
+
 
     /**
      * 删除员工
@@ -234,6 +287,15 @@ export default {
       .user-img {
         vertical-align: middle;
         margin-right: 5px;
+      }
+
+      .user-name {
+        display: inline-block;
+        width: 70px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        vertical-align: middle;
       }
     }
     .item-list:hover {

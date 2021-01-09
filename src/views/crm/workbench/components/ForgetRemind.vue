@@ -53,14 +53,14 @@
 import { crmIndexForgottenCustomerAPI, crmIndexForgottenCustomerListAPI, crmIndexUnContactCustomerAPI } from '@/api/crm/workbench'
 
 import ReportList from './ReportList'
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 
 export default {
   name: 'RankingStatistics',
   components: {
     ReportList
   },
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       data: [

@@ -35,14 +35,14 @@
 </template>
 <script type="text/javascript">
 import CrmRelative from './CrmRelative'
-import arrayMixin from './arrayMixin'
+import ArrayMixin from './ArrayMixin'
 
 export default {
   name: 'CrmRelativeCell', // 相关模块CRMCell 单类型 自定义字段用
   components: {
     CrmRelative
   },
-  mixins: [arrayMixin],
+  mixins: [ArrayMixin],
   props: {
     relation: {
       // 相关ID

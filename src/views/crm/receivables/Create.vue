@@ -41,26 +41,23 @@
         </template>
       </wk-form>
     </create-sections>
+
     <create-sections
-      v-if="isOpenExamine"
+      v-if="wkFlowList"
       title="审核信息">
       <template slot="header">
-        <div
-          v-if="examineInfo.examineType===1 || examineInfo.examineType===2"
-          class="examine-type">{{ examineInfo.examineType===1 ? '固定审批流' : '授权审批人' }}</div>
         <el-tooltip
-          v-if="examineInfo && examineInfo.remarks"
-          :content="examineInfo.remarks"
+          v-if="flowRemarks"
+          :content="flowRemarks"
           effect="dark"
           placement="top">
-          <i class="wk wk-help wk-help-tips" style="height: 13px;"/>
+          <i class="wk wk-help wk-help-tips" style="margin-left: 8px;"/>
         </el-tooltip>
       </template>
-      <create-examine-info
-        ref="examineInfo"
-        :types-id="action.id"
-        types="crm_receivables"
-        @value-change="examineValueChange" />
+      <wk-approval-flow-apply
+        :data="wkFlowList"
+        style="padding: 15px;"
+      />
     </create-sections>
 
     <el-button
@@ -82,13 +79,14 @@ import {
   XhReceivablesPlan,
   CrmRelativeCell
 } from '@/components/CreateCom'
-import CreateExamineInfo from '@/components/Examine/CreateExamineInfo'
+import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
+import WkApprovalFlowApplyMixin from '@/components/Examine/mixins/WkApprovalFlowApply'
+
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CustomFieldsMixin from '@/mixins/CustomFields'
 import { debounce } from 'throttle-debounce'
 import { objDeepCopy } from '@/utils'
-// import { isEmpty } from '@/utils/types'
 
 export default {
   // 新建编辑
@@ -99,11 +97,11 @@ export default {
     CreateSections,
     CrmRelativeCell,
     XhReceivablesPlan,
-    CreateExamineInfo,
+    WkApprovalFlowApply,
     WkForm
   },
 
-  mixins: [CustomFieldsMixin],
+  mixins: [CustomFieldsMixin, WkApprovalFlowApplyMixin],
 
   props: {
     action: {
@@ -127,7 +125,8 @@ export default {
       fieldRules: {},
 
       // 审批信息
-      examineInfo: {}
+      flowRemarks: '',
+      wkFlowList: null // 有值有审批流
     }
   },
 
@@ -140,18 +139,9 @@ export default {
       return this.action.type == 'update' ? this.action.id : ''
     },
 
-    // 合同 回款 下展示审批人信息
-    isOpenExamine() {
-      if (this.examineInfo) {
-        // 初始状态是空对象默认展示，请求之后，根据status判断
-        return Object.keys(this.examineInfo).length > 0 ? this.examineInfo.status == 1 : true
-      }
-      return false
-    },
-
     // 确认名称
     sureBtnTitle() {
-      if (this.isOpenExamine) {
+      if (this.wkFlowList) {
         return '提交审核'
       }
       return '保存'
@@ -273,6 +263,14 @@ export default {
           this.fieldForm = fieldForm
           this.fieldRules = fieldRules
 
+          // 审核信息
+          this.initWkFlowData({
+            params: { label: 2 },
+            fieldForm: this.fieldForm
+          }, res => {
+            this.wkFlowList = res.list
+            this.flowRemarks = res.resData ? res.resData.remarks : ''
+          })
 
           this.loading = false
         })
@@ -289,39 +287,19 @@ export default {
       const crmForm = this.$refs.crmForm.instance
       crmForm.validate(valid => {
         if (valid) {
-          if (this.isOpenExamine) {
-            /** 验证审批数据 */
-            if (isDraft) {
-              // 不验证数据
-              const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
-              if (
-                this.examineInfo.examineType === 2 &&
-                this.examineInfo.hasOwnProperty('value') &&
-                this.examineInfo.value.length
-              ) {
-                params['checkUserId'] = this.examineInfo.value[0].userId
-              }
-              params.entity.checkStatus = 5
-              this.submiteParams(params)
-            } else {
-              this.$refs.examineInfo.validateField((result) => {
-                if (result) {
-                  const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
-                  if (this.examineInfo.examineType === 2) {
-                    params['checkUserId'] = this.examineInfo.value[0].userId
-                  }
-                  this.submiteParams(params)
-                } else {
-                  this.loading = false
-                }
-              })
-            }
-          } else {
+          const wkFlowResult = this.validateWkFlowData(this.wkFlowList)
+          if (wkFlowResult.pass) {
             const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
             if (isDraft) {
               params.entity.checkStatus = 5
             }
+            if (wkFlowResult.data) {
+              params.examineFlowData = wkFlowResult.data
+            }
             this.submiteParams(params)
+          } else {
+            this.loading = false
+            this.$message.error('请完善审批信息')
           }
         } else {
           this.loading = false
@@ -380,6 +358,8 @@ export default {
      * change
      */
     formChange(field, index, value, valueList) {
+      // 审批流逻辑
+      this.debouncedGetWkFlowList(field.field, this.fieldForm)
     },
 
     /**
@@ -432,13 +412,6 @@ export default {
     },
 
     /**
-     * 审批信息值更新
-     */
-    examineValueChange(data) {
-      this.examineInfo = data
-    },
-
-    /**
      * 关闭
      */
     close() {
@@ -452,6 +425,7 @@ export default {
 .wk-form {
   /deep/ .el-form-item.is-product {
     flex: 0 0 100%;
+    width: 0;
   }
 }
 </style>

@@ -3,7 +3,7 @@
     <xr-header
       icon-class="wk wk-approve"
       icon-color="#FFB940"
-      label="审批流" />
+      label="业务审批流" />
     <div class="main-body">
       <div class="main-table-header">
         <el-button
@@ -17,11 +17,9 @@
         id="examine-table"
         :data="list"
         :height="tableHeight"
-        :cell-class-name="cellClassName"
         class="main-table"
         highlight-current-row
-        style="width: 100%"
-        @row-click="handleRowClick">
+        style="width: 100%">
         <el-table-column
           v-for="(item, index) in fieldList"
           :key="index"
@@ -47,7 +45,7 @@
             <el-button
               type="text"
               size="small"
-              @click="handleClick('change', scope)">{{ scope.row['status'] === 0 ? '启用' : '停用' }}</el-button>
+              @click="handleClick('change', scope)">{{ scope.row['status'] === 2 ? '启用' : '停用' }}</el-button>
             <el-button
               type="text"
               size="small"
@@ -68,36 +66,36 @@
           @current-change="handleCurrentChange"/>
       </div>
     </div>
-    <create-system-examine
-      v-if="showHandleView"
-      :handle="createHandleInfo"
-      @save="getList"
-      @hiden-view="showHandleView=false"/>
-    <system-examine-detail
-      v-if="showDetail"
-      :data="detailData"
-      @refresh="getList"
-      @hide-view="showDetail=false"/>
+    <business-approve-flow-create
+      v-if="createShow"
+      :detail="rowDetail"
+      :is-copy="isCopyCreate"
+      @success="getList"
+      @close="createShow = false"
+    />
+
+    <!-- 审批流升级提醒 -->
+    <approval-flow-update-dialog />
   </div>
 </template>
 
 <script>
 import {
-  crmExamineQueryAllAPI,
-  crmExamineUpdateStatusAPI
+  examinesQueryListAPI,
+  examinesUpdateStatusAPI
 } from '@/api/examine'
 
-import CreateSystemExamine from './components/CreateSystemExamine'
-import SystemExamineDetail from './components/SystemExamineDetail'
+import BusinessApproveFlowCreate from './Create'
 import XrHeader from '@/components/XrHeader'
+import ApprovalFlowUpdateDialog from '@/components/ApprovalFlow/ApprovalFlowUpdateDialog'
 
 export default {
-  /** 系统管理 的 审核管理 */
+  // 系统管理 的 审核管理
   name: 'SystemExamine',
   components: {
-    CreateSystemExamine,
-    SystemExamineDetail,
-    XrHeader
+    XrHeader,
+    BusinessApproveFlowCreate,
+    ApprovalFlowUpdateDialog
   },
   mixins: [],
   data() {
@@ -107,23 +105,18 @@ export default {
       list: [],
       fieldList: [
         {
-          prop: 'name',
+          prop: 'examineName',
           label: '审批流名称',
           width: 150
         },
         {
-          prop: 'examineType',
-          label: '流程类型',
-          width: 150
-        },
-        {
-          prop: 'categoryType',
+          prop: 'label',
           label: '关联对象',
           width: 150
         },
         {
-          prop: 'userList',
-          label: '适用范围',
+          prop: 'recheckType',
+          label: '审批被拒后重新提交',
           width: 150
         },
         {
@@ -146,15 +139,7 @@ export default {
       pageSize: 20,
       pageSizes: [10, 20, 30, 40],
       total: 0,
-      /** 展示操作框 */
-      showHandleView: false,
-      // 创建的相关信息
-      createHandleInfo: { action: 'save', type: 'examineflow', id: '' },
-      // 详情展示
-      showDetail: false,
-      detailData: {},
-
-      categoryTypeList: [
+      labelList: [
         { name: '合同', value: 1 },
         { name: '回款', value: 2 },
         { name: '发票', value: 3 },
@@ -167,23 +152,27 @@ export default {
         { name: '回款审批', value: 10 },
         { name: '盘点审批', value: 11 },
         { name: '调拨审批', value: 12 }
-      ]
+      ],
+      rowDetail: null,
+      isCopyCreate: false,
+      createShow: false
     }
   },
   computed: {},
   mounted() {
-    // 控制table的高度
     window.onresize = () => {
-      self.tableHeight = document.documentElement.clientHeight - 240
+      this.tableHeight = document.documentElement.clientHeight - 240
     }
 
     this.getList()
   },
   methods: {
-    /** 获取列表数据 */
+    /**
+     * 获取列表数据
+     */
     getList() {
       this.loading = true
-      crmExamineQueryAllAPI({
+      examinesQueryListAPI({
         page: this.currentPage,
         limit: this.pageSize
       }).then(res => {
@@ -195,21 +184,15 @@ export default {
         this.loading = false
       })
     },
-    /** 格式化字段 */
+
+    /**
+     * 格式化字段
+     */
     fieldFormatter(row, column) {
       // 如果需要格式化
       // 1 固定审批 2 授权审批
-      if (column.property === 'examineType') {
-        if (row[column.property] === 1) {
-          return '固定审批流'
-        } else if (row[column.property] === 2) {
-          return '授权审批人'
-        } else {
-          return ''
-        }
-        // 1 合同 2 回款
-      } else if (column.property === 'categoryType') {
-        const findRes = this.categoryTypeList.find(o => o.value === row.categoryType)
+      if (column.property === 'label') {
+        const findRes = this.labelList.find(o => o.value === row.label)
         return findRes ? findRes.name : '--'
       } else if (column.property === 'userList') {
         const structures = row['deptList'] || []
@@ -231,56 +214,50 @@ export default {
         }
         const name = strName + userName
         return name || '全公司'
-        // 1 启用 0 禁用 2 删除
+        // status    1 正常 2 停用 3 删除
       } else if (column.property === 'status') {
-        if (row[column.property] === 0) {
+        if (row[column.property] === 2) {
           return '停用'
         }
         return '启用'
+      } else if (column.property === 'recheckType') {
+        return {
+          1: '返回审批流初始层级',
+          2: '跳过审批流已通过的层级，返回拒绝的层级'
+        }[row[column.property]]
       }
       return row[column.property]
     },
-    /**
-     * 通过回调控制class
-     */
-    cellClassName({ row, column, rowIndex, columnIndex }) {
-      if (column.property === 'name') {
-        return 'can-visit--underline'
-      } else {
-        return ''
-      }
-    },
+
     /**
      *  添加审批流
      */
     addExamine() {
-      this.createHandleInfo = { action: 'save', type: 'examineflow', id: '' }
-      this.showHandleView = true
+      this.isCopyCreate = false
+      this.rowDetail = null
+      this.createShow = true
     },
-    /** 列表操作 */
-    // 当某一行被点击时会触发该事件
-    handleRowClick(row, column, event) {
-      if (column.property) {
-        this.detailData = row
-        this.showDetail = true
-      }
-    },
-    // 更改每页展示数量
+
+    /**
+     * 更改每页展示数量
+     */
     handleSizeChange(val) {
       this.pageSize = val
       this.getList()
     },
-    // 更改当前页数
+
+    /**
+     * 更改当前页数
+     */
     handleCurrentChange(val) {
       this.currentPage = val
       this.getList()
     },
     handleClick(type, scope) {
       if (type === 'edit') {
-        this.createHandleInfo.action = 'update'
-        this.createHandleInfo.id = scope.row.examineId
-        this.createHandleInfo.data = scope.row
-        this.showHandleView = true
+        this.isCopyCreate = false
+        this.rowDetail = scope.row
+        this.createShow = true
       } else if (type === 'delete') {
         // 启用停用
         this.$confirm('您确定要删除该审批流?', '提示', {
@@ -289,8 +266,9 @@ export default {
           type: 'warning'
         })
           .then(() => {
-            crmExamineUpdateStatusAPI({
-              examineId: scope.row['examineId']
+            examinesUpdateStatusAPI({
+              examineId: scope.row['examineId'],
+              status: 3
             }).then(res => {
               this.list.splice(scope.$index, 1)
               if (this.list.length === 0) {
@@ -312,7 +290,7 @@ export default {
         // 启用停用
         this.$confirm(
           '您确定要' +
-            (scope.row['status'] === 0 ? '启用' : '停用') +
+            (scope.row['status'] === 2 ? '启用' : '停用') +
             '该审批流?',
           '提示',
           {
@@ -322,15 +300,15 @@ export default {
           }
         )
           .then(() => {
-            crmExamineUpdateStatusAPI({
+            examinesUpdateStatusAPI({
               examineId: scope.row['examineId'],
-              status: scope.row['status'] === 0 ? 1 : 0
+              status: scope.row['status'] === 2 ? 1 : 2
             }).then(res => {
-              scope.row['status'] = scope.row['status'] === 0 ? 1 : 0
               this.$message({
                 type: 'success',
                 message: '操作成功'
               })
+              this.getList()
             }).catch(() => {})
           }).catch(() => {
             this.$message({
@@ -339,10 +317,9 @@ export default {
             })
           })
       } else if (type === 'copy') {
-        this.createHandleInfo.action = 'save'
-        this.createHandleInfo.id = ''
-        this.createHandleInfo.data = scope.row
-        this.showHandleView = true
+        this.isCopyCreate = true
+        this.rowDetail = scope.row
+        this.createShow = true
       }
     }
   }

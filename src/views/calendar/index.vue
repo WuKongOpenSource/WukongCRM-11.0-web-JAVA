@@ -21,7 +21,7 @@
         </xh-user-cell>
         <span v-else class="username">我的日历</span>
       </div>
-      <div class="left-scroll">
+      <el-checkbox-group v-model="checkCusList" class="left-scroll">
         <schedule
           v-loading="scheduleLoading"
           ref="schedule"
@@ -36,17 +36,14 @@
             <span class="main-text">系统类型</span>
             <span :class="{ 'is-reverse' : showSys }" class="el-icon-arrow-up icon"/>
           </div>
-          <template v-if="showGroup">
+          <template v-show="showGroup && showSys">
 
-            <el-checkbox-group v-show="showSys" v-model="checkCusList">
-              <el-checkbox
-                v-for="item in cusCheck"
-                v-if="item.type === 1"
-                :checked="item.select"
-                :class="item.class"
-                :label="item.typeName"
-                :key="item.typeName"/>
-            </el-checkbox-group>
+            <el-checkbox
+              v-for="item in cusCheck"
+              v-if="item.type === 1"
+              :class="item.class"
+              :label="item.typeId"
+              :key="item.typeId">{{ item.typeName }}</el-checkbox>
 
           </template>
         </div>
@@ -56,19 +53,16 @@
             <span class="main-text">自定义类型</span>
             <span :class="{ 'is-reverse' : showCus }" class="el-icon-arrow-up icon"/>
           </div>
-          <template v-if="showGroup">
-            <el-checkbox-group v-show="showCus" v-model="checkCusList">
-              <el-checkbox
-                v-for="item in cusCheck"
-                v-if="item.type === 2"
-                :class="item.class"
-                :checked="item.select"
-                :label="item.typeName"
-                :key="item.typeId"/>
-            </el-checkbox-group>
+          <template v-show="showGroup && showCus">
+            <el-checkbox
+              v-for="item in cusCheck"
+              v-if="item.type === 2"
+              :class="item.class"
+              :label="item.typeId"
+              :key="item.typeId">{{ item.typeName }}</el-checkbox>
           </template>
         </div>
-      </div>
+      </el-checkbox-group>
       <div class="left-bottom-text">
         <i class="el-icon-warning"/>
         <span class="text-span">自定义类型可在后台配置</span>
@@ -233,7 +227,6 @@ export default {
       showTodayDetail: false,
       todayDetailData: {},
       selectDiv: null,
-      typeIds: [],
       // 储存显示日期的开始时间和结束时间
       activeTime: {},
       listDataType: '',
@@ -355,12 +348,12 @@ export default {
      */
     getCusCheck() {
       this.loading = true
-      this.typeIds = []
       this.checkSysList = []
       this.calendarEvents = []
-      this.checkCusList = []
       this.showGroup = false
       this.sysTypeId = []
+
+      const checkCusList = []
       const crmTypeObj = {
         '1': 'task',
         '2': 'customer',
@@ -376,10 +369,11 @@ export default {
         const cusCheck = res.data || []
         this.todaySchedule = []
         cusCheck.forEach(item => {
-          if (item.select) {
-            this.typeIds.push(item.typeId)
-          }
           if (item.type === 1) {
+            if (item.select) {
+              checkCusList.push(item.typeId)
+            }
+
             this.sysTypeId.push(
               { typeId: item.typeId, name: item.typeName, crmType: crmTypeObj[item.color] }
             )
@@ -409,7 +403,11 @@ export default {
           }
         })
 
-        this.activeTime.typeIds = this.typeIds
+        if (this.checkCusList.length === 0) {
+          this.checkCusList = checkCusList
+        }
+
+        this.activeTime.typeIds = this.checkCusList
         this.cusCheck = cusCheck
         this.getTodayTypeList()
       }).catch(() => {
@@ -422,11 +420,11 @@ export default {
      */
     updateList() {
       // 只用于记录，去除loading效果，保证前端无痕保存
-      this.activeTime.typeIds = this.typeIds
-      if (this.typeIds.length === 0) {
+      this.activeTime.typeIds = this.checkCusList
+      if (this.checkCusList.length === 0) {
         return
       }
-      canlendarUpdateTypeAPI({ typeIds: this.typeIds, userId: this.activeTime.userId }).then(res => {
+      canlendarUpdateTypeAPI({ typeIds: this.checkCusList, userId: this.activeTime.userId }).then(res => {
       }).catch(() => {
       })
     },
@@ -610,18 +608,7 @@ export default {
      * 筛选
      */
     customFifter(data) {
-      this.typeIds = []
-      const list = []
-      data.forEach(item => {
-        this.cusCheck.forEach(element => {
-          if (item === element.typeName) {
-            this.typeIds.push(element.typeId)
-            list.push({ typeId: element.typeId, title: item })
-          }
-        })
-      })
-
-      this.updateEvent(list)
+      this.updateEvent(this.checkCusList)
     },
 
     /**
@@ -630,8 +617,8 @@ export default {
     updateEvent(data) {
       const list = []
       this.calendarList.forEach(item => {
-        data.forEach(element => {
-          if (element.typeId === item.groupId) {
+        data.forEach(typeId => {
+          if (typeId === item.groupId) {
             list.push(item)
           }
         })

@@ -34,9 +34,14 @@ const confirmMessage = debounce(1000, (message) => {
   MessageBox.confirm(message, '提示', {
     confirmButtonText: '确定',
     showCancelButton: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    showClose: false,
     type: 'warning'
   }).then(() => {
-    clearCacheEnterLogin()
+    if ((window.app.$route && window.app.$route.name !== 'login') || !window.app.$route) {
+      clearCacheEnterLogin()
+    }
   }).catch(() => {
   })
 })
@@ -97,7 +102,7 @@ service.interceptors.response.use(
     } else if (res.code !== 0) {
       // 302	登录已失效
       if (res.code === 302) {
-        if (res.data.extra === 1) {
+        if (res.data && res.data.extra === 1) {
           confirmMessage(`您的账号${res.data.extraTime}在别处登录。如非本人操作，则密码可能已泄漏，建议修改密码`)
         } else {
           clearCacheEnterLogin()

@@ -69,7 +69,7 @@ const user = {
     }, userInfo) {
       return new Promise((resolve, reject) => {
         loginAPI(userInfo).then(res => {
-          const data = res.data || data
+          const data = res.data || {}
           if (!data.hasOwnProperty('companyList')) {
             commit('SET_AUTH', data)
             dispatch('GetUserInfo')

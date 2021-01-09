@@ -30,6 +30,7 @@
         :height="tableHeight"
         :cell-class-name="cellClassName"
         :header-cell-class-name="headerCellClassName"
+        :row-key="`${crmType}Id`"
         class="n-table--border"
         use-virtual
         stripe
@@ -42,6 +43,7 @@
         @selection-change="handleSelectionChange">
         <el-table-column
           show-overflow-tooltip
+          reserve-selection
           type="selection"
           align="center"
           width="55"/>
@@ -82,6 +84,14 @@
               @change="setSave"/>
           </template>
         </el-table-column>
+        <wk-empty
+          slot="empty"
+          :props="{
+            buttonTitle: '新建联系人',
+            showButton: saveAuth
+          }"
+          @click="createClick"
+        />
       </el-table>
       <div class="p-contianer">
         <el-pagination

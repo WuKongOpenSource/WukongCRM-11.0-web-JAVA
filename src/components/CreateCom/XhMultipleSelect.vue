@@ -14,12 +14,12 @@
   </el-select>
 </template>
 <script type="text/javascript">
-import arrayMixin from './arrayMixin'
+import ArrayMixin from './ArrayMixin'
 
 export default {
   name: 'XhMultipleSelect', // 新建 multiple select
   components: {},
-  mixins: [arrayMixin],
+  mixins: [ArrayMixin],
   props: {},
   data() {
     return {}

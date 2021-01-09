@@ -323,6 +323,7 @@ export default {
 .wk-form {
   /deep/ .el-form-item.is-product {
     flex: 0 0 100%;
+    width: 0;
   }
 }
 </style>

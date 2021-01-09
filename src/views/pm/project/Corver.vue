@@ -127,7 +127,7 @@
 import { workIndexWorkListAPI } from '@/api/pm/task'
 import {
   workWorkCollectAPI,
-  workupdateWorkOrderAPI,
+  workUpdateWorkOrderAPI,
   workWorkDeleteAPI
 } from '@/api/pm/project'
 
@@ -293,9 +293,7 @@ export default {
           return
         }
 
-        workupdateWorkOrderAPI({
-          workIds: this.tabList[0].list.map(item => item.workId)
-        })
+        workUpdateWorkOrderAPI(this.tabList[0].list.map(item => item.workId))
           .then(res => {})
           .catch(() => {})
       }

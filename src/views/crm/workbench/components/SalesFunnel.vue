@@ -47,13 +47,13 @@
 
 <script>
 import echarts from 'echarts'
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 import { crmIndexFunnelAPI } from '@/api/crm/workbench'
 import { crmBusinessStatusListAPI } from '@/api/crm/business'
 
 export default {
   name: 'SalesFunnel',
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       chartOption: {

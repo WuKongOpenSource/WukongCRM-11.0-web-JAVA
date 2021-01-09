@@ -15,16 +15,6 @@
           placement="bottom-start"
           width="182">
           <div class="project-list-popover-btn-list">
-            <members-dep
-              :user-checked-data="membersList"
-              :close-dep="true"
-              @popoverSubmit="userSelectChange">
-              <p
-                v-if="permission.setTaskOwnerUser && projectData.isOpen != 1 && permission.setWork"
-                slot="membersDep"
-                @click="projectHandleShow = false">添加项目成员</p>
-            </members-dep>
-
             <project-settings
               v-if="permission.setWork"
               :work-id="workId"
@@ -33,10 +23,21 @@
               :is-open="projectData.isOpen"
               :add-members-data="membersList"
               :permission="permission"
-              @close="projectHandleShow = false"
+              tab-type="base"
               @submite="setSubmite"
-              @handle="projectSettingsHandle"
-              @click="projectHandleShow = false"/>
+              @handle="projectSettingsHandle"/>
+
+            <project-settings
+              v-if="permission.setTaskOwnerUser && projectData.isOpen != 1"
+              :work-id="workId"
+              :title="projectName"
+              :color="projectColor"
+              :is-open="projectData.isOpen"
+              :add-members-data="membersList"
+              :permission="permission"
+              tab-type="member"
+              @submite="setSubmite"
+              @handle="projectSettingsHandle"/>
             <p v-if="permission.excelImport" @click="taskImportShow = true">导入任务</p>
             <p v-if="permission.excelExport" @click="exportClick">导出任务</p>
             <p
@@ -53,10 +54,13 @@
         </el-popover>
 
         <!-- 人员列表 -->
-        <i
+        <span
           slot="ft"
-          class="wk wk-s-seas ft-img"
-          @click="membersShow = true" />
+          class="ft-btn"
+          @click="membersShow = true">
+          <i class="wk wk-s-seas ft-img" />
+          <span class="ft-label">成员管理</span>
+        </span>
         <span
           v-show="screeningButtonShow"
           slot="ft"
@@ -295,24 +299,6 @@ export default {
         .then(res => {
           this.membersList = res.data || []
           this.$bus.$emit('members-update', this.membersList)
-        })
-        .catch(() => {})
-    },
-
-    /**
-     * 编辑成员
-     */
-    userSelectChange(members, dep) {
-      workWorkUpdateAPI({
-        workId: this.workId,
-        ownerUserId: members
-          .map(item => item.userId)
-          .join(',')
-      })
-        .then(res => {
-          this.membersList = res.data.workOwnerRoleList || []
-          this.$bus.$emit('members-update', this.membersList)
-          this.$message.success('添加成功')
         })
         .catch(() => {})
     },

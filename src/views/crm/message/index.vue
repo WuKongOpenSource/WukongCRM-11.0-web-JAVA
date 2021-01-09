@@ -64,7 +64,7 @@ export default {
         {
           name: '今日需联系线索',
           crmType: 'leads',
-          color: '#2362FB',
+          color: '#c623fb',
           iconClass: 'wk wk-leads',
           infoType: 'todayLeads',
           model: 11,
@@ -86,7 +86,7 @@ export default {
         {
           name: '今日需联系商机',
           crmType: 'business',
-          color: '#2362FB',
+          color: '#fb9323',
           iconClass: 'wk wk-business',
           infoType: 'todayBusiness',
           model: 12,

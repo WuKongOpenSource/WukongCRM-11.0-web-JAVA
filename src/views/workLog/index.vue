@@ -1,119 +1,120 @@
 <template>
-  <div
-    v-infinite-scroll="getList"
-    :key="scrollKey"
-    class="main"
-    infinite-scroll-distance="100"
-    infinite-scroll-disabled="scrollDisabled">
-    <div>
-      <div class="work-log scroll-body">
-        <div class="card">
-          <flexbox class="hello-card">
-            <xr-avatar
-              :name="userInfo.realname"
-              :size="50"
-              :src="userInfo.img"
-              class="user-img" />
+  <div style="height: 100%;">
+    <div
+      v-infinite-scroll="getList"
+      :key="scrollKey"
+      class="main"
+      infinite-scroll-distance="100"
+      infinite-scroll-disabled="scrollDisabled">
+      <div>
+        <div class="work-log scroll-body">
+          <div class="card">
+            <flexbox class="hello-card">
+              <xr-avatar
+                :name="userInfo.realname"
+                :size="50"
+                :src="userInfo.img"
+                class="user-img" />
 
-            <div class="greeting">
-              <div class="hello">
-                {{ headData.timeLabel }}，{{ nickName }}
-                <span class="status">
-                  <span :class="userDoneStatus.icon" class="icon wk" />
-                  <span>{{ userDoneStatus.label }}</span>
-                </span>
+              <div class="greeting">
+                <div class="hello">
+                  {{ headData.timeLabel }}，{{ nickName }}
+                  <span class="status">
+                    <span :class="userDoneStatus.icon" class="icon wk" />
+                    <span>{{ userDoneStatus.label }}</span>
+                  </span>
+                </div>
+                <div v-if="headData && headData.timeRemind" class="text">
+                  {{ headData.timeRemind }}
+                </div>
               </div>
-              <div v-if="headData && headData.timeRemind" class="text">
-                {{ headData.timeRemind }}
+
+              <div class="statistics">
+                <div class="title">
+                  <!-- <span class="icon wk wk-task" /> -->
+                  <span>本月完成日志</span>
+                </div>
+                <div class="info">
+                  <span class="special">{{ headData.allNum }}</span>篇
+                </div>
+
               </div>
+            </flexbox>
+            <flexbox
+              align="stretch"
+              class="report-card">
+              <div class="report-card__label">销售简报</div>
+              <report-menu
+                :list="reportList"
+                @select="reportSelect" />
+            </flexbox>
+          </div>
+
+
+          <create-log v-if="showAdd" ref="createLog" class="add-card card" @update="addLogSuccess" @completeSelect="completeSelect" />
+
+          <flexbox class="filter-control card">
+            <xh-user-cell
+              v-if="showUserSelect"
+              :radio="false"
+              :value="userSelects"
+              class="xh-user-cell"
+              placeholder="选择人员"
+              @value-change="userChange" />
+            <time-type-select
+              :width="190"
+              :options="timeOptions"
+              :default-type="timeSelect"
+              @change="timeTypeChange" />
+            <el-select
+              v-model="filterForm.categoryId"
+              placeholder="类型">
+              <el-option
+                v-for="(item, index) in options"
+                :key="index"
+                :label="item.label"
+                :value="item.value" />
+            </el-select>
+            <el-input
+              v-model="search"
+              placeholder="请输入工作内容"
+              prefix-icon="el-icon-search"
+              type="text"
+              @blur="refreshList"
+              @keyup.enter.native="refreshList"/>
+            <div class="filter-right">
+              <span class="total-count">已筛选出<span>{{ totalCount }}</span>项</span>
+              <el-button
+                class="export-btn"
+                @click="logExportClick">导出</el-button>
             </div>
-
-            <div class="statistics">
-              <div class="title">
-                <!-- <span class="icon wk wk-task" /> -->
-                <span>本月完成日志</span>
-              </div>
-              <div class="info">
-                <span class="special">{{ headData.allNum }}</span>篇
-              </div>
-
-            </div>
-          </flexbox>
-          <flexbox
-            align="stretch"
-            class="report-card">
-            <div class="report-card__label">销售简报</div>
-            <report-menu
-              :list="reportList"
-              @select="reportSelect" />
           </flexbox>
         </div>
 
-
-        <create-log v-if="showAdd" ref="createLog" class="add-card card" @update="addLogSuccess" @completeSelect="completeSelect" />
-
-        <flexbox class="filter-control card">
-          <xh-user-cell
-            v-if="showUserSelect"
-            :radio="false"
-            :value="userSelects"
-            class="xh-user-cell"
-            placeholder="选择人员"
-            @value-change="userChange" />
-          <time-type-select
-            :width="190"
-            :options="timeOptions"
-            :default-type="timeSelect"
-            @change="timeTypeChange" />
-          <el-select
-            v-model="filterForm.categoryId"
-            placeholder="类型">
-            <el-option
-              v-for="(item, index) in options"
-              :key="index"
-              :label="item.label"
-              :value="item.value" />
-          </el-select>
-          <el-input
-            v-model="search"
-            placeholder="请输入工作内容"
-            prefix-icon="el-icon-search"
-            type="text"
-            @blur="refreshList"
-            @keyup.enter.native="refreshList"/>
-          <div class="filter-right">
-            <span class="total-count">已筛选出<span>{{ totalCount }}</span>项</span>
-            <el-button
-              class="export-btn"
-              @click="logExportClick">导出</el-button>
-          </div>
-        </flexbox>
+        <div
+          v-for="(item, index) in listData"
+          :key="index"
+          class="card">
+          <log-item
+            :data="item"
+            :index="index"
+            :show-history-btn="showUserSelect"
+            @read="handleRead(index)"
+            @add-comment="handleAddComment"
+            @delete="handleDelete"
+            @edit="handleEdit"
+            @relate-detail="enterRelateDetail"
+            @report-detail="reportSelect"
+            @check-history="checkUserHistory" />
+        </div>
       </div>
-
-      <div
-        v-for="(item, index) in listData"
-        :key="index"
-        class="card">
-        <log-item
-          :data="item"
-          :index="index"
-          :show-history-btn="showUserSelect"
-          @read="handleRead(index)"
-          @add-comment="handleAddComment"
-          @delete="handleDelete"
-          @edit="handleEdit"
-          @relate-detail="enterRelateDetail"
-          @report-detail="reportSelect"
-          @check-history="checkUserHistory" />
-      </div>
+      <p
+        v-if="loading"
+        class="scroll-bottom-tips">加载中...</p>
+      <p
+        v-if="noMore"
+        class="scroll-bottom-tips">没有更多了</p>
     </div>
-    <p
-      v-if="loading"
-      class="scroll-bottom-tips">加载中...</p>
-    <p
-      v-if="noMore"
-      class="scroll-bottom-tips">没有更多了</p>
-
     <c-r-m-all-detail
       :visible.sync="showRelatedDetail"
       :crm-type="relatedCRMType"

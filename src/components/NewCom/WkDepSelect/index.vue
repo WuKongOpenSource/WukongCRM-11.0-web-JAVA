@@ -326,7 +326,7 @@ export default {
 
     containerClick() {
       if (!this.disabled) {
-        this.visible = true
+        this.visible = !this.visible
       }
     }
   }
@@ -357,6 +357,7 @@ export default {
     color: #ddd;
     line-height: 34px;
     cursor: pointer;
+    user-select: none;
   }
   .delete-icon {
     color: #999;

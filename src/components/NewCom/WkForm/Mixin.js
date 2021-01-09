@@ -1,3 +1,5 @@
+import { isEmpty } from '@/utils/types'
+
 export default {
   methods: {
     /**
@@ -67,7 +69,10 @@ export default {
      */
     getTips(data) {
       const tips = data.tips || data.inputTips
-      return tips ? `（${tips}）` : ''
+      if (data.tipType == 'tooltip') {
+        return isEmpty(tips) ? '' : tips
+      }
+      return isEmpty(tips) ? '' : `（${tips}）`
     }
   }
 }

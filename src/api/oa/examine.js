@@ -1,18 +1,6 @@
 import request from '@/utils/request'
 
 /**
- * 审批类型列表
- * @param {*} data
- */
-export function oaAllExamineCategoryListAPI(data) {
-  return request({
-    url: 'oaExamineCategory/queryAllExamineCategoryList',
-    method: 'post',
-    data: data
-  })
-}
-
-/**
  * 审批类型前台排序
  * @param {*} data
  */
@@ -132,33 +120,6 @@ export function oaExamineFlowStepListAPI(data) {
     url: 'oaExamine/queryExamineRecordList',
     method: 'post',
     data: data
-  })
-}
-
-/**
- * 审批记录
- * @param {*} data
- */
-export function oaExamineFlowRecordListAPI(data) {
-  return request({
-    url: 'oaExamine/queryExamineLogList',
-    method: 'post',
-    data: data
-  })
-}
-
-/**
- * 审批的审核
- * @param {*} data
- */
-export function oaExamineFlowAuditExamineAPI(data) {
-  return request({
-    url: 'oaExamine/auditExamine',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
   })
 }
 

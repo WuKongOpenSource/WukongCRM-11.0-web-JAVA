@@ -11,7 +11,7 @@
           :disabled="false"
           class="person__hd" />
         <div class="person__bd">
-          <div class="person__bd-name">{{ data.createUser.realname }}</div>
+          <div class="person__bd-name">{{ data.createUser ? data.createUser.realname : '' }}</div>
           <div class="person__bd-des">{{ `创建审批于 ${data.createTime}` }}</div>
         </div>
 
@@ -130,7 +130,7 @@ export default {
   },
   computed: {
     iconObj() {
-      return this.getCategoryIcon(this.data.icon)
+      return this.getCategoryIcon(this.data.examineIcon)
     },
     relateList() {
       const keys = ['contacts', 'customer', 'business', 'contract']

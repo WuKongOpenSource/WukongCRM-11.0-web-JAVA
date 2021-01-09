@@ -12,7 +12,9 @@
     :show-close="false"
     width="700px">
     <wk-dep-user-view
-      v-bind="$attrs"
+      :props="props"
+      :dep-value="deps"
+      :user-value="users"
       @change="selectChange"
     />
     <span
@@ -29,6 +31,8 @@
 <script>
 import WkDepUserView from './Dep'
 
+import { objDeepCopy } from '@/utils'
+
 export default {
   // 弹窗选择员工
   name: 'WkDepUserViewDialog',
@@ -36,12 +40,34 @@ export default {
     WkDepUserView
   },
   mixins: [],
-  inheritAttrs: false,
   props: {
     visible: {
       type: Boolean,
       required: true,
       default: false
+    },
+    // 取值字段
+    props: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
+    closeOnEmptyValue: {
+      type: Boolean,
+      default: true
+    },
+    depValue: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    },
+    userValue: {
+      type: Array,
+      default: () => {
+        return []
+      }
     }
   },
   data() {
@@ -55,7 +81,12 @@ export default {
   },
   watch: {
     visible: {
-      handler(val) {},
+      handler(val) {
+        if (val) {
+          this.users = objDeepCopy(this.userValue)
+          this.deps = objDeepCopy(this.depValue)
+        }
+      },
       immediate: true
     }
   },
@@ -75,7 +106,13 @@ export default {
      */
     handleConfirm() {
       this.$emit('change', this.users, this.deps)
-      this.close()
+      if (this.closeOnEmptyValue) {
+        if (this.users.length !== 0 || this.deps.length !== 0) {
+          this.close()
+        }
+      } else {
+        this.close()
+      }
     }
   }
 }

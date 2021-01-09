@@ -25,7 +25,7 @@
     </create-sections>
 
     <el-button
-      v-if="action.type == 'save'"
+      v-if="action.type == 'save' && contactsSaveAuth"
       slot="footer"
       class="handle-button"
       type="primary"
@@ -59,6 +59,7 @@ import ContactsCreate from '../contacts/Create'
 
 import { debounce } from 'throttle-debounce'
 import { isEmpty } from '@/utils/types'
+import { mapGetters } from 'vuex'
 
 export default {
   // 新建编辑
@@ -105,6 +106,10 @@ export default {
   },
 
   computed: {
+    ...mapGetters(['crm']),
+    contactsSaveAuth() {
+      return this.crm.contacts && this.crm.contacts.save
+    },
     title() {
       return this.action.type === 'update' ? '编辑客户' : '新建客户'
     }

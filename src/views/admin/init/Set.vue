@@ -98,7 +98,8 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputType: 'password',
-        inputPlaceholder: '请输入密码'
+        inputPlaceholder: '请输入密码',
+        closeOnClickModal: false
       }).then(({ value }) => {
         this.loading = true
         adminConfigVerifyPasswordAPI({

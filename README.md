@@ -98,8 +98,11 @@ QQ群交流群⑩群：[1026560336](http:////shang.qq.com/wpa/qunwpa?idkey=13d5e
 | [Element](https://element.eleme.io) | UI框架 | 2.12.0 |
 | [Axios](https://github.com/axios/axios) | HTTP框架 | 0.18.0 |
 
+#### 更新日志
 
-### 三、悟空CRM功能模块预览
+<a href="https://www.72crm.com/upgrade_log" target="_blank">点击查看更新日志</a>
+
+### 悟空CRM功能模块预览
 
 
 ![输入图片说明](https://images.gitee.com/uploads/images/2020/0928/172541_efed65bd_345098.png "01.png")

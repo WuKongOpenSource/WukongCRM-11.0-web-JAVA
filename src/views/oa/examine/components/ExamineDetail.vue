@@ -339,7 +339,7 @@ export default {
      * 详情logo
      */
     detailIcon() {
-      return this.getCategoryIcon(this.detail.icon)
+      return this.getCategoryIcon(this.detail.examineIcon)
     }
   },
   watch: {

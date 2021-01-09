@@ -456,13 +456,13 @@ export default {
         } else {
           this.dispatch('ElFormItem', 'el.form.change', this.depDataValue)
         }
-        this.$emit('change', 'dep', this.depDataValue, this.depSelects)
+        this.$emit('change', this.userDataValue, this.depDataValue, this.userSelects, this.depSelects, 'dep')
       })
     },
 
     containerClick() {
       if (!this.disabled) {
-        this.visible = true
+        this.visible = !this.visible
       }
     },
 
@@ -564,7 +564,7 @@ export default {
           this.dispatch('ElFormItem', 'el.form.change', this.userDataValue)
         }
       })
-      this.$emit('change', 'user', this.userDataValue, this.userSelects)
+      this.$emit('change', this.userDataValue, this.depDataValue, this.userSelects, this.depSelects, 'user')
     },
 
     /**
@@ -610,6 +610,7 @@ export default {
     color: #ddd;
     line-height: 34px;
     cursor: pointer;
+    user-select: none;
   }
   .delete-icon {
     color: #999;

@@ -49,7 +49,7 @@
 </template>
 <script type="text/javascript">
 import XhUser from './XhUser'
-import arrayMixin from './arrayMixin'
+import ArrayMixin from './ArrayMixin'
 
 
 export default {
@@ -57,7 +57,7 @@ export default {
   components: {
     XhUser
   },
-  mixins: [arrayMixin],
+  mixins: [ArrayMixin],
   inheritAttrs: false,
   props: {
     // 是否单选

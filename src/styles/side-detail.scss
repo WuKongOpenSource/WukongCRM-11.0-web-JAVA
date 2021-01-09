@@ -83,34 +83,34 @@
 }
 
 // 详情
-.side-detail__tabs--default {
+/deep/ .side-detail__tabs--default {
   flex: 1;
   overflow: hidden;
 
-  /deep/ .el-tabs__header {
+  .el-tabs__header {
     padding: 0 20px;
   }
 
-  /deep/ .el-tabs__item {
+  .el-tabs__item {
     color: #333;
     font-size: 12px;
     top: 2px;
     margin-top: -2px;
   }
 
-  /deep/ .el-tabs__nav-scroll {
+  .el-tabs__nav-scroll {
     min-height: 39px;
   }
 
-  /deep/ .el-tabs__item.is-active {
+  .el-tabs__item.is-active {
     color: #333;
   }
 
-  /deep/ .el-tabs {
+  .el-tabs {
     height: calc(100% - 15px) !important;
   }
 
-  /deep/ .el-tabs__content {
+  .el-tabs__content {
     height: calc(100% - 55px) !important;
     padding: 0;
     overflow: hidden;
@@ -118,11 +118,11 @@
 
     .el-tab-pane {
       height: 100%;
-      overflow: hidden;
+      overflow-y: auto;
     }
   }
 
-  /deep/ .el-tabs__nav-wrap::after {
+  .el-tabs__nav-wrap::after {
     height: 1px;
   }
 

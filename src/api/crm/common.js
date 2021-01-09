@@ -311,20 +311,20 @@ export function crmIndexFieldRecordAPI(data) {
   })
 }
 
-/**
- * 客户管理下 合同回款的待审批
- * @param {*} data
- */
-export function crmExamineMyExamineAPI(data) {
-  return request({
-    url: 'crmExamine/myExamine',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
+// /**
+//  * 客户管理下 合同回款的待审批
+//  * @param {*} data
+//  */
+// export function crmExamineMyExamineAPI(data) {
+//   return request({
+//     url: 'crmExamine/myExamine',
+//     method: 'post',
+//     data: data,
+//     headers: {
+//       'Content-Type': 'application/json;charset=UTF-8'
+//     }
+//   })
+// }
 
 /**
  * 查询活动分页列表

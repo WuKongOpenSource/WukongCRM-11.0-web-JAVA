@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -47,7 +48,7 @@
 <script>
 import { sysConfigSetPhraseAPI } from '@/api/crm/common'
 
-import { Loading } from 'element-ui'
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 import draggable from 'vuedraggable'
 
 export default {
@@ -56,6 +57,7 @@ export default {
   components: {
     draggable
   },
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -66,6 +68,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       setList: [],
       isDrag: false
     }
@@ -126,17 +129,16 @@ export default {
         this.$message.error('请输入常用语')
         return
       }
-      const loading = Loading.service({
-        target: document.querySelector(`.el-dialog[aria-label="常用语管理"]`)
-      })
+
+      this.loading = true
       sysConfigSetPhraseAPI(value)
         .then(res => {
-          loading.close()
+          this.loading = false
           this.$emit('update', value)
           this.close()
         })
         .catch(() => {
-          loading.close()
+          this.loading = false
         })
     },
 

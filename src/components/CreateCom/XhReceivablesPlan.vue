@@ -13,7 +13,7 @@
   </el-select>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 import {
   crmQueryReceivablesPlansByContractIdAPI
 } from '@/api/crm/contract'
@@ -21,7 +21,7 @@ import {
 export default {
   name: 'XhReceivablesPlan', // 回款 下的 回款计划
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {
     relation: {
       // 相关ID

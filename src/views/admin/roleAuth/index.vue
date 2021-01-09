@@ -87,6 +87,7 @@
                     :content="getReminderContent()"/>
                 </div>
                 <el-button
+                  :disabled="roleList.length === 0"
                   size="medium"
                   class="xr-btn--orange"
                   type="primary"
@@ -145,6 +146,7 @@
               class="jurisdiction-box">
               <el-button
                 v-if="roleActive"
+                :disabled="roleList.length === 0"
                 size="medium"
                 type="primary"
                 class="jurisdiction-edit"
@@ -783,6 +785,8 @@ export default {
      */
     getUserList() {
       if (!this.roleActive) {
+        this.tableData = []
+        this.total = 0
         return
       }
 

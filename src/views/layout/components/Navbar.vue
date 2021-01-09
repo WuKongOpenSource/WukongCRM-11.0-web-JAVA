@@ -4,7 +4,7 @@
       v-src="logo"
       :key="logo"
       class="logo"
-      @click="enterCustoemBoard" >
+      @click="enterMainPage" >
     <div class="nav-items-container">
       <el-menu
         :default-active="navActiveIndex"
@@ -426,10 +426,8 @@ export default {
     /**
      * 有客户权限点击logo 进入仪表盘
      */
-    enterCustoemBoard() {
-      if (this.crm) {
-        this.$router.push('/crm/workbench')
-      }
+    enterMainPage() {
+      this.$router.push('/')
     },
 
     moreMenuClick(command) {

@@ -104,7 +104,7 @@
   </div>
 </template>
 <script type="text/javascript">
-import objMixin from './objMixin'
+import ObjMixin from './ObjMixin'
 import CrmRelative from '@/components/CreateCom/CrmRelative'
 
 export default {
@@ -112,7 +112,7 @@ export default {
   components: {
     CrmRelative
   },
-  mixins: [objMixin],
+  mixins: [ObjMixin],
   props: {},
   data() {
     return {
@@ -180,11 +180,14 @@ export default {
     salesPriceChange(data) {
       const item = data.row
 
-      let discount = ((item.price - item.salesPrice || 0) / item.price) * 100.0
-      discount = discount.toFixed(2)
-      if (item.discount !== discount) {
-        item.discount = discount
+      if (item.price !== 0) {
+        let discount = ((item.price - item.salesPrice || 0) / item.price) * 100.0
+        discount = discount.toFixed(2)
+        if (item.discount !== discount) {
+          item.discount = discount
+        }
       }
+
       this.calculateSubTotal(item)
       this.calculateToal()
     },

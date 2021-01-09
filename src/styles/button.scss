@@ -18,6 +18,8 @@
 }
 
 .xr-btn--green:hover,
+.xr-btn--green.is-disabled,
+.xr-btn--green.is-disabled:hover,
 .xr-btn--green:focus {
   background: #4ca824;
   border-color: #4ca824;
@@ -36,6 +38,8 @@
 }
 
 .xr-btn--orange:hover,
+.xr-btn--orange.is-disabled,
+.xr-btn--orange.is-disabled:hover,
 .xr-btn--orange:focus {
   background: #fc7d63;
   border-color: #fc7d63;
@@ -54,6 +58,8 @@
 }
 
 .xr-btn--red:hover,
+.xr-btn--red.is-disabled,
+.xr-btn--red.is-disabled:hover,
 .xr-btn--red:focus {
   background: #fa6060;
   border-color: #fa6060;

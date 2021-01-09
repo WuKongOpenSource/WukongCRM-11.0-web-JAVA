@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -77,7 +78,7 @@ import {
 import SetSortItem from './SetSortItem'
 import draggable from 'vuedraggable'
 
-import { Loading } from 'element-ui'
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   // 设置仪表盘排序
@@ -86,7 +87,7 @@ export default {
     SetSortItem,
     draggable
   },
-  mixins: [],
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -96,6 +97,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       sortLeft: [],
       sortRight: [],
       data: {
@@ -164,10 +166,7 @@ export default {
        * 6 遗忘提醒
        * 7 排行榜
        */
-      const loading = Loading.service({
-        target: document.querySelector(`.el-dialog[aria-label="仪表盘模块设置"]`)
-      })
-
+      this.loading = true
       crmIndexSortAPI().then(res => {
         const left = res.data.left || []
         const right = res.data.right || []
@@ -182,9 +181,9 @@ export default {
           return { ...item, ...this.data[item.modelId] }
         })
 
-        loading.close()
+        this.loading = false
       }).catch(
-        loading.close()
+        this.loading = false
       )
     },
 
@@ -196,9 +195,7 @@ export default {
     },
 
     handleConfirm() {
-      const loading = Loading.service({
-        target: document.querySelector(`.el-dialog[aria-label="仪表盘模块设置"]`)
-      })
+      this.loading = true
       const params = {}
       params.left = this.sortLeft.map(item => {
         const data = {}
@@ -220,10 +217,10 @@ export default {
           })
           this.$emit('save')
           this.handleCancel()
-          loading.close()
+          this.loading = false
         })
         .catch(() => {
-          loading.close()
+          this.loading = false
         })
     }
   }

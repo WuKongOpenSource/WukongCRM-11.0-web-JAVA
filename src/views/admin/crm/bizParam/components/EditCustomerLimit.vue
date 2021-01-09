@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :visible.sync="visible"
     :title="title"
     :append-to-body="true"
@@ -48,14 +49,17 @@
 
 <script>
 import { crmSettingCustomerConfigSetAPI } from '@/api/admin/crm'
+
 import { XhStrucUserCell } from '@/components/CreateCom'
-import { Loading } from 'element-ui'
+
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   name: 'EditCustomerLimit',
   components: {
     XhStrucUserCell
   },
+  mixins: [ElDialogLoadingMixin],
   props: {
     types: [String, Number], // 1拥有客户上限2锁定客户上限
 
@@ -75,6 +79,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       customerDeal: 1,
       customerNum: '',
       users: [],
@@ -140,9 +145,7 @@ export default {
       } else if ((!this.users.length && !this.strucs.length)) {
         this.$message.error('请完善信息')
       } else {
-        const loading = Loading.service({
-          target: document.querySelector(`.el-dialog[aria-label="${this.title}"]`)
-        })
+        this.loading = true
         const params = {
           userIds: this.users,
           deptIds: this.strucs,
@@ -163,10 +166,10 @@ export default {
             this.$emit('success')
             this.$message.success(`${this.title}成功`)
             this.close()
-            loading.close()
+            this.loading = false
           })
           .catch(() => {
-            loading.close()
+            this.loading = false
           })
       }
     },

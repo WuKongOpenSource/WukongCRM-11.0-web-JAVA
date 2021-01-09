@@ -54,9 +54,13 @@
   </create-view>
 </template>
 <script type="text/javascript">
+import {
+  customFieldListAPI,
+  oaExamineFieldListAPI
+} from '@/api/admin/crm'
+
 import CreateView from '@/components/CreateView'
 import CreateSections from '@/components/CreateSections'
-import { customFieldListAPI, oaExamineFieldListAPI } from '@/api/admin/crm'
 
 import {
   XhInput,
@@ -200,7 +204,9 @@ export default {
       this.loading = true
       let request = customFieldListAPI
       const params = {}
-      params.label = this.label
+      if (this.label !== 'none') {
+        params.label = this.label
+      }
       if (this.types === 'oa_examine') {
         request = oaExamineFieldListAPI
         params.categoryId = this.typesId

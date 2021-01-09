@@ -10,23 +10,12 @@
         v-loading="loading"
         class="project-settings-box">
         <p class="project-settings-title-top">
-          <span>项目设置</span>
+          <span>{{ tabTypeName }}</span>
           <span
             class="el-icon-close rt"
             @click="close"/>
         </p>
         <div class="content">
-          <p class="title-checked">
-            <span
-              :class="{'is-select ': tabType == 'base'}"
-              class="span-item"
-              @click="tabType = 'base'">基础设置</span>
-            <span
-              v-if="isOpen == 0"
-              :class="{'is-select ': tabType == 'member'}"
-              class="span-item"
-              @click="tabType = 'member'">成员管理</span>
-          </p>
           <!-- 基础设置 -->
           <div
             v-show="tabType == 'base'"
@@ -110,10 +99,11 @@
                   :src="item.img"
                   class="user-img" />
                 <span class="member-row-name">{{ item.realname }}</span>
-                <div class="rt">
+                <div
+                  class="rt">
                   <el-select
+                    v-if="permission.manageTaskOwnerUser"
                     v-model="item.roleId"
-
                     size="mini">
                     <el-option
                       v-for="val in optionList"
@@ -133,14 +123,14 @@
         <div class="footer">
           <el-button
             type="primary"
-            @click="submite">确定</el-button>
-          <el-button @click="close">取消</el-button>
+            @click.stop="submite">确定</el-button>
+          <el-button @click.stop="close">取消</el-button>
         </div>
       </div>
       <p
         slot="reference"
         class="title"
-        @click="projectSetting">项目设置</p>
+        @click.stop="projectSetting">{{ tabTypeName }}</p>
     </el-popover>
   </div>
 </template>
@@ -166,6 +156,10 @@ export default {
   },
 
   props: {
+    tabType: {
+      type: String,
+      default: 'base'
+    }, // base 基础设置 member 成员设置
     workId: [Number, String],
     title: String,
     color: String,
@@ -204,7 +198,6 @@ export default {
         '#F24D70',
         '#FF6F6F'
       ],
-      tabType: 'base', // base 基础设置 member 成员设置
       // 动态背景
       setColor: '',
       setTitle: '',
@@ -228,6 +221,15 @@ export default {
     }
   },
 
+  computed: {
+    tabTypeName() {
+      return {
+        base: '项目设置',
+        member: '成员管理'
+      }[this.tabType]
+    }
+  },
+
   watch: {
     addMembersData() {
       this.membersList = objDeepCopy(this.addMembersData || [])
@@ -237,18 +239,18 @@ export default {
       if (val) {
         this.membersList = objDeepCopy(this.addMembersData || [])
       }
-    },
-
-    tabType(val) {
-      if (val == 'member' && this.optionList.length == 0) {
-        this.getGroupList()
-      }
     }
   },
 
   created() {
     this.membersList = objDeepCopy(this.addMembersData || [])
-    this.getProjectRoleList()
+    if (this.tabType === 'base') {
+      this.getProjectRoleList()
+    }
+
+    if (this.tabType === 'member') {
+      this.getGroupList()
+    }
   },
 
   beforeDestroy() {},
@@ -272,8 +274,6 @@ export default {
       this.setColor = this.color
       this.setTitle = this.title
       this.setIsOpen = this.isOpen
-      this.tabType = 'base'
-      this.$emit('click')
     },
 
     /**
@@ -343,10 +343,10 @@ export default {
       const membersList = []
 
       members.forEach(item => {
-        const memder = this.getSelectMemberRole(selectIds, item)
-        if (memder) {
-          item.roleId = memder.roleId
-          item.roleName = memder.roleName
+        const member = this.getSelectMemberRole(selectIds, item)
+        if (member) {
+          item.roleId = member.roleId
+          item.roleName = member.roleName
         } else {
           item.roleId = roleItem ? roleItem.roleId : ''
           item.roleName = roleItem ? roleItem.roleName : ''
@@ -362,7 +362,7 @@ export default {
      */
     getSelectMemberRole(selectIds, member) {
       if (selectIds.includes(member.userId)) {
-        return this.membersList.find(item => item.userId)
+        return this.membersList.find(item => item.userId === member.userId)
       }
 
       return null
@@ -372,13 +372,21 @@ export default {
      * 删除一个成员
      */
     deleteMember(data, index) {
-      workWorkOwnerDelAPI({
-        workId: this.workId,
-        ownerUserId: data.userId
-      }).then(res => {
-        this.membersList.splice(index, 1)
-        this.$message.success('删除成功')
-      }).catch(() => {})
+      this.$confirm('确定删除?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          workWorkOwnerDelAPI({
+            workId: this.workId,
+            ownerUserId: data.userId
+          }).then(res => {
+            this.$emit('handle', 'member')
+            this.$message.success('删除成功')
+          }).catch(() => {})
+        })
+        .catch(() => {})
     },
 
     /**
@@ -439,26 +447,6 @@ export default {
   .content {
     padding: 30px 20px;
     padding-top: 0;
-    .title-checked {
-      text-align: center;
-      margin: 5px 0;
-      .span-item {
-        font-size: 14px;
-        display: inline-block;
-        padding-bottom: 3px;
-        color: #333;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-      }
-      .span-item + .span-item {
-        margin-left: 15px;
-      }
-
-      .span-item.is-select {
-        color: $xr-color-primary;
-        border-bottom-color: $xr-color-primary;
-      }
-    }
     .infrastructure {
       .row {
         display: flex;

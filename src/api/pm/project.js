@@ -268,9 +268,9 @@ export function workWorkCollectAPI(workId) {
  * 修改标签排序
  * @param {*} data
  */
-export function workupdateWorkOrderAPI(data) {
+export function workUpdateWorkOrderAPI(data) {
   return request({
-    url: 'work/work/updateWorkOrder',
+    url: 'workOrder/updateWorkOrder',
     method: 'post',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'

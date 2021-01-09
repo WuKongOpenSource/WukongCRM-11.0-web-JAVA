@@ -11,7 +11,7 @@
           :disabled="false"
           class="person__hd" />
         <div class="person__bd">
-          <div class="person__bd-name">{{ data.createUser.realname }}</div>
+          <div class="person__bd-name">{{ data.createUser ? data.createUser.realname : '' }}</div>
           <div class="person__bd-des">{{ `创建审批于 ${data.createTime}` }}</div>
         </div>
 
@@ -36,7 +36,7 @@
             :style="{ backgroundColor: iconObj.color}" />
           <div class="examine-content__bd">
             <div>
-              <a @click="handleClick('detail')">{{ data.catagory }}</a>
+              <a @click="handleClick('detail')">{{ data.category }}</a>
             </div>
             <div
               v-if="data.causeTitle"
@@ -139,15 +139,15 @@ export default {
         return {
           type: 'customer',
           typeName: '客户',
-          id: this.data.catagoryCiteId,
-          name: this.data.catagoryCiteName
+          id: this.data.categoryCiteId,
+          name: this.data.categoryCiteName
         }
       } else if (this.crmType == 'receivables') {
         return {
           type: 'contract',
           typeName: '合同',
-          id: this.data.catagoryCiteId,
-          name: this.data.catagoryCiteName
+          id: this.data.categoryCiteId,
+          name: this.data.categoryCiteName
         }
       }
 

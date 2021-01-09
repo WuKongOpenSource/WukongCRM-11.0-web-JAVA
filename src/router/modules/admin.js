@@ -201,7 +201,40 @@ export default [
       meta: {
         activeMenu: '/manage/customer/custom-field',
         requiresAuth: true,
-        permissions: ['manage', 'crm', 'field']
+        permissionList: [['manage', 'crm', 'field'], ['manage', 'crm', 'activityForm']]
+      }
+    }]
+  },
+  {
+    ...layout({
+      permissions: ['manage', 'adminLog'],
+      title: '系统日志',
+      icon: 'record'
+    }, '/manage/log/'),
+    alwaysShow: true,
+    children: [{
+      path: 'handle',
+      component: () => import('@/views/admin/log/DataHandleLog'),
+      meta: {
+        title: '数据操作日志',
+        requiresAuth: true,
+        permissions: ['manage', 'adminLog', 'actionRecord']
+      }
+    }, {
+      path: 'sys',
+      component: () => import('@/views/admin/log/SysHandleLog'),
+      meta: {
+        title: '系统操作日志',
+        requiresAuth: true,
+        permissions: ['manage', 'adminLog', 'systemLog']
+      }
+    }, {
+      path: 'login',
+      component: () => import('@/views/admin/log/LoginLog'),
+      meta: {
+        title: '登录日志',
+        requiresAuth: true,
+        permissions: ['manage', 'adminLog', 'loginLog']
       }
     }]
   },

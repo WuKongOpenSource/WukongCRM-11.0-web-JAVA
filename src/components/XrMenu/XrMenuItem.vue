@@ -48,6 +48,8 @@ export default {
     display: inline-block;
     font-size: 12px;
     padding: 6px;
+    width: 25px;
+    height: 25px;
     border-radius: $xr-border-radius-base;
     background-color: #edf2f6;
     color: #8a94a6;;

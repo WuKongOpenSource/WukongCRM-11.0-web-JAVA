@@ -47,14 +47,14 @@
 
 <script>
 import echarts from 'echarts'
-import chartMixins from './chartMixins'
+import ChartMixin from './ChartMixin'
 import {
   crmIndexAchievementDataAPI
 } from '@/api/crm/workbench'
 
 export default {
   name: 'PerformanceChart',
-  mixins: [chartMixins],
+  mixins: [ChartMixin],
   data() {
     return {
       chartOption: {

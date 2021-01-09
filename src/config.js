@@ -3,7 +3,7 @@ const getLocationOrigin = () => {
 }
 
 const companyName = '悟空CRM'
-const version = 'V11.1.0'
+const version = 'V11.2.0'
 const baiduKey = '百度key'
 
 export default {

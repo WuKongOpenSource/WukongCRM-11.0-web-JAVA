@@ -29,6 +29,7 @@
         :data="list"
         :height="tableHeight"
         :cell-class-name="cellClassName"
+        :row-key="`${crmType}Id`"
         :header-cell-class-name="headerCellClassName"
         class="n-table--border"
         use-virtual
@@ -42,6 +43,7 @@
         @selection-change="handleSelectionChange">
         <el-table-column
           show-overflow-tooltip
+          reserve-selection
           type="selection"
           align="center"
           width="55"/>
@@ -82,6 +84,14 @@
               @change="setSave"/>
           </template>
         </el-table-column>
+        <wk-empty
+          slot="empty"
+          :props="{
+            buttonTitle: '新建商机',
+            showButton: saveAuth
+          }"
+          @click="createClick"
+        />
       </el-table>
       <div class="p-contianer">
         <el-pagination

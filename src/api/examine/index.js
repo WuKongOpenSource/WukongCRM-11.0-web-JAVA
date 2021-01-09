@@ -4,78 +4,11 @@
 import request from '@/utils/request'
 
 /**
- * 查询所有未删除审批流程
- * @param {*} data
- */
-export function crmExamineQueryAllAPI(data) {
-  return request({
-    url: 'crmExamine/queryAllExamine',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
-
-// /**
-//  * 根据id查询审批流程 examineId 审批流程id
-//  */
-// export function QueryExamineById(data) {
-//   return request({
-//     url: `crmExamine/queryExamineById/${data.examineId}`,
-//     method: 'post'
-//   })
-// }
-
-/**
- * 查询当前启用审核流程步骤
- */
-export function crmExamineStepAPI(data) {
-  return request({
-    url: 'crmExamine/queryExamineStep',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
-
-/**
- * 添加审批流程
- */
-export function crmExamineSaveAPI(data) {
-  return request({
-    url: 'crmExamine/saveExamine',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
-
-/**
- * 停用或删除审批流程
- */
-export function crmExamineUpdateStatusAPI(data) {
-  return request({
-    url: 'crmExamine/updateStatus',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
-
-/**
- * 进行审批 AuditExamine
+ * 进行审批
  */
 export function crmExamineRecordAuditAPI(data) {
   return request({
-    url: 'crmExamineRecord/auditExamine',
+    url: 'examineRecord/auditExamine',
     method: 'post',
     data: data,
     headers: {
@@ -89,7 +22,7 @@ export function crmExamineRecordAuditAPI(data) {
  */
 export function crmExamineRecordLogListAPI(data) {
   return request({
-    url: 'crmExamineRecord/queryExamineLogList',
+    url: 'examineRecord/queryExamineRecordLog',
     method: 'post',
     data: data
   })
@@ -103,5 +36,158 @@ export function crmExamineRecordRecordListAPI(data) {
     url: 'crmExamineRecord/queryExamineRecordList',
     method: 'post',
     data: data
+  })
+}
+
+/**
+ * 查询审批可供设置的字段
+ * @param {*} data
+ *
+ */
+export function examinesQueryFieldAPI(data) {
+  return request({
+    url: 'examines/queryField',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 保存审批数据
+ * @param {*} data
+ */
+export function examinesAddAPI(data) {
+  return request({
+    url: 'examines/addExamine',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 查询审批列表
+ * @param {*} data
+ */
+export function examinesQueryListAPI(data) {
+  return request({
+    url: 'examines/queryList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 修改审批状态
+ * @param {*} data
+ */
+export function examinesUpdateStatusAPI(data) {
+  return request({
+    url: 'examines/updateStatus',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 审批详情
+ * @param {*} data
+ */
+export function examinesQueryExamineFlowAPI(data) {
+  return request({
+    url: 'examines/queryExamineFlow',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 获取审批流程有效字段
+ * @param {*} data
+ */
+export function examinesPreviewFiledNameAPI(data) {
+  return request({
+    url: 'examines/previewFiledName',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 预览审批流程
+ * @param {*} data
+ */
+export function examinesPreviewExamineFlowAPI(data) {
+  return request({
+    url: 'examines/previewExamineFlow',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 获取审批详情
+ */
+export function examineRecordQueryListAPI(data) {
+  return request({
+    url: 'examineRecord/queryExamineRecordList',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 查询正常审批流列表
+ * @param {*} data
+ */
+export function examinesQueryPartListAPI(data) {
+  return request({
+    url: 'examines/queryPartList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 查询全部审批流列表
+ * @param {*} data
+ */
+export function examineWaitingQueryCrmExamineListAPI(data) {
+  return request({
+    url: 'examineWaiting/queryCrmExamineList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 查询全部审批流列表
+ * @param {*} data
+ */
+export function examineWaitingQueryOaExamineListAPI(data) {
+  return request({
+    url: 'examineWaiting/queryOaExamineList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
   })
 }

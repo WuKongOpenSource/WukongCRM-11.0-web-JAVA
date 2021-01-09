@@ -2,7 +2,6 @@
   <el-select
     v-model="dataValue"
     :disabled="disabled"
-    clearable
     style="width: 100%;"
     @change="valueChange">
     <el-option
@@ -14,13 +13,13 @@
   </el-select>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 import { crmBusinessStatusListAPI } from '@/api/crm/business'
 
 export default {
   name: 'XhBusinessStatus', // 商机状态
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {},
   data() {
     return {

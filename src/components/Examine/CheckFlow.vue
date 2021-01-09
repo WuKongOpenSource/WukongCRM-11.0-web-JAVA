@@ -23,12 +23,13 @@
           class="cf-flow-item-img" >
         <div>
           <flexbox class="cf-flow-item-head">
-            <div class="cf-flow-item-des">{{ item.orderId|stepName }}</div>
+            <!-- <div class="cf-flow-item-des">{{ item.orderId|stepName }}</div> -->
             <div>{{ item.examineTime }}</div>
           </flexbox>
           <flexbox class="cf-flow-item-info">
-            <div class="cf-flow-item-name">{{ item.realname }}</div>
-            <div><span>{{ getStatusName(item.examineStatus) }}</span>了此申请</div>
+            <div class="cf-flow-item-name">{{ item.examineUserName }}</div>
+            <!-- 审核中 3 当做 待审核 0 处理 -->
+            <div><span>{{ getStatusName(item.examineStatus) }}</span>此申请</div>
           </flexbox>
           <div
             v-if="item.remarks"
@@ -44,13 +45,12 @@
 
 <script>
 import { crmExamineRecordLogListAPI } from '@/api/examine' // 审批记录
-import { oaExamineFlowRecordListAPI } from '@/api/oa/examine'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 
 import Nzhcn from 'nzh/cn'
 
 export default {
-  /** 客户管理 的 合同详情  查看审批流程*/
+  // 查看审批历史
   name: 'CheckFlow',
   components: {},
   filters: {
@@ -90,23 +90,12 @@ export default {
     getDetail() {
       if (this.id) {
         this.loading = true
-        const request = {
-          crm_contract: crmExamineRecordLogListAPI,
-          crm_receivables: crmExamineRecordLogListAPI,
-          crm_invoice: crmExamineRecordLogListAPI,
-          oa_examine: oaExamineFlowRecordListAPI
-        }[this.examineType]
-
-        request({
+        crmExamineRecordLogListAPI({
           recordId: this.id
         })
           .then(res => {
             this.loading = false
             this.list = res.data
-            // this.$emit('value-change', {
-            //   config: res.data.config, // 审批类型
-            //   value: [] // 审批信息
-            // })
           })
           .catch(() => {
             this.loading = false

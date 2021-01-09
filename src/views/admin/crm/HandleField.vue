@@ -89,7 +89,6 @@
 </template>
 
 <script>
-import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import {
   customFieldHandleAPI,
   oaFieldHandleAPI,
@@ -97,6 +96,7 @@ import {
   oaExamineFieldListAPI
 } from '@/api/admin/crm'
 import { filedGetFieldAPI } from '@/api/crm/common'
+
 import PreviewFieldView from '@/views/admin/components/PreviewFieldView'
 import {
   SingleLineText,
@@ -107,6 +107,8 @@ import {
   TableForm
 } from './components/Fields'
 import draggable from 'vuedraggable'
+
+import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Field from './model/field'
 import FieldList from './model/fieldList'
 import FieldInfo from './components/FieldInfo'
@@ -161,7 +163,7 @@ export default {
   },
   data() {
     return {
-      fieldList: FieldList,
+      fieldList: [],
       fieldArr: [], // 数据没有返回时 根据null 判断不能操作
       movedItem: {},
       selectedIndex: -1,
@@ -180,10 +182,13 @@ export default {
   computed: {
     // 能转移
     canTransform() {
-      return this.$route.params.type == 'crm_leads'
+      return this.moduleType == 'crm_leads'
     },
     canUnique() {
-      return this.$route.params.type != 'oa_examine' // 办公审批不允许设置唯一
+      return this.moduleType != 'oa_examine' // 办公审批不允许设置唯一
+    },
+    moduleType() {
+      return this.$route.params.type // oa_examine
     }
   },
   watch: {
@@ -199,6 +204,9 @@ export default {
       immediate: true
     }
   },
+  created() {
+    this.getFieldList()
+  },
   mounted() {
     window.onresize = () => {
       this.contentHeight = document.documentElement.clientHeight - 75
@@ -212,16 +220,31 @@ export default {
     }
   },
   methods: {
-    // 获取当前模块的自定义数据
+    /**
+     * 获取字段
+     */
+    getFieldList() {
+      this.fieldList = FieldList
+    },
+
+    /**
+     * 获取当前模块的自定义数据
+     */
     getCustomInfo() {
       this.loading = true
       let request = customFieldListAPI
+
       var params = {}
-      params.label = this.$route.params.label
-      if (this.$route.params.type === 'oa_examine') {
+
+      if (this.$route.params.label !== 'none') {
+        params.label = this.$route.params.label
+      }
+
+      if (this.moduleType === 'oa_examine') {
         request = oaExamineFieldListAPI
         params.categoryId = this.$route.params.id
       }
+
       request(params)
         .then(res => {
           for (let index = 0; index < res.data.length; index++) {
@@ -261,7 +284,10 @@ export default {
           this.loading = false
         })
     },
-    // 删除一行自定义数据
+
+    /**
+     * 删除一行自定义数据
+     */
     handleDelete(item, index) {
       this.$confirm('确定删除该自定义字段吗?', '提示', {
         confirmButtonText: '确定',
@@ -276,7 +302,10 @@ export default {
         })
         .catch(() => {})
     },
-    // 主列表的选择
+
+    /**
+     * 主列表的选择
+     */
     handleSelect(item, index) {
       this.selectedIndex = index
       if (this.selectedIndex === index) {
@@ -286,16 +315,25 @@ export default {
         }
       }
     },
-    // 表的选择
+
+    /**
+     * 表的选择
+     */
     handleChildSelect(data) {
       this.form = data.data
     },
-    // 预览表单
+
+    /**
+     * 预览表单
+     */
     handlePreview() {
       this.tablePreviewData = this.$route.params
       this.showTablePreview = true
     },
-    // 保存数据
+
+    /**
+     * 保存数据
+     */
     handleSave() {
       if (this.rejectHandle) return
 
@@ -370,8 +408,10 @@ export default {
       this.loading = true
       var params = {}
       params.data = tempFieldArr
-      params.label = this.$route.params.label
-      if (this.$route.params.type === 'oa_examine') {
+      if (this.$route.params.label !== 'none') {
+        params.label = this.$route.params.label
+      }
+      if (this.moduleType === 'oa_examine') {
         params.categoryId = this.$route.params.id
       }
       for (const item of params.data) {
@@ -383,7 +423,10 @@ export default {
       }
 
       // 请求
-      const request = this.$route.params.type === 'oa_examine' ? oaFieldHandleAPI : customFieldHandleAPI
+      const request = {
+        oa_examine: oaFieldHandleAPI
+      }[this.moduleType] || customFieldHandleAPI
+
       request(params)
         .then(res => {
           this.$message({
@@ -425,12 +468,19 @@ export default {
         }[formType] || '0'
       )
     },
-    // 返回
+
+    /**
+     * 返回
+     */
     handleCancel() {
       this.$router.go(-1)
     },
+
     /**  拖拽操作部分 */
-    // 从左侧移动到右侧
+
+    /**
+     * 从左侧移动到右侧
+     */
     handleEnd(e) {
       if (!this.rejectHandle) {
         const newField = new Field({
@@ -450,42 +500,55 @@ export default {
         }
       }
     },
-    // 从左侧移动到右侧 时候的数据对象
+
+    /**
+     * 从左侧移动到右侧 时候的数据对象
+     */
     handleMove(obj) {
       this.movedItem = obj
     },
-    // 点击左侧进行添加
+
+    /**
+     * 点击左侧进行添加
+     */
     handleClick(obj) {
       this.movedItem = obj
       this.handleEnd()
     },
-    // list move
+
+    /**
+     * list move
+     */
     handleListMove(e) {
       this.selectedIndex = e.newIndex
     },
+
     /**  拖拽操作部分 */
-    /**  左上角title */
+    /**
+     * 左上角title
+     */
     getTitle() {
-      if (this.$route.params.type == 'crm_leads') {
+      if (this.moduleType == 'crm_leads') {
         return '线索'
-      } else if (this.$route.params.type == 'crm_customer') {
+      } else if (this.moduleType == 'crm_customer') {
         return '客户'
-      } else if (this.$route.params.type == 'crm_contacts') {
+      } else if (this.moduleType == 'crm_contacts') {
         return '联系人'
-      } else if (this.$route.params.type == 'crm_business') {
+      } else if (this.moduleType == 'crm_business') {
         return '商机'
-      } else if (this.$route.params.type == 'crm_contract') {
+      } else if (this.moduleType == 'crm_contract') {
         return '合同'
-      } else if (this.$route.params.type == 'crm_product') {
+      } else if (this.moduleType == 'crm_product') {
         return '产品'
-      } else if (this.$route.params.type == 'crm_receivables') {
+      } else if (this.moduleType == 'crm_receivables') {
         return '回款'
-      } else if (this.$route.params.type == 'crm_visit') {
+      } else if (this.moduleType == 'crm_visit') {
         return '客户回访'
       } else {
         return ''
       }
     },
+
     /**
      * 获取添加字段
      */

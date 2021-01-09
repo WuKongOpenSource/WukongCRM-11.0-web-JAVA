@@ -81,12 +81,12 @@
 </template>
 <script type="text/javascript">
 import moment from 'moment'
-import objMixin from '@/components/CreateCom/objMixin'
+import ObjMixin from '@/components/CreateCom/ObjMixin'
 
 export default {
   name: 'XhLeaves', // 请假事项
   components: {},
-  mixins: [objMixin],
+  mixins: [ObjMixin],
   props: {},
   data() {
     return {

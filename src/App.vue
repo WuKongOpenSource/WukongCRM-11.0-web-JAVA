@@ -84,7 +84,9 @@ export default {
       // 添加监听器，在title里显示状态变化
       document.addEventListener(visibilityChange, () => {
         if (document[state] == 'visible') {
-          cache.updateAxiosHeaders()
+          if (cache.updateAxiosHeaders() && this.$route.name === 'login') {
+            window.location.reload()
+          }
         }
         this.$bus.emit('document-visibility', document[state])
       }, false)

@@ -83,6 +83,7 @@ export default {
 .project-cell {
   cursor: pointer;
   padding: 20px 0;
+  background: white;
 
   &__header {
     width: 150px;

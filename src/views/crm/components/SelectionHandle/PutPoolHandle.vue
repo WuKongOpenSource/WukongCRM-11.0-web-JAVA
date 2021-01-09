@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -35,7 +36,7 @@ import {
   crmCustomerPutInPoolAPI
 } from '@/api/crm/customer'
 
-import { Loading } from 'element-ui'
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   /**
@@ -44,7 +45,7 @@ export default {
   name: 'PutPoolHandle',
   components: {
   },
-  mixins: [],
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -62,6 +63,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       selectId: '',
       list: []
     }
@@ -87,16 +89,14 @@ export default {
      * 获取数据源
      */
     getList() {
-      const loading = Loading.service({
-        target: document.querySelector(`.el-dialog[aria-label="放入公海"]`)
-      })
+      this.loading = true
       crmCustomerPoolNameListAPI()
         .then(res => {
           this.list = res.data || []
-          loading && loading.close()
+          this.loading = false
         })
         .catch(() => {
-          loading && loading.close()
+          this.loading = false
         })
     },
 
@@ -112,9 +112,7 @@ export default {
      */
     handleConfirm() {
       if (this.selectId) {
-        const loading = Loading.service({
-          target: document.querySelector(`.el-dialog[aria-label="放入公海"]`)
-        })
+        this.loading = true
         crmCustomerPutInPoolAPI({
           ids: this.selectionList.map(item => item.customerId),
           poolId: this.selectId
@@ -124,12 +122,12 @@ export default {
               type: 'success',
               message: '操作成功'
             })
-            loading.close()
+            this.loading = false
             this.$emit('handle', { type: 'put_seas' })
             this.handleCancel()
           })
           .catch(() => {
-            loading.close()
+            this.loading = false
           })
       }
     }

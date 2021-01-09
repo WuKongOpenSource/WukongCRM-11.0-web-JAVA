@@ -13,12 +13,12 @@
   </el-select>
 </template>
 <script type="text/javascript">
-import stringMixin from './stringMixin'
+import StringMixin from './StringMixin'
 
 export default {
   name: 'XhSelect', // 新建 select
   components: {},
-  mixins: [stringMixin],
+  mixins: [StringMixin],
   props: {
     clearable: {
       type: Boolean,
