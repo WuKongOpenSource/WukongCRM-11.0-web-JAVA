@@ -65,10 +65,11 @@ const app = {
     }) {
       return new Promise((resolve, reject) => {
         adminSystemIndexAPI().then(response => {
-          commit('SET_APPNAME', response.data.companyName)
-          commit('SET_APPLOGO', response.data.companyLogo)
-          Lockr.set('systemLogo', response.data.companyLogo)
-          Lockr.set('systemName', response.data.companyName)
+          const resData = response.data || {}
+          commit('SET_APPNAME', resData.companyName)
+          commit('SET_APPLOGO', resData.companyLogo)
+          Lockr.set('systemLogo', resData.companyLogo)
+          Lockr.set('systemName', resData.companyName)
           resolve(response)
         }).catch(error => {
           reject(error)

@@ -376,6 +376,7 @@ export default {
      * 新建 审批类型选择
      */
     selcetExamineCategory(item) {
+      item.type = item.oaType
       this.createInfo = item
       this.createAction = { type: 'save' }
       this.isCreate = true

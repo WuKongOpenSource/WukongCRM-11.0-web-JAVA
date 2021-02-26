@@ -132,7 +132,9 @@
     </div>
     <customer-detail
       v-if="showDview"
-      :id="rowID"
+      :id.sync="rowID"
+      :page-list="crmType == rowType ? list : []"
+      :page-index.sync="rowIndex"
       :pool-id="poolId"
       :is-seas="isSeas"
       class="d-view"

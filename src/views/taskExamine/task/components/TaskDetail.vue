@@ -624,7 +624,10 @@ export default {
   mixins: [TaskMixin],
   props: {
     id: [String, Number],
-    isTrash: Boolean,
+    isTrash: {
+      type: Boolean,
+      default: false
+    },
     detailIndex: Number,
     detailSection: Number,
     noListenerClass: {
@@ -697,6 +700,13 @@ export default {
         return this.priorityList[3] // 默认读取 priorityList 返回
       }
       return this.getPriorityColor(this.taskData.priority)
+    },
+
+    /**
+     * 是否能操作
+     */
+    isDisabled() {
+      return this.isTrash
     },
 
     /**
@@ -967,7 +977,14 @@ export default {
       }
 
       const permission = this.taskData ? this.taskData.authList.project || {} : {}
-      return !!permission[key]
+      const hasPermission = !!permission[key]
+
+      // 是回收站任务 限制操作
+      if (this.isDisabled) {
+        return ['restoreTask', 'cleanTask'].includes(key) && hasPermission
+      } else {
+        return hasPermission
+      }
     },
 
     /**

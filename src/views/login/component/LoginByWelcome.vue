@@ -20,10 +20,10 @@
         <el-input
           ref="code"
           v-model.trim="form.code"
-          :maxlength="20"
           :class="{error: !validateRes.code}"
           placeholder="请输入您的序列号"
-          type="code"
+          type="textarea"
+          rows="5"
           @focus="focusKey = 'code'"
           @keyup.enter.native="debouncedHandleLogin"
           @blur="checkForm"/>
@@ -91,7 +91,7 @@ import { Loading } from 'element-ui'
 
 import Mixins from './Mixins'
 import { debounce } from 'throttle-debounce'
-import md5 from 'js-md5'
+// import md5 from 'js-md5'
 
 export default {
   name: 'LoginByWelcome',
@@ -119,7 +119,7 @@ export default {
         }
         return false
       }
-
+      /*
       const validateCode = () => {
         let num = ''
         if (this.form.username && this.form.username.length > 6) {
@@ -132,14 +132,15 @@ export default {
         }
         return num == this.form.code
       }
+      */
       const temp = {
         username: [
           { required: true, msg: '手机号不能为空' },
           { reg: /^1[1-9]\d{9}$/, msg: '请输入正确的手机号码' }
         ],
         code: [
-          { required: true, msg: '序列号不能为空' },
-          { validator: validateCode, msg: '请输入正确的序列号' }
+          { required: true, msg: '序列号不能为空' }/*,
+          { validator: validateCode, msg: '请输入正确的序列号' }*/
         ],
         password: [
           { required: true, msg: '初始化密码不能为空' },

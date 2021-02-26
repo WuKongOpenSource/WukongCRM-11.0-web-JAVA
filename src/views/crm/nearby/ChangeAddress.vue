@@ -21,7 +21,7 @@
           </template>
         </el-autocomplete>
         <div
-          id="chosemap"
+          ref="chosemap"
           class="map"/>
       </flexbox-item>
     </flexbox>
@@ -69,7 +69,7 @@ export default {
         this.$nextTick(() => {
           getBaiduMap()
             .then(() => {
-              var map = new BMap.Map('chosemap', { enableMapClick: true })
+              var map = new BMap.Map(this.$refs.chosemap, { enableMapClick: true })
               var point = this.value
               map.centerAndZoom(point, 14)
               map.enableScrollWheelZoom()

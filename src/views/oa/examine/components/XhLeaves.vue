@@ -45,12 +45,12 @@
             v-model="item[subItem.field]"
             :controls="false"
             :precision="1"
+            :maxlength="356"
             :min="0"
             @input="calculateValueChange(index, subIndex)"/>
           <el-input
             v-else
             :maxlength="100"
-            :disabled="getInputDisable(subItem.field)"
             v-model="item[subItem.field]"
             type="text"/>
         </flexbox-item>

@@ -6,28 +6,33 @@
     @save="saveClick">
     <!-- 基本信息 -->
     <create-sections title="基本信息">
-      <wk-form
+      <el-form
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
-        :field-from="fieldForm"
-        :field-list="fieldList"
-        label-position="top"
-        @change="formChange"
-      >
-        <template slot-scope="{ data }">
-          <xh-expenses
-            v-if="data && data.formType == 'examine_cause'"
-            :value="fieldForm[data.field]"
-            @value-change="otherChange($event, data)"
-          />
-          <xh-leaves
-            v-if="data && data.formType == 'business_cause'"
-            :value="fieldForm[data.field]"
-            @value-change="otherChange($event, data)"
-          />
-        </template>
-      </wk-form>
+        class="wk-form"
+        label-position="top">
+        <wk-form-items
+          v-for="(children, index) in fieldList"
+          :key="index"
+          :field-from="fieldForm"
+          :field-list="children"
+          @change="formChange"
+        >
+          <template slot-scope="{ data }">
+            <xh-expenses
+              v-if="data && data.formType == 'examine_cause'"
+              :value="fieldForm[data.field]"
+              @value-change="otherChange($event, data)"
+            />
+            <xh-leaves
+              v-if="data && data.formType == 'business_cause'"
+              :value="fieldForm[data.field]"
+              @value-change="otherChange($event, data)"
+            />
+          </template>
+        </wk-form-items>
+      </el-form>
     </create-sections>
 
     <!-- 图片附件 -->
@@ -111,7 +116,7 @@ import XhLeaves from './XhLeaves' // 出差事项
 import RelatedBusiness from './RelatedBusiness'
 import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
 import WkApprovalFlowApplyMixin from '@/components/Examine/mixins/WkApprovalFlowApply'
-import WkForm from '@/components/NewCom/WkForm'
+import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 
 import { isEmpty } from '@/utils/types'
 import CustomFieldsMixin from '@/mixins/CustomFields'
@@ -132,7 +137,7 @@ export default {
     XhLeaves,
     RelatedBusiness,
     WkApprovalFlowApply,
-    WkForm
+    WkFormItems
   },
   filters: {},
   mixins: [CustomFieldsMixin, WkApprovalFlowApplyMixin],
@@ -336,147 +341,147 @@ export default {
      * 根据自定义字段获取自定义字段规则
      */
     getcrmRulesAndModel(list) {
+      const baseFields = []
       const fieldList = []
       const fieldRules = {}
       const fieldForm = {}
-      list.forEach(item => {
-        const temp = {}
-        temp.field = item.fieldName
-        temp.formType = item.formType
-        temp.fieldId = item.fieldId
-        temp.inputTips = item.inputTips
-        temp.name = item.name
-        temp.setting = item.setting
+      list.forEach(children => {
+        const fields = []
+        children.forEach(item => {
+          const temp = this.getFormItemDefaultProperty(item)
 
-        fieldRules[temp.field] = this.getRules(item)
+          fieldRules[temp.field] = this.getRules(item)
 
-        // 特殊字段验证规则
-        if (item.isNull == 1) {
-          if (item.formType == 'business_cause') {
-            var validateFunction = (rule, value, callback) => {
-              if (!value.list) {
-                callback(new Error('请完善明细'))
-              } else {
-                var hasError = false
-                for (let index = 0; index < value.list.length; index++) {
-                  const item = value.list[index]
-                  const keys = [
-                    'startAddress',
-                    'endAddress',
-                    'startTime',
-                    'endTime',
-                    'duration'
-                  ]
-                  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-                    const key = keys[keyIndex]
-                    if (key == 'duration') {
-                      if (item.duration <= 0) {
+          // 特殊字段验证规则
+          if (item.isNull == 1) {
+            if (item.formType == 'business_cause') {
+              var validateFunction = (rule, value, callback) => {
+                if (!value.list) {
+                  callback(new Error('请完善明细'))
+                } else {
+                  var hasError = false
+                  for (let index = 0; index < value.list.length; index++) {
+                    const item = value.list[index]
+                    const keys = [
+                      'startAddress',
+                      'endAddress',
+                      'startTime',
+                      'endTime',
+                      'duration'
+                    ]
+                    for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+                      const key = keys[keyIndex]
+                      if (key == 'duration') {
+                        if (item.duration <= 0) {
+                          hasError = true
+                          callback(new Error(`行程明细（${index + 1}）时长应大于0`))
+                          break
+                        }
+                      } else if (isEmpty(item[key])) {
                         hasError = true
-                        callback(new Error(`行程明细（${index + 1}）时长应大于0`))
+                        callback(new Error('请完善明细'))
                         break
                       }
-                    } else if (isEmpty(item[key])) {
-                      hasError = true
-                      callback(new Error('请完善明细'))
-                      break
                     }
                   }
-                }
-                if (!hasError) {
-                  callback()
+                  if (!hasError) {
+                    callback()
+                  }
                 }
               }
-            }
-            fieldRules[temp.field] = [{
-              validator: validateFunction,
-              trigger: []
-            }]
-          } else if (item.formType == 'examine_cause') {
-            var validateFunction = (rule, value, callback) => {
-              if (!value.list) {
-                callback(new Error('请完善明细'))
-              } else {
-                var hasError = false
-                for (let index = 0; index < value.list.length; index++) {
-                  const item = value.list[index]
-                  const keys = [
-                    'startAddress',
-                    'endAddress',
-                    'startTime',
-                    'endTime',
-                    'traffic',
-                    'stay',
-                    'diet',
-                    'other'
-                  ]
-                  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-                    const key = keys[keyIndex]
-                    if (isEmpty(item[key])) {
-                      hasError = true
-                      callback(new Error('请完善明细'))
-                      break
+              fieldRules[temp.field] = [{
+                validator: validateFunction,
+                trigger: []
+              }]
+            } else if (item.formType == 'examine_cause') {
+              var validateFunction = (rule, value, callback) => {
+                if (!value.list) {
+                  callback(new Error('请完善明细'))
+                } else {
+                  var hasError = false
+                  for (let index = 0; index < value.list.length; index++) {
+                    const item = value.list[index]
+                    const keys = [
+                      'startAddress',
+                      'endAddress',
+                      'startTime',
+                      'endTime',
+                      'traffic',
+                      'stay',
+                      'diet',
+                      'other'
+                    ]
+                    for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+                      const key = keys[keyIndex]
+                      if (isEmpty(item[key])) {
+                        hasError = true
+                        callback(new Error('请完善明细'))
+                        break
+                      }
                     }
-                  }
 
-                  if (item.money <= 0) {
-                    hasError = true
-                    callback(new Error(`费用明细（${index + 1}）合计应大于0`))
-                    break
+                    if (item.money <= 0) {
+                      hasError = true
+                      callback(new Error(`费用明细（${index + 1}）合计应大于0`))
+                      break
+                    }
+                  }
+                  if (!hasError) {
+                    callback()
                   }
                 }
-                if (!hasError) {
-                  callback()
-                }
               }
-            }
-            fieldRules[temp.field] = [{
-              validator: validateFunction,
-              trigger: []
-            }]
-          } else if ((item.fieldName == 'duration' && this.type == 3) ||
+              fieldRules[temp.field] = [{
+                validator: validateFunction,
+                trigger: []
+              }]
+            } else if ((item.fieldName == 'duration' && this.type == 3) ||
           (item.fieldName == 'money' && this.type == 5)) {
-            fieldRules[temp.field] = [{
-              required: true,
-              message: '请完善明细',
-              trigger: ['blur', 'change']
-            }]
+              fieldRules[temp.field] = [{
+                required: true,
+                message: '请完善明细',
+                trigger: ['blur', 'change']
+              }]
+            }
           }
-        }
 
-        // disabled
-        if (
+          // disabled
+          if (
           // 出差审批 差旅报销
-          (item.fieldName == 'duration' && this.type == 3) ||
+            (item.fieldName == 'duration' && this.type == 3) ||
           (item.fieldName == 'money' && this.type == 5)
-        ) {
-          temp.disabled = true
-        }
-
-        // 特殊字段允许多选
-        this.getItemRadio(item, temp)
-
-        // 获取默认值
-        if (item.formType == 'examine_cause' ||
-          item.formType == 'business_cause') {
-          if (this.action.type == 'update') {
-            const list = item.value.map(element => {
-              if (element.img) {
-                element.imgList = objDeepCopy(element.img || [])
-              } else {
-                element.imgList = []
-              }
-              return element
-            })
-            fieldForm[temp.field] = { list: list } // 编辑的值 在value字段
-          } else {
-            fieldForm[temp.field] = {} // 加入默认值 可能编辑的时候需要调整
+          ) {
+            temp.disabled = true
           }
-        } else {
-          fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
-        }
-        fieldList.push(temp)
+
+          // 特殊字段允许多选
+          this.getItemRadio(item, temp)
+
+          // 获取默认值
+          if (item.formType == 'examine_cause' ||
+          item.formType == 'business_cause') {
+            if (this.action.type == 'update') {
+              const list = item.value.map(element => {
+                if (element.img) {
+                  element.imgList = objDeepCopy(element.img || [])
+                } else {
+                  element.imgList = []
+                }
+                return element
+              })
+              fieldForm[temp.field] = { list: list } // 编辑的值 在value字段
+            } else {
+              fieldForm[temp.field] = {} // 加入默认值 可能编辑的时候需要调整
+            }
+          } else {
+            fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+          }
+          fields.push(temp)
+          baseFields.push(item)
+        })
+        fieldList.push(fields)
       })
-      this.baseFields = list
+      this.baseFields = baseFields
       this.fieldList = fieldList
       this.fieldForm = fieldForm
       this.fieldRules = fieldRules
@@ -487,7 +492,7 @@ export default {
      */
     saveClick() {
       this.loading = true
-      const crmForm = this.$refs.crmForm.instance
+      const crmForm = this.$refs.crmForm
       crmForm.validate(valid => {
         if (valid) {
           const wkFlowResult = this.validateWkFlowData(this.wkFlowList)
@@ -568,9 +573,15 @@ export default {
         } else {
           if (element.fieldType == 1) {
             params.oaExamine[element.fieldName] = this.getRealParams(element, dataValue)
-          } else {
-            element.value = this.getRealParams(element, dataValue)
-            params.field.push(element)
+          } else if (element.formType !== 'desc_text') { //  描述文字忽略
+            params.field.push({
+              fieldName: element.fieldName,
+              fieldType: element.fieldType,
+              name: element.name,
+              type: element.type,
+              fieldId: element.fieldId,
+              value: this.getRealParams(element, dataValue)
+            })
           }
         }
       }

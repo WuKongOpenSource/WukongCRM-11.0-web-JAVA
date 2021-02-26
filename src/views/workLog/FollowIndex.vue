@@ -39,6 +39,20 @@
           :label="item.label"
           :value="item.value" />
       </el-select>
+
+      <el-dropdown
+        v-if="moreTypes.length > 0"
+        trigger="click"
+        @command="handleTypeDrop">
+        <el-button icon="el-icon-more"/>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item
+            v-for="(item, index) in moreTypes"
+            :key="index"
+            :icon="item.icon"
+            :command="item.type">{{ item.name }}</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
     </flexbox>
 
     <div
@@ -90,7 +104,15 @@
 </template>
 
 <script>
-import { crmIndexGetRecordListAPI } from '@/api/crm/workbench'
+import {
+  crmIndexGetRecordListAPI,
+  crmInstrumentExportRecordListAPI,
+  crmInstrumentImportRecordListAPI,
+  crmInstrumentDownloadRecordExcelAPI
+} from '@/api/crm/workbench'
+import {
+  userErrorExcelDownAPI
+} from '@/api/admin/employeeDep'
 
 import RecordTabHead from './components/RecordTabHead'
 import XhUserCell from '@/components/CreateCom/XhUserCell'
@@ -99,6 +121,8 @@ import LogCell from '@/views/crm/components/Activity/LogCell'
 import LogEditDialog from '@/views/crm/components/Activity/LogEditDialog'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import { downloadExcelWithResData } from '@/utils'
+import { mapGetters } from 'vuex'
 
 export default {
   // 跟进记录
@@ -182,10 +206,28 @@ export default {
         seciton: 0,
         index: 0
       },
-      logEditDialogVisible: false
+      logEditDialogVisible: false,
+      requestParams: {}
     }
   },
   computed: {
+    ...mapGetters(['crm']),
+
+    followRecordAuth() {
+      return this.crm.followRecord
+    },
+
+    moreTypes() {
+      const temps = []
+      if (this.followRecordAuth.excelimport) {
+        temps.push({ type: 'enter', name: '导入', icon: 'wk wk-import' })
+      }
+      if (this.followRecordAuth.excelexport) {
+        temps.push({ type: 'out', name: '导出', icon: 'wk wk-export' })
+      }
+      return temps
+    },
+
     // 无线滚动控制
     scrollDisabled() {
       return this.loading || this.noMore
@@ -204,8 +246,18 @@ export default {
     }
   },
   mounted() {},
-
-  beforeDestroy() {},
+  created() {
+    // 监听导入
+    this.$bus.on('import-crm-done-bus', (type) => {
+      console.log(type)
+      if (type === 'crmFollowLog') {
+        this.refreshList()
+      }
+    })
+  },
+  beforeDestroy() {
+    this.$bus.off('import-crm-done-bus')
+  },
   methods: {
     /**
      * 中间tabs改变
@@ -254,6 +306,7 @@ export default {
         params.search = this.filterForm.search
       }
 
+      this.requestParams = params
       crmIndexGetRecordListAPI(params)
         .then(res => {
           this.loading = false
@@ -332,7 +385,53 @@ export default {
       if (this.logEditPosition.index >= 0) {
         this.list.splice(this.logEditPosition.index, 1, data)
       }
+    },
+
+    handleTypeDrop(command) {
+      if (!this.requestParams.label) {
+        this.$message.error('请先选择一个模块导入/导出')
+        return
+      }
+      if (command == 'out') {
+        crmInstrumentExportRecordListAPI(this.requestParams)
+          .then(res => {
+            downloadExcelWithResData(res)
+          })
+          .catch(() => {})
+      } else if (command == 'enter') {
+        const labelObj = this.options.find(item => item.value === this.requestParams.label)
+        this.$bus.emit('import-crm-bus', 'crmFollowLog', {
+          typeName: `${labelObj.label}跟进记录`,
+          ownerSelectShow: false,
+          repeatHandleShow: false,
+          historyShow: false,
+          noImportProcess: true,
+          importRequest: crmInstrumentImportRecordListAPI, // 导入请求
+          importParams: { crmType: this.requestParams.label },
+          templateRequest: crmInstrumentDownloadRecordExcelAPI, // 模板请求
+          templateParams: { crmType: this.requestParams.label },
+          downloadErrFuc: this.getImportError
+        })
+      }
+    },
+
+    /**
+     * 导入错误下载
+     */
+    getImportError(result) {
+      return new Promise((resolve, reject) => {
+        userErrorExcelDownAPI({
+          token: result.token
+        })
+          .then(res => {
+            resolve(res)
+          })
+          .catch(() => {
+            reject()
+          })
+      })
     }
+
   }
 }
 </script>

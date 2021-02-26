@@ -1,13 +1,10 @@
 <template>
   <component
-    v-if="id&&visible"
+    v-if="$attrs.id&&visible"
+    v-bind="$attrs"
     :is="tabName"
-    :crm-type="crmType"
-    :id="id"
-    :listener-ids="listenerIDs"
-    :no-listener-ids="noListenerIDs"
-    :no-listener-class="noListenerClass"
     class="d-view"
+    v-on="$listeners"
     @handle="detailHandle"
     @hide-view="hiddenView"/>
 </template>
@@ -38,36 +35,10 @@ export default {
     InvoiceDetail
   },
   props: {
-    /** 模块ID */
-    id: [String, Number],
-    /** 没有值就是全部类型 有值就是当个类型 */
-    crmType: {
-      type: String,
-      default: ''
-    },
+    crmType: String,
     visible: {
       type: Boolean,
       default: false
-    },
-    // 监听的dom 进行隐藏详情
-    listenerIDs: {
-      type: Array,
-      default: () => {
-        return ['crm-main-container']
-      }
-    },
-    // 不监听
-    noListenerIDs: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
-    noListenerClass: {
-      type: Array,
-      default: () => {
-        return ['el-table__body']
-      }
     }
   },
   data() {

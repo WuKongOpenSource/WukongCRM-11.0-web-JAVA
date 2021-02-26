@@ -8,7 +8,7 @@ import {
   regexIsCRMMobile,
   regexIsCRMEmail
 } from '@/utils'
-import { isEmpty } from '@/utils/types'
+import { isEmpty, isObject } from '@/utils/types'
 
 
 export default {
@@ -72,12 +72,16 @@ export default {
       }
 
       // 特殊类型
-      if (item.formType === 'number') {
+      if (item.formType === 'number' || item.formType === 'percent') {
         const validateCRMNumber = (rule, value, callback) => {
-          if (isEmpty(value) || regexIsCRMNumber(value)) {
-            callback()
+          if (item.hasOwnProperty('precisions')) {
+            this._getNumberRule(rule, value, callback)
           } else {
-            callback(new Error('数字的整数部分须少于15位，小数部分须少于4位'))
+            if (isEmpty(value) || regexIsCRMNumber(value)) {
+              callback()
+            } else {
+              callback(new Error('数字的整数部分须少于15位，小数部分须少于4位'))
+            }
           }
         }
         tempList.push({
@@ -87,10 +91,14 @@ export default {
         })
       } else if (item.formType === 'floatnumber') {
         const validateCRMMoneyNumber = (rule, value, callback) => {
-          if (isEmpty(value) || regexIsCRMMoneyNumber(value)) {
-            callback()
+          if (item.hasOwnProperty('precisions')) {
+            this._getNumberRule(rule, value, callback)
           } else {
-            callback(new Error('货币的整数部分须少于15位，小数部分须少于2位'))
+            if (isEmpty(value) || regexIsCRMMoneyNumber(value)) {
+              callback()
+            } else {
+              callback(new Error('货币的整数部分须少于15位，小数部分须少于2位'))
+            }
           }
         }
         tempList.push({
@@ -124,9 +132,57 @@ export default {
           item: item,
           trigger: ['blur']
         })
+      } else if (item.formType === 'location' && item.isNull == 1) {
+        const validateLocation = (rule, value, callback) => {
+          if (!isObject(value) || (
+            isObject(value) && isEmpty(value.lat) && isEmpty(value.lng) && isEmpty(value.address)
+          )) {
+            callback(new Error(item.name + '不能为空'))
+          } else {
+            callback()
+          }
+        }
+        tempList.push({
+          validator: validateLocation,
+          item: item,
+          trigger: ['change']
+        })
       }
 
       return tempList
+    },
+
+    /**
+     * 获取数值规则
+     */
+    _getNumberRule(rule, value, callback) {
+      const field = rule.item
+
+      const arr = String(value).split('.')
+
+      const len = String(value)
+        .replace('.', '')
+        .replace('-', '')
+        .length
+      const maxlength = field.formType === 'percent' ? 10 : 15
+
+      const min = isEmpty(field.minNumRestrict) ? -Infinity : Number(field.minNumRestrict || -Infinity)
+      const max = isEmpty(field.maxNumRestrict) ? Infinity : Number(field.maxNumRestrict || Infinity)
+
+      if (len > maxlength) {
+        callback(new Error(`最多支持${maxlength}位数字（包含小数位）`))
+      } else if (isEmpty(field.precisions) && String(value).includes('.')) {
+        // null 不支持小数  0 不限制小数位
+        callback(new Error(`不支持小数`))
+      } else if (arr.length > 1 && arr[1].length > Number(field.precisions)) {
+        callback(new Error(`小数位不能大于${field.precisions}`))
+      } else if (value < min) {
+        callback(new Error(`不能小于${min}`))
+      } else if (value > max) {
+        callback(new Error(`不能大于${max}`))
+      } else {
+        callback()
+      }
     }
   }
 }

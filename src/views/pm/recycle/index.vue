@@ -1,7 +1,7 @@
 <template>
   <div class="recycle">
     <xr-header
-      icon-class="wk wk-bin"
+      icon-class="wk wk-icon-bin"
       icon-color="#fd5b4a"
       label="回收站" />
     <div
@@ -16,6 +16,7 @@
           :data="item"
           :data-index="index"
           class="item-list"
+          disabled
           @on-handle="taskCellHandle"/>
       </div>
     </div>

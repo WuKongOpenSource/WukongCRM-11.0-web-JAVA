@@ -221,3 +221,51 @@ export function crmIndexUnContactCustomerAPI(data) {
     }
   })
 }
+
+/**
+ * 跟进记录导出
+ * @param {*} data
+ */
+export function crmInstrumentExportRecordListAPI(data) {
+  return request({
+    url: 'crmInstrument/exportRecordList',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 跟进记录导入
+ * @param {*} data
+ */
+export function crmInstrumentImportRecordListAPI(data) {
+  var param = new FormData()
+  Object.keys(data).forEach(key => {
+    param.append(key, data[key])
+  })
+  return request({
+    url: 'crmInstrument/importRecordList',
+    method: 'post',
+    data: param,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
+ * 跟进记录导入模板
+ * @param {*} data
+ */
+export function crmInstrumentDownloadRecordExcelAPI(data) {
+  return request({
+    url: 'crmInstrument/downloadRecordExcel',
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}

@@ -3,6 +3,7 @@
     :class="{'is-select':select}"
     class="xr-menu-item">
     <i
+      :style="{backgroundColor: select ? iconColor || '#2362FB' : '#edf2f6'}"
       :class="['xr-menu-item__icon', iconClass]" />
     <span class="xr-menu-item__label">{{ label }}</span>
     <el-badge

@@ -17,8 +17,10 @@ import {
   crmMessagVisitRemindAPI,
   crmMessageCheckInvoiceAPI
 } from '@/api/crm/message'
+
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { invoiceHeaderFields } from '../../invoice/js/fields'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
 export default {
   components: {},
@@ -322,6 +324,7 @@ export default {
         this.fieldList.push({
           prop: element.fieldName,
           label: element.name,
+          formType: element.formType,
           width: width
         })
       }
@@ -337,7 +340,7 @@ export default {
     },
 
     /** 格式化字段 */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue, field) {
       // 如果需要格式化
       if (column.property == 'invoiceType') {
         return {
@@ -347,6 +350,10 @@ export default {
           4: '地税通用机打发票',
           5: '收据'
         }[row[column.property]]
+      }
+
+      if (field) {
+        return getFormFieldShowName(field.formType, row[column.property])
       }
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     },

@@ -106,17 +106,22 @@
           :width="item.width"
           :sortable="item.prop != 'poolDay' ? 'custom' : false"
           show-overflow-tooltip>
-          <template slot-scope="scope">
+          <template slot-scope="{ row, column, $index }">
             <template v-if="item.prop == 'dealStatus'">
-              <i :class="scope.row[item.prop] | dealIcon"/>
-              <span>{{ scope.row[item.prop] | dealName }}</span>
+              <i :class="row[item.prop] | dealIcon"/>
+              <span>{{ row[item.prop] | dealName }}</span>
             </template>
             <template v-else-if="item.prop == 'status'">
               <i
-                v-if="scope.row.status == 2"
+                v-if="row.status == 2"
                 class="wk wk-circle-password customer-lock"/>
             </template>
-            <template v-else>{{ fieldFormatter(scope.row, scope.column) }}</template>
+            <wk-field-view
+              v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+              :form-type="item.formType"
+              :value="row[column.property]"
+            />
+            <template v-else>{{ fieldFormatter(row, column, row[column.property], item) }}</template>
           </template>
         </el-table-column>
         <el-table-column/>
@@ -173,7 +178,9 @@
     <c-r-m-all-detail
       :visible.sync="showDview"
       :crm-type="rowType"
-      :id="rowID"
+      :id.sync="rowID"
+      :page-list="crmType == rowType ? list : []"
+      :page-index.sync="rowIndex"
       class="d-view"
       @handle="handleHandle"/>
 

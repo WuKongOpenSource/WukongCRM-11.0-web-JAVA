@@ -16,7 +16,9 @@ export default {
       } else if (
         formType == 'user' ||
         formType == 'single_user' ||
-        formType == 'structure'
+        formType == 'structure' ||
+        formType == 'position' ||
+        formType == 'location'
       ) {
         return [
           { value: 'contains', label: '包含', disabled: false, type: 3 },

@@ -23,6 +23,8 @@
           :head-details="headDetails"
           :id="id"
           :crm-type="crmType"
+          :page-list="pageList"
+          @pageChange="pageChange"
           @handle-click="deadHandleClick"
           @handle="detailHeadHandle"
           @close="hideView">

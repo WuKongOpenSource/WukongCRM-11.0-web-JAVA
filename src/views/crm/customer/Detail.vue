@@ -26,6 +26,8 @@
           :pool-id="seasPoolId"
           :pool-auth="poolAuth"
           :crm-type="crmType"
+          :page-list="pageList"
+          @pageChange="pageChange"
           @handle="detailHeadHandle"
           @close="hideView">
           <template slot="name">

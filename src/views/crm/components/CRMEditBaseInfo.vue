@@ -14,8 +14,9 @@
       content-height="auto">
       <el-form
         :model="editForm"
-        :rules="editRules"
+        :rules="currentEditRules"
         :ref="`editForm${mainIndex}`"
+        :validate-on-rule-change="false"
         class="el-form--flex"
         label-position="left"
         label-width="100px">
@@ -30,12 +31,17 @@
           <template v-if="item.isEdit">
             <el-input
               v-if="item.formType === 'text' ||
-                item.formType == 'number' ||
-                item.formType == 'floatnumber' ||
                 item.formType == 'mobile' ||
                 item.formType == 'email' ||
-              item.formType == 'textarea'"
+                item.formType == 'textarea' ||
+              item.formType == 'website'"
               v-model="editForm[item.fieldName]"/>
+            <el-input-number
+              v-else-if="item.formType == 'number' ||
+                item.formType == 'floatnumber' ||
+              item.formType == 'percent'"
+              v-model="editForm[item.fieldName]"
+              :controls="false" />
             <el-select
               v-else-if="item.formType === 'select' || item.formType === 'business_status'"
               v-model="editForm[item.fieldName]"
@@ -106,6 +112,34 @@
               :value="editForm[item.fieldName]"
               @value-change="arrayValueChange($event, item)"
             />
+            <el-switch
+              v-else-if="item.formType == 'boolean_value'"
+              v-model="editForm[item.fieldName]"
+              active-value="1"
+              inactive-value="0"/>
+            <wk-position
+              v-else-if="item.formType == 'position'"
+              :hide-area="item.hideArea"
+              :only-province="item.onlyProvince"
+              :show-detail="item.showDetail"
+              v-model="editForm[item.fieldName]"/>
+            <wk-location
+              v-else-if="item.formType == 'location'"
+              v-model="editForm[item.fieldName]"/>
+            <wk-signature-pad
+              v-else-if="item.formType == 'handwriting_sign'"
+              v-model="editForm[item.fieldName]"/>
+            <el-date-picker
+              v-else-if="item.formType === 'date_interval'"
+              v-model="editForm[item.fieldName]"
+              :type="item.dateType || 'daterange'"
+              :value-format="item.valueFormat || 'yyyy-MM-dd'"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期" />
+            <wk-percent-input
+              v-else-if="item.formType == 'percent'"
+              v-model="editForm[item.fieldName]"
+              :controls="false" />
           </template>
           <template v-else>
             <flexbox v-if="item.formType === 'file'" style="min-height: 40px;">
@@ -118,14 +152,14 @@
               wrap="wrap">
               <div
                 :span="0.5"
-                class="b-cell"
-                @click="checkMapView(item)">
+                class="b-cell">
                 <flexbox
                   class="b-cell-b">
                   <div class="b-cell-name">定位</div>
                   <div
                     class="b-cell-value"
-                    style="color: #3E84E9;cursor: pointer;">{{ item.value.location }}</div>
+                    style="color: #3E84E9;cursor: pointer;"
+                    @click="checkMapView(item)">{{ item.value.location }}</div>
                 </flexbox>
               </div>
               <div
@@ -147,12 +181,21 @@
                 </flexbox>
               </div>
             </div>
-
-            <div
+            <wk-desc-text
+              v-else-if="item.formType == 'desc_text'"
+              :value="item.value"/>
+            <flexbox
               v-else
               :class="{'can-check':isModule(item)}"
-              class="form-item__value"
-              @click="checkModuleDetail(item)">{{ getCommonShowValue(item) }}<i v-if="getEditAuth(item)" class="wk wk-edit form-item__edit" @click.stop="editClick(item)" /></div>
+              align="stretch"
+              class="form-item__value">
+              <wk-field-view
+                v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+                :form-type="item.formType"
+                :value="item.value"
+              />
+              <span v-else @click="checkModuleDetail(item)">{{ getCommonShowValue(item) }}</span>
+            <i v-if="getEditAuth(item)" class="wk wk-edit form-item__edit" @click.stop="editClick(item)" /></flexbox>
           </template>
         </el-form-item>
       </el-form>
@@ -173,7 +216,7 @@
 </template>
 
 <script>
-import { filedGetInformationAPI, filedUpdateTableFieldAPI, filedGetFieldAPI, filedValidatesAPI } from '@/api/crm/common'
+import { filedGetInformationAPI, filedUpdateTableFieldAPI, filedGetFieldAPI } from '@/api/crm/common'
 
 import {
   XhUserCell,
@@ -184,23 +227,24 @@ import {
   XhBusinessStatus,
   XhReceivablesPlan
 } from '@/components/CreateCom'
+import WkPosition from '@/components/NewCom/WkPosition'
+import WkLocation from '@/components/NewCom/WkLocation'
+import WkSignaturePad from '@/components/NewCom/WkSignaturePad'
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
+import WkDescText from '@/components/NewCom/WkDescText'
+import WkPercentInput from '@/components/NewCom/WkPercentInput'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Sections from '../components/Sections'
 import MapView from '@/components/MapView' // 地图详情
 import FileListView from '@/components/FileListView'
-import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
-import {
-  regexIsCRMNumber,
-  regexIsCRMMoneyNumber,
-  regexIsCRMMobile,
-  regexIsCRMEmail,
-  objDeepCopy
-} from '@/utils'
+import { objDeepCopy } from '@/utils'
 import { isArray, isObject, isEmpty } from '@/utils/types'
 import { mapGetters } from 'vuex'
 import { getWkDateTime } from '@/utils'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
+import CustomFieldsMixin from '@/mixins/CustomFields'
 
 export default {
   // 客户管理 的 基本信息
@@ -216,11 +260,17 @@ export default {
     XhProuctCate,
     XhBusinessStatus,
     XhReceivablesPlan,
+    WkPosition,
+    WkLocation,
+    WkSignaturePad,
+    WkFieldView,
+    WkDescText,
+    WkPercentInput,
     CRMFullScreenDetail: () => import('@/components/CRMFullScreenDetail')
   },
   filters: {
   },
-  mixins: [CheckStatusMixin],
+  mixins: [CustomFieldsMixin],
   props: {
     // 模块ID
     id: [String, Number],
@@ -257,6 +307,7 @@ export default {
       // 编辑
       showSaveButton: false,
       editRules: {},
+      currentEditRules: {},
       editForm: {},
       editOptions: {},
       editFieldData: []
@@ -368,7 +419,7 @@ export default {
      * 查看地图详情
      */
     checkMapView(item) {
-      if (item.value && item.value !== '') {
+      if (isObject(item.value) && !isEmpty(item.value.location)) {
         this.mapViewInfo = {
           title: item.value.location,
           lat: item.value.lat,
@@ -376,31 +427,6 @@ export default {
         }
         this.showMapView = true
       }
-    },
-
-    getArrayKey(type) {
-      if (type === 'structure') {
-        return 'name'
-      } else if (type === 'user') {
-        return 'realname'
-      }
-
-      return ''
-    },
-
-    arrayValue(array, field) {
-      if (
-        !array ||
-        Object.prototype.toString.call(array) !== '[object Array]'
-      ) {
-        return ''
-      }
-
-      return array
-        .map(item => {
-          return field ? item[field] : item
-        })
-        .join('，')
     },
 
     /**
@@ -411,7 +437,8 @@ export default {
         'customer',
         'business',
         'contract',
-        'contacts'].includes(item.formType)
+        'contacts',
+        'location'].includes(item.formType)
     },
 
     /**
@@ -445,7 +472,8 @@ export default {
         contacts: 'contactsName',
         category: 'categoryName',
         statusName: 'statusName',
-        typeName: 'typeName'
+        typeName: 'typeName',
+        location: 'address'
       }[item.formType]
       return item.value ? item.value[field] : ''
     },
@@ -479,25 +507,31 @@ export default {
     getCommonShowValue(item) {
       if (this.isModule(item) || this.isSpecialField(item)) {
         return this.getModuleName(item)
-      } else if (item.formType === 'single_user') {
-        return item.value ? item.value.realname : ''
-      } else if (item.formType === 'checkbox' || item.formType === 'structure' || item.formType === 'user') {
-        return this.arrayValue(item.value, this.getArrayKey(item.formType))
-      } else if (item.formType === 'check_status') {
-        return this.getStatusName(item.value)
+      } else {
+        return getFormFieldShowName(item.formType, item.value, '')
       }
-
-      return item.value
     },
 
     /**
      * 查看详情
      */
     checkModuleDetail(data) {
-      if (this.isModule(data) && isObject(data.value)) {
-        this.fullDetailType = data.formType
-        this.fullDetailId = data.value[`${data.formType}Id`]
-        this.showFullDetail = true
+      const dataValue = data.value
+      if (this.isModule(data) && isObject(dataValue)) {
+        if (data.formType === 'location') {
+          if (!isEmpty(dataValue.address)) {
+            this.mapViewInfo = {
+              title: dataValue.address,
+              lat: dataValue.lat,
+              lng: dataValue.lng
+            }
+          }
+          this.showMapView = true
+        } else {
+          this.fullDetailType = data.formType
+          this.fullDetailId = dataValue[`${data.formType}Id`]
+          this.showFullDetail = true
+        }
       }
     },
 
@@ -515,6 +549,9 @@ export default {
       } else if (this.crmType == 'receivables' && ['contract', 'customer'].includes(item.formType)) {
         return false
       } else if (this.crmType == 'visit' && ['business', 'contacts', 'customer'].includes(item.formType)) {
+        return false
+      } else if (item.formType === 'desc_text' || item.formType === 'handwriting_sign') {
+        // 描述文字签名不允许编辑
         return false
       }
       // authLevel 1 不能查看不能编辑 2可查看  3 可编辑可查看
@@ -542,10 +579,14 @@ export default {
           value = value && value.userId ? [value] : []
         } else if (item.formType === 'structure' || item.formType === 'file' || item.formType === 'user') {
           value = value || []
+        } else if (item.formType === 'number' || item.formType === 'floatnumber' || item.formType === 'percent') {
+          value = isEmpty(value) ? undefined : value
         }
+
         this.$set(this.editForm, item.fieldName, value)
         this.$set(editData, 'isEdit', true)
         this.$set(this.editOptions, item.fieldName, editData)
+        this.$set(this.currentEditRules, item.fieldName, this.editRules[item.fieldName])
       }
       this.showSaveButton = true
       this.$set(item, 'isEdit', true)
@@ -566,6 +607,7 @@ export default {
           item.isEdit = false
         })
 
+        this.currentEditRules = {}
         this.editForm = {}
         this.editOptions = {}
         this.showSaveButton = false
@@ -595,8 +637,14 @@ export default {
         if (field.isEdit) {
           const fieldData = this.editOptions[field.fieldName]
           if (fieldData) {
-            fieldData.value = this.getRealValue(fieldData, this.editForm[field.fieldName])
-            list.push(fieldData)
+            list.push({
+              fieldName: fieldData.fieldName,
+              fieldType: fieldData.fieldType,
+              name: fieldData.name,
+              type: fieldData.type,
+              fieldId: fieldData.fieldId,
+              value: this.getRealValue(fieldData, this.editForm[fieldData.fieldName])
+            })
           }
         }
       }
@@ -674,7 +722,8 @@ export default {
       // 获取自定义字段的更新时间
       var params = {
         label: crmTypeModel[this.crmType],
-        id: this.id
+        id: this.id,
+        type: 1 // 一维数组
       }
 
       filedGetFieldAPI(params)
@@ -683,7 +732,14 @@ export default {
           const editRules = {}
           editFieldData.forEach(item => {
             item.isEdit = false
-            const authList = this.getItemRulesArrayFromItem(item)
+            let authList = []
+            if (item.autoGeneNumber == 1) {
+              const copyItem = objDeepCopy(item)
+              copyItem.isNull = 0
+              authList = this.getRules(copyItem)
+            } else {
+              authList = this.getRules(item)
+            }
             if (authList && authList.length) {
               editRules[item.fieldName] = authList
             }
@@ -694,176 +750,6 @@ export default {
         })
         .catch(() => {
         })
-    },
-
-    /**
-     * 不验证字段必填
-     */
-    ingnoreRequiredField(data) {
-      if (this.crmType == 'contract' && data.fieldName == 'num') {
-        return data.autoGeneNumber == 1
-      } else if (this.crmType == 'receivables' && data.fieldName == 'number') {
-        return data.autoGeneNumber == 1
-      } else if (this.crmType == 'visit' && data.fieldName == 'visit_number') {
-        return data.autoGeneNumber == 1
-      }
-
-      return false
-    },
-
-    /**
-     * item 当行数据源
-     */
-    getItemRulesArrayFromItem(item) {
-      var tempList = []
-      // 验证必填
-      if (item.isNull == 1 && !this.ingnoreRequiredField(item)) {
-        var validateIsNull = (rule, value, callback) => {
-          if (!rule.item || !rule.item.isEdit) {
-            return callback()
-          }
-          if (isEmpty(value)) {
-            callback(new Error(item.name + '不能为空'))
-          } else {
-            callback()
-          }
-        }
-        tempList.push({
-          validator: validateIsNull,
-          item: item,
-          trigger: []
-        })
-      }
-
-      // 验证唯一
-      if (item.isUnique == 1) {
-        var validateUnique = (rule, value, callback) => {
-          if ((isArray(value) && value.length == 0) || !value) {
-            callback()
-          } else {
-            var validatesParams = {}
-            validatesParams.fieldId = item.fieldId
-            if (isArray(value)) {
-              let postValue = ''
-              if (value.length > 0) {
-                if (
-                  rule.item.formType == 'user' ||
-                  rule.item.formType == 'single_user' ||
-                  rule.item.formType == 'structure'
-                ) {
-                  postValue = value
-                    .map(valueItem => {
-                      return (rule.item.formType == 'user' || rule.item.formType == 'single_user')
-                        ? valueItem.userId
-                        : valueItem.id
-                    })
-                    .join(',')
-                } else if (rule.item.fieldName == 'categoryId') {
-                  if (value && value.length) {
-                    postValue = value[value.length - 1]
-                  } else {
-                    postValue = ''
-                  }
-                } else if (rule.item.formType == 'checkbox') {
-                  postValue = value.join(',')
-                }
-              }
-              validatesParams.value = postValue
-            } else {
-              validatesParams.value = value
-            }
-            validatesParams.batchId = this.detail.batchId
-            filedValidatesAPI(validatesParams)
-              .then(res => {
-                // status 1 通过 0
-                if (res.data.status === 1) {
-                  callback()
-                } else {
-                  callback(new Error(item.name + '已存在'))
-                }
-              })
-              .catch(error => {
-                callback(new Error(error.msg ? error.msg : '验证出错'))
-              })
-          }
-        }
-        tempList.push({
-          validator: validateUnique,
-          item: item,
-          trigger:
-            item.formType == 'checkbox' || item.formType == 'select'
-              ? []
-              : []
-        })
-      }
-
-      // 特殊字符
-      if (item.formType == 'number') {
-        var validateCRMNumber = (rule, value, callback) => {
-          if (!rule.item || !rule.item.isEdit) {
-            return callback()
-          }
-          if (!value || value == '' || regexIsCRMNumber(value)) {
-            callback()
-          } else {
-            callback(new Error('数字的整数部分须少于15位，小数部分须少于4位'))
-          }
-        }
-        tempList.push({
-          validator: validateCRMNumber,
-          item: item,
-          trigger: []
-        })
-      } else if (item.formType == 'floatnumber') {
-        var validateCRMMoneyNumber = (rule, value, callback) => {
-          if (!rule.item || !rule.item.isEdit) {
-            return callback()
-          }
-          if (!value || value == '' || regexIsCRMMoneyNumber(value)) {
-            callback()
-          } else {
-            callback(new Error('货币的整数部分须少于15位，小数部分须少于2位'))
-          }
-        }
-        tempList.push({
-          validator: validateCRMMoneyNumber,
-          item: item,
-          trigger: []
-        })
-      } else if (item.formType == 'mobile') {
-        var validateCRMMobile = (rule, value, callback) => {
-          if (!rule.item || !rule.item.isEdit) {
-            return callback()
-          }
-          if (!value || value == '' || regexIsCRMMobile(value)) {
-            callback()
-          } else {
-            callback(new Error('手机格式有误'))
-          }
-        }
-        tempList.push({
-          validator: validateCRMMobile,
-          item: item,
-          trigger: []
-        })
-      } else if (item.formType == 'email') {
-        var validateCRMEmail = (rule, value, callback) => {
-          if (!rule.item || !rule.item.isEdit) {
-            return callback()
-          }
-          if (!value || value == '' || regexIsCRMEmail(value)) {
-            callback()
-          } else {
-            callback(new Error('邮箱格式有误'))
-          }
-        }
-        tempList.push({
-          validator: validateCRMEmail,
-          item: item,
-          trigger: []
-        })
-      }
-      return tempList
     }
   }
 }
@@ -893,6 +779,13 @@ export default {
   }
 }
 
+.el-input-number {
+  width: 100%;
+  /deep/ .el-input__inner {
+    text-align: left;
+    padding: 0 8px;
+  }
+}
 
 .b-cells + .b-cells {
   margin-top: 25px;
@@ -911,12 +804,13 @@ export default {
     .el-form-item__content {
       position: relative;
       min-height: 40px;
+      line-height: 1.5;
     }
 
     .el-form-item__label {
       color: #777;
       font-size: 13px;
-      line-height: 30px;
+      line-height: 1.5;
     }
 
     &:hover {
@@ -930,7 +824,8 @@ export default {
 .form-item__value {
   font-size: 13px;
   color: #333;
-  line-height: 30px;
+  line-height: 1.5;
+  min-height: 22px;
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;

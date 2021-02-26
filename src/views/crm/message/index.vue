@@ -16,6 +16,7 @@
             :label="item.name"
             :num="item.num"
             :icon-class="item.iconClass"
+            :icon-color="item.color"
             :select="leftType==item.infoType"
             @click.native="sideClick(item)"/>
         </div>

@@ -112,8 +112,8 @@ export default [
       }
     }, {
       name: 'workbenchHandlefield',
-      path: 'workbench-custom-field/:type/:id/:label',
-      component: () => import('@/views/admin/crm/HandleField'),
+      path: 'workbench-custom-field/:type/:label/:id',
+      component: () => import('@/views/admin/fields'),
       hidden: true,
       meta: {
         activeMenu: '/manage/system-workbench'
@@ -194,8 +194,18 @@ export default [
         permissions: ['manage', 'crm', 'achievement']
       }
     }, {
+      name: 'customField',
+      path: 'custom-field/:type/:label/:id',
+      component: () => import('@/views/admin/fields'),
+      hidden: true,
+      meta: {
+        activeMenu: '/manage/customer/custom-field',
+        requiresAuth: true,
+        permissionList: [['manage', 'crm', 'field'], ['manage', 'crm', 'activityForm']]
+      }
+    }, {
       name: 'handlefield',
-      path: 'custom-field/:type/:id/:label',
+      path: 'handle-field/:type/:label/:id',
       component: () => import('@/views/admin/crm/HandleField'),
       hidden: true,
       meta: {
@@ -253,7 +263,7 @@ export default [
   {
     ...layout({
       permissions: ['manage', 'init', 'initData']
-    }, '/manage', false),
+    }, '/manage', true),
     children: [{
       path: 'init', // 初始化数据
       component: () => import('@/views/admin/init/Set'),
@@ -261,6 +271,19 @@ export default [
         title: '初始化数据',
         icon: 'results-solid'
       }
+    }]
+  },
+
+  {
+    ...layout(
+      {},
+      '/manage',
+      false
+    ),
+    children: [{
+      path: 'fields/:type/:id/:label',
+      component: () => import('@/views/admin/crm/HandleField'),
+      hidden: true
     }]
   }
 ]

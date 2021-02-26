@@ -15,7 +15,7 @@
         </template>
       </el-autocomplete>
       <div
-        id="choicemap"
+        ref="addressMap"
         class="map"/>
       <div class="area-title">详细地址</div>
       <el-input
@@ -86,7 +86,7 @@ export default {
   mounted() {
     getBaiduMap()
       .then(() => {
-        var map = new BMap.Map('choicemap', { enableMapClick: false })
+        var map = new BMap.Map(this.$refs.addressMap, { enableMapClick: false })
         map.centerAndZoom(new BMap.Point(116.404, 39.915), 14)
         // map.disableDragging() //禁止拖拽
         // map.disableDoubleClickZoom()

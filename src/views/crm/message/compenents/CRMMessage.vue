@@ -101,22 +101,27 @@
         :label="item.label"
         :width="item.width"
         show-overflow-tooltip>
-        <template slot-scope="scope">
+        <template slot-scope="{ row, column, $index }">
           <template v-if="item.prop == 'dealStatus'">
-            <i :class="scope.row[item.prop] | dealIcon"/>
-            <span>{{ scope.row[item.prop] | dealName }}</span>
+            <i :class="row[item.prop] | dealIcon"/>
+            <span>{{ row[item.prop] | dealName }}</span>
           </template>
           <template v-else-if="item.prop == 'status' && crmType === 'customer'">
             <i
-              v-if="scope.row.status == 2"
+              v-if="row.status == 2"
               class="wk wk-circle-password customer-lock"/>
           </template>
           <template v-else-if="item.prop == 'checkStatus'">
-            <span :style="getStatusStyle(scope.row.checkStatus)" class="status-mark"/>
-            <span>{{ getStatusName(scope.row.checkStatus) }}</span>
+            <span :style="getStatusStyle(row.checkStatus)" class="status-mark"/>
+            <span>{{ getStatusName(row.checkStatus) }}</span>
           </template>
+          <wk-field-view
+            v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+            :form-type="item.formType"
+            :value="row[column.property]"
+          />
           <template v-else>
-            {{ fieldFormatter(scope.row, scope.column) }}
+            {{ fieldFormatter(row, column, row[column.property], item) }}
           </template>
         </template>
       </el-table-column>
@@ -153,10 +158,13 @@ import {
   crmMessagAllDealAPI,
   crmMessagzealByIdAPI
 } from '@/api/crm/message'
-import MessageTableMixin from '../mixins/MessageTable'
+
 import FilterForm from '@/views/crm/components/FilterForm'
 import FilterContent from '@/views/crm/components/FilterForm/FilterContent'
 import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
+
+import MessageTableMixin from '../mixins/MessageTable'
 import { invoiceFilterFields } from '../../invoice/js/fields'
 
 export default {
@@ -166,7 +174,8 @@ export default {
   components: {
     FilterForm,
     FilterContent,
-    CRMAllDetail
+    CRMAllDetail,
+    WkFieldView
   },
 
   filters: {
@@ -521,7 +530,7 @@ export default {
         model: this.model
       }).then(res => {
         this.$message.success('操作成功')
-        this.$parent.refreshNum()
+        this.$parent.requestNumCount()
         this.getList()
       }).catch(() => {})
     },

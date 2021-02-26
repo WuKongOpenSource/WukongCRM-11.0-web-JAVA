@@ -1,6 +1,6 @@
 <template>
   <div class="map-view">
-    <div id="choicemap"/>
+    <div ref="mapView" class="main-map"/>
     <i
       class="el-icon-close map-close"
       @click="hiddenView"/>
@@ -41,7 +41,7 @@ export default {
 
     getBaiduMap()
       .then(() => {
-        var map = new BMap.Map('choicemap', { enableMapClick: false })
+        var map = new BMap.Map(this.$refs.mapView, { enableMapClick: false })
         var point = new BMap.Point(parseFloat(this.lng), parseFloat(this.lat))
         map.centerAndZoom(point, 18)
         map.enableScrollWheelZoom()
@@ -75,6 +75,14 @@ export default {
   top: 0;
   left: 0;
   background-color: #000;
+  .main-map {
+    position: absolute;
+    left: 100px;
+    top: 100px;
+    bottom: 100px;
+    right: 100px;
+    overflow: hidden;
+  }
 }
 
 .map-close {
@@ -84,14 +92,5 @@ export default {
   font-size: 28px;
   color: #fff;
   cursor: pointer;
-}
-
-#choicemap {
-  position: absolute;
-  left: 100px;
-  top: 100px;
-  bottom: 100px;
-  right: 100px;
-  overflow: hidden;
 }
 </style>

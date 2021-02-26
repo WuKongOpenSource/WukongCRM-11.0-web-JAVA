@@ -9,9 +9,23 @@ export default {
     isTrimInput(formType) {
       return [
         'mobile',
-        'email'
+        'email',
+        'website'
       ].includes(formType)
     },
+
+    /**
+     * 获取类型图标
+     * @param {*} formType
+     */
+    getInputIcon(formType) {
+      return {
+        mobile: 'wk wk-icon-mobile',
+        email: 'wk wk-icon-email-outline',
+        website: 'wk wk-icon-link'
+      }[formType]
+    },
+
     /**
      * 部门事件
      */
@@ -39,7 +53,9 @@ export default {
     oldChange(dataValue, field, index) {
       this.$set(this.fieldFrom, field.field, dataValue.value)
       this.$emit('change', field, index, dataValue.value)
-      this.$refs.form.validateField(field.field)
+      if (this.$refs.form) {
+        this.$refs.form.validateField(field.field)
+      }
     },
 
     /**

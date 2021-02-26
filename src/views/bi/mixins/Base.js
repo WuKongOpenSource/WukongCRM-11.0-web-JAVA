@@ -115,12 +115,16 @@ export default {
     // 页面展示条数
     handleSizeChange(val) {
       this.pageData.limit = val
+      this.pageData.talkTime = this.talkTime
+      this.pageData.talkTimeCondition = this.talkTimeCondition
       this.getList(this.pageData)
     },
 
     // 分页切换
     handleCurrentChange(val) {
       this.pageData.page = val
+      this.pageData.talkTime = this.talkTime
+      this.pageData.talkTimeCondition = this.talkTimeCondition
       this.getList(this.pageData)
     },
 

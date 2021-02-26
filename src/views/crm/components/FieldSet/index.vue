@@ -9,7 +9,7 @@
       <el-input
         v-model="search"
         class="field-set__search"
-        placeholder="搜索字段"
+        placeholder="搜索字段（拖拽字段进行排序）"
         @input="searchClick" />
 
       <div v-loading="loading" class="field-set__content">

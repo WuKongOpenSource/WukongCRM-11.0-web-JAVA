@@ -30,38 +30,6 @@
             :span="0.5"
             :key="index"
             class="b-cell">
-            <!-- <flexbox v-if="item.formType === 'user'"
-                     align="stretch"
-                     class="b-cell-b">
-              <div class="b-cell-name">{{item.name}}</div>
-              <div class="b-cell-value">
-                <flexbox :gutter="0"
-                         wrap="wrap"
-                         style="padding: 0px 10px 10px 0px;">
-                  <div v-for="(item, index) in item.value"
-                       :key="index">
-                    {{item.realname}}&nbsp;&nbsp;
-                  </div>
-                </flexbox>
-              </div>
-            </flexbox>
-
-            <flexbox v-else-if="item.formType === 'structure'"
-                     align="stretch"
-                     class="b-cell-b">
-              <div class="b-cell-name">{{item.name}}</div>
-              <div class="b-cell-value">
-                <flexbox :gutter="0"
-                         wrap="wrap"
-                         style="padding: 0px 10px 10px 0px;">
-                  <div v-for="(item, index) in item.value"
-                       :key="index">
-                    {{item.name}}&nbsp;&nbsp;
-                  </div>
-                </flexbox>
-              </div>
-            </flexbox> -->
-
             <div
               v-if="item.formType === 'checkbox'"
               class="b-cell-b">
@@ -105,7 +73,18 @@
               v-else
               class="b-cell-b">
               <div class="b-cell-name">{{ item.name }}</div>
-              <div class="b-cell-value">{{ item.value }}</div>
+              <div class="b-cell-value">
+                <wk-field-view
+                  v-if="item.formType == 'boolean_value'
+                    || item.formType == 'handwriting_sign'
+                    || item.formType == 'desc_text'
+                    || item.formType == 'location'
+                  || item.formType == 'website'"
+                  :form-type="item.formType"
+                  :value="item.value"
+                />
+                <template v-else>{{ getCommonShowValue(item) }}</template>
+              </div>
             </div>
           </flexbox-item>
         </flexbox>
@@ -234,12 +213,16 @@
 
 <script>
 import { oaExamineReadAPI, oaExamineGetFieldAPI } from '@/api/oa/examine'
+
 import SlideView from '@/components/SlideView'
 import ExamineInfo from '@/components/Examine/ExamineInfo'
 import RelatedBusinessCell from '@/views/oa/components/RelatedBusinessCell'
 import FileCell from '@/views/oa/components/FileCell'
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
+
 import { downloadFile, fileSize } from '@/utils'
 import ExamineMixin from '@/views/taskExamine/examine/components/ExamineMixin'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
 export default {
   /** 审批详情 */
@@ -250,7 +233,8 @@ export default {
     RelatedBusinessCell,
     CRMFullScreenDetail: () =>
       import('@/components/CRMFullScreenDetail'),
-    FileCell
+    FileCell,
+    WkFieldView
   },
   filters: {
     fileName(file) {
@@ -362,7 +346,8 @@ export default {
       this.loading = true
       oaExamineGetFieldAPI({
         examineId: this.id,
-        isDetail: 1 // 1详情 2 编辑
+        isDetail: 1, // 1详情 2 编辑
+        type: 1 // 一维数组
       })
         .then(res => {
           this.list = res.data
@@ -433,6 +418,13 @@ export default {
       // this.$store.dispatch('GetOAMessageNum', 'examine')
       this.$emit('on-examine-handle', data, this.detailIndex)
       this.$emit('handle', data, this.detailIndex)
+    },
+
+    /**
+     * 获取非附件类型的展示值
+     */
+    getCommonShowValue(item) {
+      return getFormFieldShowName(item.formType, item.value, '')
     }
   }
 }

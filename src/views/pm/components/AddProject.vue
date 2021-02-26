@@ -52,8 +52,10 @@
               class="cover-content-item"
               @click.native="corverSelect(item)">
               <img v-src="item.url" class="cover-img">
-              <i class="wk wk-success cover-select" />
-              <i v-if="item.custom && !coverImg.custom" class="wk wk-close cover-delete" @click.stop="corverDelete" />
+              <span class="cover-mark">
+                <i class="wk wk-success cover-select" />
+                <i v-if="item.custom" class="wk wk-close cover-delete" @click.stop="corverDelete" />
+              </span>
             </flexbox-item>
             <flexbox-item
               v-loading="imgLoading"
@@ -552,8 +554,7 @@ $color3: #333;
           height: 100px;
         }
 
-        .cover-delete,
-        .cover-select {
+        .cover-mark {
           position: absolute;
           top: 10px;
           right: 15px;

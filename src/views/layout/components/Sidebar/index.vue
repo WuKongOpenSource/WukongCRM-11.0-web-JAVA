@@ -55,7 +55,11 @@
       :style="{ 'background-color':variables.menuBg }"
       class="sidebar-bottom">
       <slot name="sidebar-bottom"/>
-      <div class="sidebar-container">
+      <div class="sidebar-bottom-content">
+        <div v-if="!collapse" class="copyright">
+          <img src="/favicon.ico" width="20px" >
+          <span>Power by 悟空</span>
+        </div>
         <img
           :style="{ 'right': buttonCollapse ? '3px' : '0' }"
           :class="{ 'is-close': collapse }"
@@ -271,9 +275,20 @@ export default {
   right: 0;
   // height: 48px;
 
-  .sidebar-container {
+  &-content {
     position: relative;
     height: 48px;
+  }
+
+  .copyright {
+    color: white;
+    font-size: 12px;
+    height: 100%;
+    padding-left: 20px;
+    line-height: 3.5;
+    img,span {
+      vertical-align: middle;
+    }
   }
 }
 

@@ -11,6 +11,7 @@
         :class="data.checked ? 'title title-active' : 'title'"
         @click.stop>
         <el-checkbox
+          :disabled="disabled"
           v-model="data.checked"
           @change="taskOverClick(data)"/>
       </div>
@@ -141,6 +142,10 @@ export default {
   mixins: [TaskMixin],
 
   props: {
+    disabled: {
+      type: Boolean,
+      default: false
+    },
     data: Object,
     dataIndex: Number,
     dataSection: Number

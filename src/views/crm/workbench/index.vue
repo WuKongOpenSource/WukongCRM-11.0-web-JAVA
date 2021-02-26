@@ -504,12 +504,13 @@ export default {
           this.reportData.sortable = 'custom'
 
           // 合同金额回款金额 通过的
-          if (item.field === 'receivablesMoney' || item.field === 'contractMoney') {
+          if (item.field === 'receivablesMoney' || item.field === 'contractMoney' || item.field === 'contractCount') {
             this.reportData.params.checkStatus = 1
 
-            // 合同金额 回款金额 加入 moneyType 1合同 2回款
+            // 合同金额 回款金额 新增合同 加入 moneyType 1合同 2回款
             this.reportData.params.moneyType = {
               contractMoney: 1,
+              contractCount: 1,
               receivablesMoney: 2
             }[item.field]
           }

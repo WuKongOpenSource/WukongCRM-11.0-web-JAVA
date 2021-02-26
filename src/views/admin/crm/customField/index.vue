@@ -40,35 +40,22 @@
               type="text"
               size="small"
               @click="handleCustomField('edit', scope.row, scope.$index)">编辑</el-button>
-            <el-button
-              type="text"
-              size="small"
-              @click="handleCustomField('preview', scope.row, scope.$index)">预览</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
-    <!-- 表单预览 -->
-    <preview-field-view
-      v-if="showTablePreview"
-      :types="tablePreviewData.types"
-      :types-id="tablePreviewData.typesId"
-      :label="tablePreviewData.label"
-      @hiden-view="showTablePreview=false"/>
   </div>
 </template>
 
 <script>
 import { customFieldIndexAPI } from '@/api/admin/crm'
 
-import PreviewFieldView from '@/views/admin/components/PreviewFieldView'
 import XrHeader from '@/components/XrHeader'
 
 export default {
   name: 'CustomField',
 
   components: {
-    PreviewFieldView,
     XrHeader
   },
 
@@ -77,10 +64,7 @@ export default {
       loading: false,
       tableHeight: document.documentElement.clientHeight - 140, // 表的高度
       // 自定义字段设置
-      tableList: [],
-      // 展示表单预览
-      tablePreviewData: { types: '', typesId: '' },
-      showTablePreview: false
+      tableList: []
     }
   },
 
@@ -113,9 +97,9 @@ export default {
      * 列表的编辑和预览
      */
     handleCustomField(type, item, index) {
-      if (type == 'edit') {
+      if (type === 'edit') {
         this.$router.push({
-          name: 'handlefield',
+          name: 'customField',
           params: {
             type: {
               1: 'crm_leads',
@@ -131,9 +115,6 @@ export default {
             label: item.label
           }
         })
-      } else if (type == 'preview') {
-        this.tablePreviewData = item
-        this.showTablePreview = true
       }
     },
 

@@ -18,7 +18,8 @@ export default {
       showFirstDetail: true,
       detailData: null,
       // tabs Number
-      tabsNumber: {}
+      tabsNumber: {},
+      currentPageIndex: 0
     }
   },
   props: {
@@ -26,7 +27,9 @@ export default {
     isSeas: {
       type: Boolean,
       default: false
-    }
+    },
+    pageIndex: [String, Number],
+    pageList: Array // 用于详情切换
   },
 
   computed: {
@@ -76,6 +79,29 @@ export default {
   },
 
   methods: {
+    /**
+     * 详情页面切换
+     */
+    pageChange(type) {
+      if (type === 'left') {
+        if (this.pageIndex > 0) {
+          let pageIndex = this.pageIndex
+          this.$emit('update:pageIndex', --pageIndex)
+          this.$emit('update:id', this.pageList[pageIndex][`${this.crmType}Id`])
+        } else {
+          this.$message.error('没有更多了')
+        }
+      } else {
+        if (this.pageIndex < this.pageList.length - 1) {
+          let pageIndex = this.pageIndex
+          this.$emit('update:pageIndex', ++pageIndex)
+          this.$emit('update:id', this.pageList[pageIndex][`${this.crmType}Id`])
+        } else {
+          this.$message.error('没有更多了')
+        }
+      }
+    },
+
     viewAfterEnter() {
       if (this.canShowDetail) {
         this.getDetial()
@@ -141,6 +167,10 @@ export default {
         product: crmProductNumAPI,
         receivables: crmReceivablesNumAPI
       }[this.crmType]
+
+      if (!request) {
+        return
+      }
 
       const params = {}
       params[`id`] = this.id

@@ -273,14 +273,6 @@ export default {
   }
 }
 
-.el-table /deep/ thead th {
-  font-size: 12px;
-}
-
-.el-table /deep/ tbody tr td {
-  font-size: 12px;
-}
-
 .handle-footer {
   position: relative;
   font-size: 12px;

@@ -169,3 +169,29 @@ export function userErrorExcelDownAPI(data) {
     responseType: 'blob'
   })
 }
+
+/**
+ * 重置部门
+ * @param {*} data
+ */
+export function adminUserSetUserDeptPI(data) {
+  return request({
+    url: 'adminUser/setUserDept',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 员工数量
+ * @param {*} data
+ */
+export function adminUserCountNumOfUserAPI() {
+  return request({
+    url: 'adminUser/countNumOfUser',
+    method: 'post'
+  })
+}

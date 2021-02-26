@@ -26,7 +26,7 @@
       <flexbox align="stretch" class="map-content--title">
         <flexbox-item>
           <div class="title--position">
-            <span class="wk wk-position"/>
+            <span class="wk wk-icon-position"/>
             <el-tooltip :content="address" class="item" effect="dark" placement="top-start">
               <span class="title--address">{{ address }}</span>
             </el-tooltip>
@@ -105,7 +105,7 @@
                 :style="{backgroundColor: item.customerId === currentId ? '#f7f7f7' : ''}"
                 class="map-info--box"
                 @click="selectAddress(item)">
-                <span class="wk wk-location"/>
+                <span class="wk wk-icon-location"/>
                 <div class="map-box--content">
                   <div class="map-info--name">
                     <el-tooltip :content="item.customerName" class="item" effect="dark" placement="top-start">
@@ -123,7 +123,7 @@
         </div>
         <flexbox-item :style="{height: mapHeight + 'px'}" class="map-primity">
           <div
-            id="choicemap"
+            ref="nearbyMap"
             class="map"/>
         </flexbox-item>
       </flexbox>
@@ -253,7 +253,7 @@ export default {
   mounted() {
     getBaiduMap()
       .then(() => {
-        var map = new BMap.Map('choicemap')
+        var map = new BMap.Map(this.$refs.nearbyMap)
         var point = new BMap.Point(116.404, 39.915)
         map.centerAndZoom(point, 14)
         map.enableScrollWheelZoom(true)
@@ -544,7 +544,7 @@ export default {
   width: 100%;
   .title--position {
     display: inline-block;
-    /deep/.wk-position {
+    /deep/.wk-icon-position {
       color: #2362FB;
       display: inline-block;
       vertical-align: top;
@@ -639,7 +639,7 @@ export default {
     padding-bottom: 10px;
     border-bottom: 1px solid #e4e4e4;
   }
-  .wk-location {
+  .wk-icon-location {
     color: red;
     display: inline-block;
     margin-right: 10px;

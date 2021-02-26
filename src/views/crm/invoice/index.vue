@@ -143,7 +143,9 @@
     <c-r-m-all-detail
       :visible.sync="showDview"
       :crm-type="rowType"
-      :id="rowID"
+      :id.sync="rowID"
+      :page-list="crmType == rowType ? list : []"
+      :page-index.sync="rowIndex"
       class="d-view"
       @handle="handleHandle"/>
 
@@ -245,7 +247,8 @@ export default {
       transferDialogShow: false,
       showDview: false,
       rowType: '',
-      rowID: ''
+      rowID: '',
+      rowIndex: 0
     }
   },
   computed: {
@@ -496,6 +499,23 @@ export default {
       } else {
         this.showDview = false
       }
+
+      this.rowIndex = this.getRowIndex()
+    },
+
+    /**
+     * 获取点击行索引
+     */
+    getRowIndex() {
+      let rowIndex = 0
+      for (let index = 0; index < this.list.length; index++) {
+        const element = this.list[index]
+        if (element[`${this.rowType}Id`] === this.rowID) {
+          rowIndex = index
+          break
+        }
+      }
+      return rowIndex
     },
 
     /**
@@ -555,6 +575,15 @@ export default {
   .scene-select {
     width: 180px;
   }
+}
+
+.d-view {
+  position: fixed;
+  min-width: 926px;
+  width: 75%;
+  top: 60px;
+  bottom: 0px;
+  right: 0px;
 }
 
 .status-mark {

@@ -54,9 +54,17 @@
           :prop="item.prop"
           :label="item.label"
           :width="item.width"
-          :formatter="fieldFormatter"
           sortable="custom"
-          show-overflow-tooltip/>
+          show-overflow-tooltip>
+          <template slot-scope="{ row, column, $index }">
+            <wk-field-view
+              v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+              :form-type="item.formType"
+              :value="row[column.property]"
+            />
+            <template v-else>{{ fieldFormatter(row, column, row[column.property], item) }}</template>
+          </template>
+        </el-table-column>
         <el-table-column/>
         <el-table-column
           label="关注"
@@ -111,7 +119,9 @@
     <c-r-m-all-detail
       :visible.sync="showDview"
       :crm-type="rowType"
-      :id="rowID"
+      :id.sync="rowID"
+      :page-list="crmType == rowType ? list : []"
+      :page-index.sync="rowIndex"
       class="d-view"
       @handle="handleHandle"/>
 

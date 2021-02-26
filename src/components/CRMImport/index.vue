@@ -101,7 +101,7 @@
             v-if="resultData && resultData.errSize > 0"
             class="result-info__btn--err"
             type="text"
-            @click="downloadErrData">下载错误数据</el-button>
+            @click="downloadErrData(resultData)">下载错误数据</el-button>
         </div>
       </div>
 
@@ -114,6 +114,7 @@
       slot="footer"
       class="dialog-footer">
       <el-popover
+        v-if="config.historyShow"
         v-model="historyPopoverShow"
         placement="top"
         width="800"
@@ -180,12 +181,17 @@ import merge from '@/utils/merge'
 
 const DefaultProps = {
   typeName: '', // 模块名称
-  ownerSelectShow: true,
+  ownerSelectShow: false,
   poolSelectShow: false,
+  historyShow: true,
   repeatHandleShow: true,
   repeatRuleShow: true, // 步骤二的重复规则是否展示
   importRequest: null, // 导入请求
-  templateRequest: null // 模板请求
+  importParams: null, // 导入参数
+  templateRequest: null, // 模板请求
+  templateParams: null, // 导入模板参数
+  noImportProcess: false, // 无导入过程，上传完附件直接出结果
+  downloadErrFuc: null // 自定义下载错误的方法
 }
 
 export default {
@@ -387,16 +393,30 @@ export default {
           this.stepList[1].status = 'process'
           this.stepsActive = 2
           this.firstUpdateFile(res => {
-            this.messageId = res.data
+            const resData = res.data || {}
+            if (this.config.noImportProcess) {
+              this.loading = false
+              this.stepList[1].status = 'finish'
+              this.stepsActive = 3
+              this.$emit('status', 'finish')
+              this.resultData = resData
+              if (resData.errSize > 0) {
+                this.stepList[2].status = 'error'
+              } else {
+                this.stepList[2].status = 'finish'
+              }
+            } else {
+              this.messageId = resData
 
-            // 写入本次缓存
-            Lockr.set('crmImportInfo', {
-              messageId: this.messageId,
-              crmProps: this.config,
-              crmType: this.crmType
-            })
+              // 写入本次缓存
+              Lockr.set('crmImportInfo', {
+                messageId: this.messageId,
+                crmProps: this.config,
+                crmType: this.crmType
+              })
 
-            this.loopSecondQueryNum()
+              this.loopSecondQueryNum()
+            }
           })
         } else {
           if (!this.file.name) {
@@ -418,10 +438,12 @@ export default {
      * 第一步上传
      */
     firstUpdateFile(result) {
-      const params = {}
+      let params = {}
       params.repeatHandling = this.repeatHandling
       params.file = this.file
-      params.ownerUserId = this.user.length > 0 ? this.user[0].userId : ''
+      if (this.config.ownerSelectShow) {
+        params.ownerUserId = this.user.length > 0 ? this.user[0].userId : ''
+      }
       if (this.config.poolSelectShow) {
         params.poolId = this.poolId
       }
@@ -433,6 +455,12 @@ export default {
         product: crmProductExcelImportAPI
       }[this.crmType]
       this.loading = true
+      if (this.config.importParams) {
+        params = {
+          ...params,
+          ...this.config.importParams
+        }
+      }
       request(params)
         .then(res => {
           if (result) {
@@ -503,16 +531,26 @@ export default {
     /**
      * 下载错误模板
      */
-    downloadErrData() {
+    downloadErrData(result) {
       this.loading = true
-      crmDownImportErrorAPI({ messageId: this.messageId })
-        .then(res => {
+      if (this.config.downloadErrFuc) {
+        this.config.downloadErrFuc(result).then(res => {
           downloadExcelWithResData(res)
           this.loading = false
         })
-        .catch(() => {
-          this.loading = false
-        })
+          .catch(() => {
+            this.loading = false
+          })
+      } else {
+        crmDownImportErrorAPI({ messageId: this.messageId })
+          .then(res => {
+            downloadExcelWithResData(res)
+            this.loading = false
+          })
+          .catch(() => {
+            this.loading = false
+          })
+      }
     },
 
     // 下载模板操作
@@ -523,7 +561,7 @@ export default {
         contacts: crmContactsDownloadExcelAPI,
         product: crmProductDownloadExcelAPI
       }[this.crmType]
-      request()
+      request(this.config.templateParams || {})
         .then(res => {
           downloadExcelWithResData(res)
         })
@@ -630,7 +668,8 @@ export default {
      */
     getField() {
       var params = {
-        label: crmTypeModel[this.crmType]
+        label: crmTypeModel[this.crmType],
+        type: 1
       }
 
       filedGetFieldAPI(params)

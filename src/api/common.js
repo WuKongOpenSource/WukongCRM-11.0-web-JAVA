@@ -88,6 +88,22 @@ export function crmFileSaveAPI(data, config = {}) {
   })
 }
 
+export function crmFileSingleSaveAPI(data, config = {}) {
+  var param = new FormData()
+  Object.keys(data).forEach(key => {
+    param.append(key, data[key])
+  })
+  return request({
+    url: 'adminFile/uploadBySingle',
+    method: 'post',
+    data: param,
+    ...config,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 /**
  * 公共web文件上传
  * @param data

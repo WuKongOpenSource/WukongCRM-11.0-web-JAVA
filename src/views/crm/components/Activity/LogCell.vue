@@ -133,7 +133,7 @@
           align="stretch"
           class="cell">
           <div class="cell-hd is-address">
-            <i class="wk wk-location" />
+            <i class="wk wk-icon-location" />
           </div>
           <div
             class="cell-bd text-one-line can-visit--underline"

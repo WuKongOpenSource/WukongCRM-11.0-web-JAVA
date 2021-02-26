@@ -13,9 +13,11 @@ export function filedGetFieldAPI(data) {
   } else {
     url = crmTypeModel.labelToType[label] + '/field/' + (data.id ? data.id : '')
   }
+
   return request({
     url: url,
-    method: 'post'
+    method: 'post',
+    data
   })
 }
 

@@ -143,6 +143,13 @@ export default {
           key: 'money',
           unit: '元'
         }
+      } else if (
+        this.optionValue == 8
+      ) {
+        return {
+          key: 'count',
+          unit: '条'
+        }
       }
       return {
         key: 'count',

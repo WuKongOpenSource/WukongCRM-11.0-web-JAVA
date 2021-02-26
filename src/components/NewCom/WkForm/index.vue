@@ -42,6 +42,7 @@
         v-if="isTrimInput(item.formType)"
         v-model.trim="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :prefix-icon="getInputIcon(item.formType)"
         :maxlength="100"
         :placeholder="item.placeholder"
         type="text"
@@ -167,6 +168,9 @@
           {{ !isEmptyValue(item.value) ? item.label || item.name : item }}
         </el-radio>
       </el-radio-group>
+      <el-switch
+        v-else-if="item.formType == 'radio'"
+        v-model="fieldFrom[item.field]"/>
       <v-distpicker
         v-if="item.formType == 'address'"
         :province="fieldFrom[item.field].province"

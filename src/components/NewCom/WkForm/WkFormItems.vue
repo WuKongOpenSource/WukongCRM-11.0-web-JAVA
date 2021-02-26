@@ -1,14 +1,24 @@
 <template>
-  <div>
+  <flexbox
+    class="wk-form-items"
+    align="flex-start"
+    justify="flex-start">
     <el-form-item
       v-for="(item, index) in fieldList"
       :key="index"
       :prop="item.field"
       :class="[item.className || '', `is-${item.formType}`]"
-      :rules="item.rules">
+      :style="{width: item.stylePercent ? `${item.stylePercent}%` : 'auto'}">
       <template slot="label">
         {{ item.name }}
-        <span style="color:#999;">
+        <el-tooltip
+          v-if="item.tipType == 'tooltip'"
+          effect="dark"
+          placement="top">
+          <div slot="content" v-html="getTips(item)"/>
+          <i class="wk wk-help wk-help-tips"/>
+        </el-tooltip>
+        <span v-else style="color:#999;">
           {{ getTips(item) }}
         </span>
       </template>
@@ -21,12 +31,13 @@
         :type="item.formType"
         @input="commonChange(item, index, $event)"/>
       <el-input
-        v-else-if="isTrimInput(item.formType)"
+        v-if="isTrimInput(item.formType)"
         v-model.trim="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :prefix-icon="getInputIcon(item.formType)"
         :maxlength="100"
         :placeholder="item.placeholder"
-        :type="item.formType"
+        type="text"
         @input="commonChange(item, index, $event)"/>
       <el-input-number
         v-else-if="item.formType == 'number'"
@@ -34,9 +45,16 @@
         :placeholder="item.placeholder"
         :disabled="item.disabled"
         :controls="false"
-        @input="commonChange(item, index, $event)" />
+        @change="commonChange(item, index, $event)" />
       <el-input-number
         v-else-if="item.formType == 'floatnumber'"
+        v-model="fieldFrom[item.field]"
+        :placeholder="item.placeholder"
+        :disabled="item.disabled"
+        :controls="false"
+        @change="commonChange(item, index, $event)" />
+      <wk-percent-input
+        v-else-if="item.formType == 'percent'"
         v-model="fieldFrom[item.field]"
         :placeholder="item.placeholder"
         :disabled="item.disabled"
@@ -46,8 +64,9 @@
         v-else-if="item.formType == 'textarea'"
         v-model="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :rows="3"
         :autosize="{ minRows: 3}"
-        :maxlength="800"
+        :maxlength="item.maxlength || 800"
         :placeholder="item.placeholder"
         :type="item.formType"
         resize="none"
@@ -96,10 +115,10 @@
         v-else-if="item.formType == 'dateRange'"
         v-model="fieldFrom[item.field]"
         :disabled="item.disabled"
+        :type="item.dateType || 'daterange'"
+        :value-format="item.dateValueFormat || 'yyyy-MM-dd'"
         clearable
         style="width: 100%;"
-        type="daterange"
-        value-format="yyyy-MM-dd"
         start-placeholder="开始日期"
         end-placeholder="结束日期"
         @change="commonChange(item, index, $event)"/>
@@ -148,6 +167,34 @@
           {{ !isEmptyValue(item.value) ? item.label || item.name : item }}
         </el-radio>
       </el-radio-group>
+      <el-switch
+        v-else-if="item.formType == 'boolean_value'"
+        v-model="fieldFrom[item.field]"
+        active-value="1"
+        inactive-value="0"/>
+      <wk-position
+        v-else-if="item.formType == 'position'"
+        :hide-area="item.hideArea"
+        :only-province="item.onlyProvince"
+        :show-detail="item.showDetail"
+        v-model="fieldFrom[item.field]"/>
+      <wk-location
+        v-else-if="item.formType == 'location'"
+        v-model="fieldFrom[item.field]"/>
+      <wk-signature-pad
+        v-else-if="item.formType == 'handwriting_sign'"
+        v-model="fieldFrom[item.field]"/>
+      <wk-desc-text
+        v-else-if="item.formType == 'desc_text'"
+        :value="fieldFrom[item.field]"/>
+      <el-date-picker
+        v-else-if="item.formType === 'date_interval'"
+        v-model="fieldFrom[item.field]"
+        :type="item.dateType || 'daterange'"
+        :value-format="item.dateValueFormat || 'yyyy-MM-dd'"
+        style="width: 100%;"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期" />
       <v-distpicker
         v-if="item.formType == 'address'"
         :province="fieldFrom[item.field].province"
@@ -156,17 +203,29 @@
         @province="selectProvince($event, item, index)"
         @city="selectCity($event, item, index)"
         @area="selectArea($event, item, index)"/>
+      <xh-files
+        v-if="item.formType == 'file'"
+        :value="fieldFrom[item.field]"
+        :disabled="item.disabled"
+        @value-change="oldChange($event, item, index)"
+      />
       <template v-else>
-        <slot :data="item" />
+        <slot :data="item" :index="index" />
       </template>
     </el-form-item>
-  </div>
+  </flexbox>
 </template>
 
 <script>
 import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import WkDepSelect from '@/components/NewCom/WkDepSelect'
+import WkPosition from '@/components/NewCom/WkPosition'
+import WkLocation from '@/components/NewCom/WkLocation'
+import WkSignaturePad from '@/components/NewCom/WkSignaturePad'
+import WkDescText from '@/components/NewCom/WkDescText'
+import WkPercentInput from '@/components/NewCom/WkPercentInput'
 import VDistpicker from '@/components/VDistpicker'
+import { XhFiles } from '@/components/CreateCom'
 
 import Mixin from './Mixin'
 
@@ -177,7 +236,13 @@ export default {
   components: {
     WkUserSelect,
     WkDepSelect,
-    VDistpicker
+    WkPosition,
+    WkLocation,
+    WkSignaturePad,
+    WkDescText,
+    WkPercentInput,
+    VDistpicker,
+    XhFiles
   },
 
   mixins: [Mixin],
@@ -216,6 +281,47 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
 
+<style lang="scss">
+.wk-form-items {
+  .el-form-item__label {
+    line-height: 1.5;
+    padding-bottom: 8px;
+    word-break: break-all;
+    word-wrap: break-word;
+    color: #333;
+  }
+
+  .el-form-item__error {
+    position: relative;
+    top: auto;
+    left: auto;
+  }
+
+  .el-form-item.is-desc_text {
+    .el-form-item__label {
+      display: none;
+    }
+  }
+}
+</style>
+
+
+<style lang="scss" scoped>
+.el-input-number {
+  width: 100%;
+  /deep/ .el-input__inner {
+    text-align: left;
+    padding: 0 8px;
+  }
+}
+
+.wk-form-items {
+  padding: 0 12px;
+
+  .el-form-item {
+    padding: 12px 12px 0;
+    margin-bottom: 0;
+  }
+}
 </style>

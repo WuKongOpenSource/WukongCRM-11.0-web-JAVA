@@ -6,38 +6,43 @@
     @close="close"
     @save="saveClick">
     <create-sections title="基本信息">
-      <wk-form
+      <el-form
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
-        :field-from="fieldForm"
-        :field-list="fieldList"
-        label-position="top"
-        @change="formChange"
-      >
-        <template slot-scope="{ data }">
-          <crm-relative-cell
-            v-if="data && data.formType == 'customer'"
-            :value="fieldForm[data.field]"
-            :disabled="data.disabled"
-            relative-type="customer"
-            @value-change="otherChange($event, data)"
-          />
-          <crm-relative-cell
-            v-if="data && (data.formType == 'business' || data.formType == 'contacts')"
-            :value="fieldForm[data.field]"
-            :disabled="data.disabled"
-            :relation="data.relation"
-            :relative-type="data.formType"
-            @value-change="otherChange($event, data)"
-          />
-          <xh-product
-            v-if="data && data.formType == 'product'"
-            :value="fieldForm[data.field]"
-            @value-change="otherChange($event, data)"
-          />
-        </template>
-      </wk-form>
+        class="wk-form"
+        label-position="top">
+        <wk-form-items
+          v-for="(children, index) in fieldList"
+          :key="index"
+          :field-from="fieldForm"
+          :field-list="children"
+          @change="formChange"
+        >
+          <template slot-scope="{ data }">
+            <crm-relative-cell
+              v-if="data && data.formType == 'customer'"
+              :value="fieldForm[data.field]"
+              :disabled="data.disabled"
+              relative-type="customer"
+              @value-change="otherChange($event, data)"
+            />
+            <crm-relative-cell
+              v-if="data && (data.formType == 'business' || data.formType == 'contacts')"
+              :value="fieldForm[data.field]"
+              :disabled="data.disabled"
+              :relation="data.relation"
+              :relative-type="data.formType"
+              @value-change="otherChange($event, data)"
+            />
+            <xh-product
+              v-if="data && data.formType == 'product'"
+              :value="fieldForm[data.field]"
+              @value-change="otherChange($event, data)"
+            />
+          </template>
+        </wk-form-items>
+      </el-form>
     </create-sections>
 
     <create-sections
@@ -73,7 +78,7 @@ import { crmBusinessProductAPI } from '@/api/crm/business'
 
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
-import WkForm from '@/components/NewCom/WkForm'
+import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 import {
   XhProduct,
   CrmRelativeCell
@@ -95,7 +100,7 @@ export default {
     CreateSections,
     CrmRelativeCell,
     XhProduct,
-    WkForm,
+    WkFormItems,
     WkApprovalFlowApply
   },
 
@@ -175,84 +180,84 @@ export default {
         .then(res => {
           const list = res.data || []
 
+          const baseFields = []
           const fieldList = []
           const fieldRules = {}
           const fieldForm = {}
-          list.forEach(item => {
-            const temp = {}
-            temp.field = item.fieldName
-            temp.formType = item.formType
-            temp.fieldId = item.fieldId
-            temp.inputTips = item.inputTips
-            temp.name = item.name
-            temp.setting = item.setting
+          list.forEach(children => {
+            const fields = []
+            children.forEach(item => {
+              const temp = this.getFormItemDefaultProperty(item)
 
-            const canEdit = this.getItemIsCanEdit(item, this.action.type)
-            // 是否能编辑权限
-            if (canEdit) {
+              const canEdit = this.getItemIsCanEdit(item, this.action.type)
+              // 是否能编辑权限
+              if (canEdit) {
               // 自动生成编号
-              if (item.autoGeneNumber == 1) {
-                temp.placeholder = '根据编号规则自动生成，支持手动输入'
-                const copyItem = objDeepCopy(item)
-                copyItem.isNull = 0
-                fieldRules[temp.field] = this.getRules(copyItem)
-              } else {
-                fieldRules[temp.field] = this.getRules(item)
+                if (item.autoGeneNumber == 1) {
+                  temp.placeholder = '根据编号规则自动生成，支持手动输入'
+                  const copyItem = objDeepCopy(item)
+                  copyItem.isNull = 0
+                  fieldRules[temp.field] = this.getRules(copyItem)
+                } else {
+                  fieldRules[temp.field] = this.getRules(item)
+                }
               }
-            }
 
-            // 是否可编辑
-            temp.disabled = !canEdit
+              // 是否可编辑
+              temp.disabled = !canEdit
 
-            // 禁止某些业务组件选择
-            if (temp.formType == 'contacts' ||
+              // 禁止某些业务组件选择
+              if (temp.formType == 'contacts' ||
                 temp.formType == 'customer' ||
                 temp.formType == 'business'
-            ) {
-              if (this.action.type == 'relative') {
-                const relativeDisInfos = {
-                  contacts: { customer: true },
-                  customer: { customer: true },
-                  business: { customer: true, business: true }
-                }
+              ) {
+                if (this.action.type == 'relative') {
+                  const relativeDisInfos = {
+                    contacts: { customer: true },
+                    customer: { customer: true },
+                    business: { customer: true, business: true }
+                  }
 
-                // 在哪个类型下添加
-                const relativeTypeDisInfos = relativeDisInfos[this.action.crmType]
-                if (relativeTypeDisInfos) {
+                  // 在哪个类型下添加
+                  const relativeTypeDisInfos = relativeDisInfos[this.action.crmType]
+                  if (relativeTypeDisInfos) {
                   // 包含的字段值
-                  temp.disabled = relativeTypeDisInfos[item.formType] || false
-                }
-              } else if (this.action.type != 'update') {
-                temp.disabled = item.formType === 'business' || item.formType === 'contacts'
-              }
-            }
-
-            // 处理关联
-            if ((this.action.type == 'relative' || this.action.type == 'update') && (item.formType == 'business' || item.formType == 'contacts' || item.formType == 'contract'
-            )) {
-              const customerItem = this.getItemRelatveInfo(list, 'customer')
-              if (customerItem) {
-                if (item.formType == 'business' || item.formType == 'contacts') {
-                  customerItem['moduleType'] = 'customer'
-                  temp['relation'] = customerItem
-                } else if (item.formType == 'contract') {
-                  customerItem['moduleType'] = 'customer'
-                  customerItem['params'] = { checkStatus: 1 }
-                  temp['relation'] = customerItem
+                    temp.disabled = relativeTypeDisInfos[item.formType] || false
+                  }
+                } else if (this.action.type != 'update') {
+                  temp.disabled = item.formType === 'business' || item.formType === 'contacts'
                 }
               }
-            }
-            // 特殊字段允许多选
-            this.getItemRadio(item, temp)
 
-            // 获取默认值
-            // 非编辑情况下 填充默认值
-            if (this.action.type != 'update' && item.fieldName === 'orderDate') {
-              fieldForm[temp.field] = this.$moment().format('YYYY-MM-DD')
-            } else {
-              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
-            }
-            fieldList.push(temp)
+              // 处理关联
+              if ((this.action.type == 'relative' || this.action.type == 'update') && (item.formType == 'business' || item.formType == 'contacts' || item.formType == 'contract'
+              )) {
+                const customerItem = this.getItemRelatveInfo(list, 'customer')
+                if (customerItem) {
+                  if (item.formType == 'business' || item.formType == 'contacts') {
+                    customerItem['moduleType'] = 'customer'
+                    temp['relation'] = customerItem
+                  } else if (item.formType == 'contract') {
+                    customerItem['moduleType'] = 'customer'
+                    customerItem['params'] = { checkStatus: 1 }
+                    temp['relation'] = customerItem
+                  }
+                }
+              }
+              // 特殊字段允许多选
+              this.getItemRadio(item, temp)
+
+              // 获取默认值
+              // 非编辑情况下 填充默认值
+              if (this.action.type != 'update' && item.fieldName === 'orderDate') {
+                fieldForm[temp.field] = this.$moment().format('YYYY-MM-DD')
+              } else {
+                fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+              }
+              fields.push(temp)
+              baseFields.push(item)
+            })
+            fieldList.push(fields)
           })
 
 
@@ -272,7 +277,7 @@ export default {
             }
           }
 
-          this.baseFields = list
+          this.baseFields = baseFields
           this.fieldList = fieldList
           this.fieldForm = fieldForm
           this.fieldRules = fieldRules
@@ -297,7 +302,7 @@ export default {
      */
     saveClick(isDraft = false) {
       this.loading = true
-      const crmForm = this.$refs.crmForm.instance
+      const crmForm = this.$refs.crmForm
       crmForm.validate(valid => {
         if (valid) {
           const wkFlowResult = this.validateWkFlowData(this.wkFlowList)
@@ -385,78 +390,81 @@ export default {
     otherChange(data, field) {
       if (field.formType === 'customer') {
         let contractForCount = 0
-        for (let index = 0; index < this.fieldList.length; index++) {
-          const element = this.fieldList[index]
-          // 需要处理 需关联客户信息或客户下信息
-          const handleFields = [
-            'businessId',
-            'contactsId',
-            'companyUserId'
-          ]
+        for (let mainIndex = 0; mainIndex < this.fieldList.length; mainIndex++) {
+          const children = this.fieldList[mainIndex]
+          for (let index = 0; index < children.length; index++) {
+            const element = children[index]
+            // 需要处理 需关联客户信息或客户下信息
+            const handleFields = [
+              'businessId',
+              'contactsId',
+              'companyUserId'
+            ]
 
-          // 添加请求关联
-          const addRelation = ['businessId', 'contactsId']
+            // 添加请求关联
+            const addRelation = ['businessId', 'contactsId']
 
-          // 需要disabled
-          const addDisabled = ['businessId', 'contactsId']
+            // 需要disabled
+            const addDisabled = ['businessId', 'contactsId']
 
-          // 复制
-          const getValueObj = {
-            contactsId: data => {
-              if (!data.contactsId) {
-                return []
-              }
-              return [
-                {
-                  name: data.contactsName || '',
-                  contactsId: data.contactsId
+            // 复制
+            const getValueObj = {
+              contactsId: data => {
+                if (!data.contactsId) {
+                  return []
                 }
-              ]
-            },
-            companyUserId: data => {
-              if (!data.ownerUserId) {
-                return []
-              }
-              return [
-                {
-                  realname: data.ownerUserName || '',
-                  userId: data.ownerUserId
+                return [
+                  {
+                    name: data.contactsName || '',
+                    contactsId: data.contactsId
+                  }
+                ]
+              },
+              companyUserId: data => {
+                if (!data.ownerUserId) {
+                  return []
                 }
-              ]
+                return [
+                  {
+                    realname: data.ownerUserName || '',
+                    userId: data.ownerUserId
+                  }
+                ]
+              }
             }
-          }
 
-          if (handleFields.includes(element.field)) {
-            if (data.value.length > 0) {
-              element.disabled = false
+            if (handleFields.includes(element.field)) {
+              if (data.value.length > 0) {
+                element.disabled = false
 
-              // 增加关联信息
-              const customerItem = data.value[0]
-              if (addRelation.includes(element.field)) {
-                customerItem['moduleType'] = 'customer'
-                element['relation'] = customerItem
-              }
+                // 增加关联信息
+                const customerItem = data.value[0]
+                if (addRelation.includes(element.field)) {
+                  customerItem['moduleType'] = 'customer'
+                  element['relation'] = customerItem
+                }
 
-              // 填充值
-              if (getValueObj[element.field]) {
-                this.fieldForm[element.field] = getValueObj[element.field](customerItem)
+                // 填充值
+                if (getValueObj[element.field]) {
+                  this.fieldForm[element.field] = getValueObj[element.field](customerItem)
+                } else {
+                  this.fieldForm[element.field] = []
+                }
               } else {
+              // 禁用
+                element.disabled = !!addDisabled.includes(element.field)
+
+                if (addRelation.includes(element.field)) {
+                  element['relation'] = {}
+                }
+
                 this.fieldForm[element.field] = []
               }
-            } else {
-              // 禁用
-              element.disabled = !!addDisabled.includes(element.field)
 
-              if (addRelation.includes(element.field)) {
-                element['relation'] = {}
+              contractForCount++
+              if (contractForCount == handleFields.length) {
+                break
               }
-
-              this.fieldForm[element.field] = []
-            }
-
-            contractForCount++
-            if (contractForCount == handleFields.length) {
-              break
             }
           }
         }
@@ -487,7 +495,7 @@ export default {
         this.debouncedGetWkFlowList('money', this.fieldForm)
       }
       this.$set(this.fieldForm, field.field, data.value)
-      this.$refs.crmForm.instance.validateField(field.field)
+      this.$refs.crmForm.validateField(field.field)
     },
 
     /**

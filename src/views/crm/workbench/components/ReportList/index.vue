@@ -51,24 +51,29 @@
               :label="item.label"
               :width="item.width"
               show-overflow-tooltip>
-              <template slot-scope="scope">
+              <template slot-scope="{ row, column, $index }">
                 <template v-if="item.prop == 'dealStatus'">
-                  <i :class="scope.row[item.prop] | dealIcon"/>
-                  <span>{{ scope.row[item.prop] | dealName }}</span>
+                  <i :class="row[item.prop] | dealIcon"/>
+                  <span>{{ row[item.prop] | dealName }}</span>
                 </template>
                 <template v-else-if="item.prop == 'status'">
                   <i
-                    v-if="scope.row.status == 2"
+                    v-if="row.status == 2"
                     class="wk wk-circle-password customer-lock"/>
                 </template>
                 <template v-else-if="item.prop == 'checkStatus'">
                   <span
                     :style="{
-                      backgroundColor: getStatusColor(scope.row.checkStatus)
+                      backgroundColor: getStatusColor(row.checkStatus)
                   }" class="status-mark"/>
-                  <span>{{ getStatusName(scope.row.checkStatus) }}</span>
+                  <span>{{ getStatusName(row.checkStatus) }}</span>
                 </template>
-                <template v-else>{{ fieldFormatter(scope.row, scope.column) }}</template>
+                <wk-field-view
+                  v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+                  :form-type="item.formType"
+                  :value="row[column.property]"
+                />
+                <template v-else>{{ fieldFormatter(row, column, row[column.property], item) }}</template>
               </template>
             </el-table-column>
             <el-table-column v-if="showFillColumn" />
@@ -113,16 +118,19 @@ import { filedGetTableFieldAPI } from '@/api/crm/common'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
 import RecordList from './components/RecordList'
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
 
 import { mapGetters } from 'vuex'
 import Lockr from 'lockr'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
 export default {
   name: 'ReportList', // 简报列表
   components: {
     CRMAllDetail,
-    RecordList
+    RecordList,
+    WkFieldView
   },
   filters: {
     dealIcon(statu) {
@@ -208,12 +216,7 @@ export default {
     this.$el.addEventListener('click', this.handleDocumentClick, false)
   },
 
-  destroyed() {
-    if (this.$el) {
-      this.$el
-        .removeEventListener('click', this.handleDocumentClick, false)
-    }
-  },
+  destroyed() {},
   methods: {
     /**
      * 获取表高
@@ -328,6 +331,7 @@ export default {
 
               this.showFieldList.push({
                 prop: element.fieldName,
+                formType: element.formType,
                 label: element.name,
                 width: width
               })
@@ -348,13 +352,18 @@ export default {
     /**
      * 格式化字段
      */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue, field) {
       // 如果需要格式化
       if (this.fieldList && this.fieldList.length) {
         if (column.property == 'crmType') {
           return crmTypeModel.convertTypeToName(row[column.property])
         }
       }
+
+      if (field) {
+        return getFormFieldShowName(field.formType, row[column.property])
+      }
+
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     },
 

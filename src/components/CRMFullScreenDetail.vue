@@ -102,7 +102,6 @@ export default {
       this.showDetail = val
       if (val) {
         document.body.appendChild(this.$el)
-        this.$el.addEventListener('click', this.handleDocumentClick, false)
         this.$el.style.zIndex = getMaxIndex()
       }
     },
@@ -117,7 +116,6 @@ export default {
   mounted() {
     if (this.visible) {
       document.body.appendChild(this.$el)
-      this.$el.addEventListener('click', this.handleDocumentClick, false)
       this.$el.style.zIndex = getMaxIndex()
     }
   },
@@ -126,18 +124,11 @@ export default {
     // remove DOM node after destroy
     if (this.$el && this.$el.parentNode) {
       this.$el.parentNode.removeChild(this.$el)
-      this.$el.removeEventListener('click', this.handleDocumentClick, false)
     }
   },
   methods: {
     hiddenView() {
       this.showDetail = false
-    },
-    handleDocumentClick(e) {
-      // e.stopPropagation()
-      if (this.$el == e.target) {
-        this.showDetail = false
-      }
     },
 
     /**

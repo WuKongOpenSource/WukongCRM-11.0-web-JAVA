@@ -10,7 +10,7 @@
       class="slide-detail-card-container">
       <el-button
         v-if="showClose"
-        class="close-btn"
+        class="close-btn xr-btn--orange"
         type="primary"
         icon="el-icon-close"
         @click="close"/>
@@ -158,8 +158,8 @@ export default {
         })
 
         if (
-          document.getElementById('slide') &&
-        document.getElementById('slide').contains(e.target)
+          this.$el &&
+        this.$el.contains(e.target)
         ) {
           hidden = false
         }
@@ -220,13 +220,14 @@ export default {
   position: absolute;
   top: 160px;
   left: -40px;
-  z-index: 1;
+  z-index: 0;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   padding: 6px;
 
   /deep/ i {
     font-size: 26px;
+    margin-right: 0;
   }
 }
 </style>

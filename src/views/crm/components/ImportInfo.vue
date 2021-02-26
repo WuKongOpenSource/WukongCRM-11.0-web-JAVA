@@ -10,19 +10,29 @@
         {{ item.name }}
       </span><br>
       <span class="detail-cell__value">
-        {{ getValueContent(item) }}
+        <wk-field-view
+          v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+          :form-type="item.formType"
+          :value="item.value"
+        />
+        <span v-else>{{ getValueContent(item) }}</span>
       </span>
     </p>
   </div>
 </template>
 
 <script>
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
+
 import { isArray, isObject } from '@/utils/types'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
 export default {
   //  重要信息 中的列表展示
   name: 'ImportInfo',
-  components: {},
+  components: {
+    WkFieldView
+  },
   props: {
     list: Array
   },
@@ -90,9 +100,9 @@ export default {
         } else {
           return item.value ? item.value[field] : ''
         }
+      } else {
+        return getFormFieldShowName(item.formType, item.value, '')
       }
-
-      return item.value
     }
   }
 }

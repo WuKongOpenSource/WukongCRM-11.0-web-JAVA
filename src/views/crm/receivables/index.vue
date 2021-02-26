@@ -54,16 +54,20 @@
           :prop="item.prop"
           :label="item.label"
           :width="item.width"
-          :formatter="fieldFormatter"
           sortable="custom"
           show-overflow-tooltip>
-          <template slot-scope="scope">
+          <template slot-scope="{ row, column, $index }">
             <template v-if="item.prop == 'checkStatus'">
-              <span :style="getStatusStyle(scope.row.checkStatus)" class="status-mark"/>
-              <span>{{ getStatusName(scope.row.checkStatus) }}</span>
+              <span :style="getStatusStyle(row.checkStatus)" class="status-mark"/>
+              <span>{{ getStatusName(row.checkStatus) }}</span>
             </template>
+            <wk-field-view
+              v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+              :form-type="item.formType"
+              :value="row[column.property]"
+            />
             <template v-else>
-              {{ fieldFormatter(scope.row, scope.column) }}
+              {{ fieldFormatter(row, column) }}
             </template>
           </template>
         </el-table-column>
@@ -108,7 +112,9 @@
     <c-r-m-all-detail
       :visible.sync="showDview"
       :crm-type="rowType"
-      :id="rowID"
+      :id.sync="rowID"
+      :page-list="crmType == rowType ? list : []"
+      :page-index.sync="rowIndex"
       class="d-view"
       @handle="handleHandle"/>
 

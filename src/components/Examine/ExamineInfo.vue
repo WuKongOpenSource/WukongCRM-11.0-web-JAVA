@@ -263,6 +263,7 @@ export default {
   overflow-x: auto;
   padding: 10px 0;
   margin-top: 10px;
+  line-height: 2;
 }
 
 .check-item {

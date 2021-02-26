@@ -150,7 +150,7 @@ export default {
         this.$emit('on-export')
       } else if (command == 'enter') {
         this.$bus.emit('import-crm-bus', this.crmType, {
-          ownerSelectShow: !this.isSeas,
+          ownerSelectShow: false, // 去除选择负责人逻辑
           poolSelectShow: this.isSeas
         })
       }

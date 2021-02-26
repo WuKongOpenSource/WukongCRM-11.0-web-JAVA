@@ -59,7 +59,7 @@
         <div class="result-info">
           <i class="wk wk-success result-info__icon" />
           <p class="result-info__des">数据导入完成</p>
-          <p class="result-info__detail">导入总数据<span class="result-info__detail--all">{{ resultData.totalSize }}</span>条，导入成功<span class="result-info__detail--suc">{{ resultData.totalSize - (resultData.errSize || 0) }}</span>条，导入失败<span class="result-info__detail--err">{{ resultData.errSize || 0 }}</span>条</p>
+          <p class="result-info__detail">导入总数据<span class="result-info__detail--all">{{ resultData.totalSize }}</span>条，导入成功<span class="result-info__detail--suc"><template v-if="resultData">{{ resultData.totalSize - (resultData.errSize || 0) }}</template></span>条，导入失败<span class="result-info__detail--err">{{ resultData.errSize || 0 }}</span>条</p>
           <el-button
             v-if="resultData && resultData.errSize > 0"
             class="result-info__btn--err"
@@ -69,6 +69,7 @@
       </div>
       <input
         id="importInputFile"
+        ref="userFileInput"
         type="file"
         @change="uploadFile">
     </div>
@@ -241,7 +242,7 @@ export default {
      * 选择文件选择文件
      */
     selectFile() {
-      document.getElementById('importInputFile').click()
+      this.$refs.userFileInput.click()
     },
 
     /**

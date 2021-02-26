@@ -23,7 +23,7 @@
             <span
               class="reply-btn"
               @click="handleToReply(index)">
-              <i class="wk wk-reply" />
+              <i class="wk wk-icon-reply" />
               <span>回复</span>
             </span>
             <span
@@ -63,7 +63,7 @@
               </div>
               <div class="control">
                 <span class="reply-btn" @click="handleToReply(index, childIndex)">
-                  <i class="wk wk-reply" />
+                  <i class="wk wk-icon-reply" />
                   <span>回复</span>
                 </span>
                 <span class="delete-btn" @click="handleToDelete(child, index, childIndex)">

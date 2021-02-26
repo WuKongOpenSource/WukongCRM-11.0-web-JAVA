@@ -132,6 +132,13 @@
       :no-listener-class="['board-item']"
       @on-handle="detailHandle"
       @close="closeBtn"/>
+    <!-- 任务新建 -->
+    <task-create
+      v-if="taskCreateShow"
+      :action="createAction"
+      @save="addSubTaskSuc"
+      @close="taskCreateShow = false"
+    />
   </div>
 </template>
 

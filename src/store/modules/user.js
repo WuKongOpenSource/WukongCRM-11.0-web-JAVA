@@ -17,6 +17,9 @@ import {
   addAuth,
   removeAuth
 } from '@/utils/auth'
+import {
+  request
+} from '@/utils'
 import Lockr from 'lockr'
 
 const user = {
@@ -107,12 +110,14 @@ const user = {
     // 获取用户信息
     GetUserInfo({
       commit,
-      state
+      dispatch
     }) {
       return new Promise((resolve, reject) => {
         adminUsersReadAPI().then(response => {
           // 邮件信息 走之前的逻辑
           commit('SET_USERINFO', response.data)
+          dispatch('SystemLogoAndName')
+          request(response.data)
           resolve(response)
         }).catch(error => {
           reject(error)

@@ -5,15 +5,20 @@
     @close="close"
     @save="saveClick">
     <create-sections title="基本信息">
-      <wk-form
+      <el-form
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
-        :field-from="fieldForm"
-        :field-list="fieldList"
-        label-position="top"
-        @change="formChange"
-      />
+        class="wk-form"
+        label-position="top">
+        <wk-form-items
+          v-for="(children, index) in fieldList"
+          :key="index"
+          :field-from="fieldForm"
+          :field-list="children"
+          @change="formChange"
+        />
+      </el-form>
     </create-sections>
   </xr-create>
 </template>
@@ -24,7 +29,7 @@ import { crmLeadsSaveAPI } from '@/api/crm/leads'
 
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
-import WkForm from '@/components/NewCom/WkForm'
+import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CustomFieldsMixin from '@/mixins/CustomFields'
@@ -37,7 +42,7 @@ export default {
   components: {
     XrCreate,
     CreateSections,
-    WkForm
+    WkFormItems
   },
 
   mixins: [CustomFieldsMixin],
@@ -107,36 +112,37 @@ export default {
             })
           }
 
+          const baseFields = []
           const fieldList = []
           const fieldRules = {}
           const fieldForm = {}
-          list.forEach(item => {
-            const temp = {}
-            temp.field = item.fieldName
-            temp.formType = item.formType
-            temp.fieldId = item.fieldId
-            temp.inputTips = item.inputTips
-            temp.name = item.name
-            temp.setting = item.setting
+          list.forEach(children => {
+            const fields = []
+            children.forEach(item => {
+              const temp = this.getFormItemDefaultProperty(item)
 
-            const canEdit = this.getItemIsCanEdit(item, this.action.type)
-            // 是否能编辑权限
-            if (canEdit) {
-              fieldRules[temp.field] = this.getRules(item)
-            }
 
-            // 是否可编辑
-            temp.disabled = !canEdit
+              const canEdit = this.getItemIsCanEdit(item, this.action.type)
+              // 是否能编辑权限
+              if (canEdit) {
+                fieldRules[temp.field] = this.getRules(item)
+              }
 
-            // 特殊字段允许多选
-            this.getItemRadio(item, temp)
+              // 是否可编辑
+              temp.disabled = !canEdit
 
-            // 获取默认值
-            fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
-            fieldList.push(temp)
+              // 特殊字段允许多选
+              this.getItemRadio(item, temp)
+
+              // 获取默认值
+              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+              fields.push(temp)
+              baseFields.push(item)
+            })
+            fieldList.push(fields)
           })
 
-          this.baseFields = list
+          this.baseFields = baseFields
           this.fieldList = fieldList
           this.fieldForm = fieldForm
           this.fieldRules = fieldRules
@@ -154,7 +160,7 @@ export default {
      */
     saveClick() {
       this.loading = true
-      const crmForm = this.$refs.crmForm.instance
+      const crmForm = this.$refs.crmForm
       crmForm.validate(valid => {
         if (valid) {
           const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
@@ -220,7 +226,7 @@ export default {
      */
     otherChange(data, field) {
       this.$set(this.fieldForm, field.field, data.value)
-      this.$refs.crmForm.instance.validateField(field.field)
+      this.$refs.crmForm.validateField(field.field)
     },
 
     /**

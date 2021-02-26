@@ -48,6 +48,7 @@ import CRMListHead from '../components/CRMListHead'
 import CRMTableHead from '../components/CRMTableHead'
 import FieldSet from '../components/FieldSet'
 import ApprovalFlowUpdateDialog from '@/components/ApprovalFlow/ApprovalFlowUpdateDialog'
+import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
 
 import {
   mapGetters
@@ -58,6 +59,7 @@ import { Loading } from 'element-ui'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
 import { downloadExcelWithResData } from '@/utils'
+import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
 export default {
   components: {
@@ -65,7 +67,8 @@ export default {
     CRMTableHead,
     FieldSet,
     WkEmpty,
-    ApprovalFlowUpdateDialog
+    ApprovalFlowUpdateDialog,
+    WkFieldView
   },
   data() {
     return {
@@ -92,7 +95,8 @@ export default {
       // 金额字段
       moneyFields: [],
       // 已经发请求 用于缓存区分
-      isRequested: false
+      isRequested: false,
+      rowIndex: 0 // 行索引
     }
   },
 
@@ -110,7 +114,6 @@ export default {
   },
   watch: {},
   mounted() {
-    /** 控制table的高度 */
     window.onresize = () => {
       this.updateTableHeight()
     }
@@ -125,7 +128,9 @@ export default {
   },
 
   methods: {
-    /** 获取列表数据 */
+    /**
+     * 获取列表数据
+     */
     getList() {
       this.loading = true
       var crmIndexRequest = this.getIndexRequest()
@@ -188,7 +193,10 @@ export default {
           this.loading = false
         })
     },
-    /** 获取列表请求 */
+
+    /**
+     * 获取列表请求
+     */
     getIndexRequest() {
       if (this.crmType === 'leads') {
         return crmLeadsIndexAPI
@@ -212,7 +220,11 @@ export default {
         return crmReturnVisitIndexAPI
       }
     },
-    /** 获取字段 */
+
+    /**
+     * 获取字段
+     * @param {*} force
+     */
     getFieldList(force) {
       if (this.fieldList.length == 0 || force) {
         this.loading = true
@@ -251,6 +263,7 @@ export default {
 
               fieldList.push({
                 prop: element.fieldName,
+                formType: element.formType,
                 label: element.name,
                 width: width,
                 sortId: element.id
@@ -270,20 +283,32 @@ export default {
         this.getList()
       }
     },
-    /** 格式化字段 */
-    fieldFormatter(row, column, cellValue) {
+
+    /**
+     * 格式化字段
+     * @param {*} row
+     * @param {*} column
+     * @param {*} cellValue
+     */
+    fieldFormatter(row, column, cellValue, field) {
       if (this.moneyFields.includes(column.property)) {
         return separator(row[column.property] || 0)
       }
       // 如果需要格式化
       if (column.property === 'isTransform') {
-        return ['否', '是'][cellValue] || '--'
+        return ['否', '是'][row[column.property]] || '--'
+      }
+
+      if (field) {
+        return getFormFieldShowName(field.formType, row[column.property])
       }
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     },
-    /** */
-    /** */
-    /** 搜索操作 */
+
+    /**
+     * 搜索操作
+     * @param {*} value
+     */
     crmSearch(value) {
       this.currentPage = 1
       this.search = value
@@ -291,8 +316,13 @@ export default {
         this.getList()
       }
     },
-    /** 列表操作 */
-    // 当某一行被点击时会触发该事件
+
+    /**
+     * 列表操作
+     * @param {*} row
+     * @param {*} column
+     * @param {*} event
+     */
     handleRowClick(row, column, event) {
       if (column.type === 'selection') {
         return // 多选布局不能点击
@@ -363,6 +393,7 @@ export default {
       } else if (this.crmType === 'product') {
         if (column.property === 'name') {
           this.rowID = row.productId
+          this.rowType = 'product'
           this.showDview = true
         } else {
           this.showDview = false
@@ -405,15 +436,32 @@ export default {
         }
       }
 
+      this.rowIndex = this.getRowIndex()
+
       if (this.showDview) {
         this.$store.commit('SET_COLLAPSE', this.showDview)
       }
     },
+
     /**
-     * 导出 线索 客户 联系人 产品
+     * 获取点击行索引
+     */
+    getRowIndex() {
+      let rowIndex = 0
+      for (let index = 0; index < this.list.length; index++) {
+        const element = this.list[index]
+        if (element[`${this.rowType}Id`] === this.rowID) {
+          rowIndex = index
+          break
+        }
+      }
+      return rowIndex
+    },
+
+    /**
+     * 导出
      * @param {*} data
      */
-    // 导出操作
     exportInfos() {
       var params = {
         search: this.search,
@@ -456,7 +504,11 @@ export default {
           loading.close()
         })
     },
-    /** 筛选操作 */
+
+    /**
+     * 筛选操作
+     * @param {*} data
+     */
     handleFilter(data) {
       this.filterObj = data
 
@@ -466,14 +518,22 @@ export default {
       this.currentPage = 1
       this.getList()
     },
-    /** 场景操作 */
+
+    /**
+     * 场景操作
+     * @param {*} data
+     */
     handleScene(data) {
       this.sceneId = data.id
       this.sceneName = data.name
       this.currentPage = 1
       this.getFieldList()
     },
-    /** 勾选操作 */
+
+    /**
+     * 勾选操作
+     * @param {*} data
+     */
     handleHandle(data) {
       if (['alloc', 'get', 'transfer', 'transform', 'delete', 'put_seas', 'exit-team'].includes(data.type)) {
         this.showDview = false
@@ -505,8 +565,11 @@ export default {
     setSave() {
       this.getFieldList(true)
     },
-    /** */
-    /** 页面头部操作 */
+
+    /**
+     * 页面头部操作
+     * @param {*} data
+     */
     listHeadHandle(data) {
       if (data.type === 'save-success' || data.type === 'import-crm') {
         // 重新请求第一页数据
@@ -514,6 +577,7 @@ export default {
         this.getList()
       }
     },
+
     /**
      * 字段排序
      */
@@ -522,13 +586,23 @@ export default {
       this.sortData = column || {}
       this.getList()
     },
-    /** 勾选操作 */
-    // 当选择项发生变化时会触发该事件
+
+    /**
+     * 勾选操作
+     * @param {*} val
+     */
     handleSelectionChange(val) {
       this.selectionList = val // 勾选的行
       this.$refs.crmTableHead.headSelectionChange(val)
     },
-    // 当拖动表头改变了列的宽度的时候会触发该事件
+
+    /**
+     * 当拖动表头改变了列的宽度的时候会触发该事件
+     * @param {*} newWidth
+     * @param {*} oldWidth
+     * @param {*} column
+     * @param {*} event
+     */
     handleHeaderDragend(newWidth, oldWidth, column, event) {
       if (column.property) {
         let request = null
@@ -562,18 +636,30 @@ export default {
           .catch(() => { })
       }
     },
-    // 更改每页展示数量
+
+    /**
+     * 更改每页展示数量
+     * @param {*} val
+     */
     handleSizeChange(val) {
       Lockr.set('crmPageSizes', val)
       this.pageSize = val
       this.getList()
     },
-    // 更改当前页数
+
+    /**
+     * 更改当前页数
+     * @param {*} val
+     */
     handleCurrentChange(val) {
       this.currentPage = val
       this.getList()
     },
-    // 0待审核、1审核中、2审核通过、3已拒绝 4已撤回 5未提交
+
+    /**
+     * 状态颜色
+     * @param {*} status
+     */
     getStatusStyle(status) {
       return {
         backgroundColor: this.getStatusColor(status)

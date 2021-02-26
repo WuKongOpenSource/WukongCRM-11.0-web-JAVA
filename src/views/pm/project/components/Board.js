@@ -14,6 +14,7 @@ import {
 } from '@/api/pm/project'
 
 import TaskQuickAdd from '@/views/taskExamine/task/components/TaskQuickAdd'
+import TaskCreate from '@/views/taskExamine/task/Create'
 import TaskDetail from '@/views/taskExamine/task/components/TaskDetail'
 
 import TaskMixin from '@/views/taskExamine/task/mixins/TaskMixin'
@@ -22,7 +23,8 @@ import { throttle } from 'throttle-debounce'
 export default {
   components: {
     TaskQuickAdd,
-    TaskDetail
+    TaskDetail,
+    TaskCreate
   },
 
   directives: {
@@ -67,7 +69,12 @@ export default {
       taskID: '',
       detailIndex: -1,
       detailSection: -1,
-      taskDetailShow: false
+      taskDetailShow: false,
+      // 全屏新建任务
+      taskCreateShow: false,
+      createAction: {
+        type: 'save'
+      }
     }
   },
 
@@ -457,11 +464,15 @@ export default {
     /**
      * 创建新任务
      */
-    createSubTaskClick(val) {
-      this.createSubTaskClassId = val[this.tableField]
-      if (val.taskHandleShow) {
-        val.taskHandleShow = false
+    createSubTaskClick(item) {
+      this.createAction = {
+        type: 'save',
+        params: {
+          workId: this.workId,
+          classId: item.classId
+        }
       }
+      this.taskCreateShow = true
     },
 
     /**
