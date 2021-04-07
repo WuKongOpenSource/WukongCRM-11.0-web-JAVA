@@ -33,7 +33,7 @@ QQ群交流群⑩群：[1026560336](http:////shang.qq.com/wpa/qunwpa?idkey=13d5e
 
 ```
 
-(<a href="https://gitee.com/wukongcrm/crm_pro" target="_blank">查看JAVA后端仓库</a>) 
+(<a href="https://github.com/72wukong/72crm-11.0-Spring" target="_blank">查看JAVA后端仓库</a>) 
 
 
 #### 项目目录
