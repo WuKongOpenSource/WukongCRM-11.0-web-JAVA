@@ -60,7 +60,7 @@
                 :id="id"
                 :handle="activityHandle"
                 :crm-type="crmType"
-                @on-handle="detailHeadHandle" />
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -291,24 +291,10 @@ export default {
     },
 
     /**
-     * 编辑成功
-     */
-    editSaveSuccess() {
-      this.$bus.$emit('crm-detail-update', this.crmType)
-      this.$emit('handle', { type: 'save-success' })
-      this.detailData = null
-      this.getDetial()
-    },
-
-    /**
      * 审核操作
      */
     examineHandle(data) {
-      // 1 审核通过 2 审核拒绝 4 已撤回
-      if (data.type == 1) {
-        this.getDetial()
-      }
-      this.$emit('handle', { type: 'examine' })
+      this.detailHeadHandle({ type: 'examine' })
     },
 
     /**

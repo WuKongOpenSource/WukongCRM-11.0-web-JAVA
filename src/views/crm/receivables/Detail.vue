@@ -50,7 +50,8 @@
                 :is="item.name"
                 :detail="detailData"
                 :id="id"
-                :crm-type="crmType" />
+                :crm-type="crmType"
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -75,6 +76,8 @@ import CRMEditBaseInfo from '../components/CRMEditBaseInfo' // 基本信息
 import RelativeFiles from '../components/RelativeFiles' // 相关附件
 import RelativeHandle from '../components/RelativeHandle' // 相关操作
 import RelativePrint from '../components/RelativePrint' // 相关打印
+import RelativeTeam from '../components/RelativeTeam' // 团队成员
+
 import CRMAllCreate from '../components/CRMAllCreate' // 新建页面
 import ExamineInfo from '@/components/Examine/ExamineInfo'
 
@@ -91,6 +94,7 @@ export default {
     RelativeFiles,
     RelativeHandle,
     RelativePrint,
+    RelativeTeam,
     ExamineInfo,
     CRMAllCreate
   },
@@ -141,18 +145,19 @@ export default {
   },
   computed: {
     tabNames() {
-      var tempsTabs = [
-        { label: '详细资料', name: 'CRMEditBaseInfo' },
-        {
-          label: this.getTabName('附件', this.tabsNumber.fileCount),
-          name: 'RelativeFiles'
-        },
-        { label: '操作记录', name: 'RelativeHandle' }
-      ]
+      var tempsTabs = [{ label: '详细资料', name: 'CRMEditBaseInfo' }]
+
+      tempsTabs.push({ label: this.getTabName('团队成员', this.tabsNumber.memberCount), name: 'RelativeTeam' })
+      tempsTabs.push({
+        label: this.getTabName('附件', this.tabsNumber.fileCount),
+        name: 'RelativeFiles'
+      })
 
       if (this.crm.receivables && this.crm.receivables.print) {
         tempsTabs.push({ label: '打印记录', name: 'RelativePrint' })
       }
+
+      tempsTabs.push({ label: '操作记录', name: 'RelativeHandle' })
 
       return tempsTabs
     }
@@ -204,7 +209,7 @@ export default {
      * 审核操作
      */
     examineHandle() {
-      this.$emit('handle', { type: 'examine' })
+      this.detailHeadHandle({ type: 'examine' })
     }
   }
 }

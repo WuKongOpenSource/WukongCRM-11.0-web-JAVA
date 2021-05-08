@@ -189,3 +189,15 @@ export function oaLogUnCompleteListAPI(data) {
     }
   })
 }
+
+/**
+ * 点赞
+ * @param {*} data
+ */
+export function oaLogFavourOrCancelAPI(data) {
+  return request({
+    url: 'oaLog/favourOrCancel',
+    method: 'post',
+    data: data
+  })
+}

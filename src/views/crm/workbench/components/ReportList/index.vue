@@ -69,11 +69,15 @@
                   <span>{{ getStatusName(row.checkStatus) }}</span>
                 </template>
                 <wk-field-view
-                  v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+                  v-else
+                  :props="item"
                   :form-type="item.formType"
                   :value="row[column.property]"
-                />
-                <template v-else>{{ fieldFormatter(row, column, row[column.property], item) }}</template>
+                >
+                  <template slot-scope="{ data }">
+                    {{ fieldFormatter(row, column, row[column.property], item) }}
+                  </template>
+                </wk-field-view>
               </template>
             </el-table-column>
             <el-table-column v-if="showFillColumn" />
@@ -361,7 +365,7 @@ export default {
       }
 
       if (field) {
-        return getFormFieldShowName(field.formType, row[column.property])
+        return getFormFieldShowName(field.formType, row[column.property], '--', field)
       }
 
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]

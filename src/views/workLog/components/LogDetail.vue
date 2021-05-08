@@ -121,6 +121,12 @@
                 @select="reportSelect" />
             </div>
           </div>
+
+          <fav-list
+            :is-favour="detail.isFavour"
+            :data="detail.favourUser"
+            @fav="favourClick"
+          />
         </div>
 
         <!-- 回复 -->
@@ -174,7 +180,9 @@
 import {
   journalQueryByIdAPI,
   journalQueryRecordCountAPI,
-  journalQueryBulletinByTypeAPI } from '@/api/oa/journal'
+  journalQueryBulletinByTypeAPI,
+  oaLogFavourOrCancelAPI
+} from '@/api/oa/journal'
 import {
   setCommentAPI,
   queryCommentListAPI
@@ -188,6 +196,7 @@ import ReportMenu from './ReportMenu'
 import ReportList from '@/views/crm/workbench/components/ReportList'
 import ReplyComment from '@/components/ReplyComment'
 import CommentList from '@/components/CommentList'
+import FavList from './FavList'
 
 import { mapGetters } from 'vuex'
 import { separator } from '@/filters/vueNumeralFilter/filters'
@@ -205,7 +214,8 @@ export default {
     ReplyComment,
     CommentList,
     CRMFullScreenDetail: () =>
-      import('@/components/CRMFullScreenDetail')
+      import('@/components/CRMFullScreenDetail'),
+    FavList
   },
   props: {
     id: [String, Number],
@@ -561,6 +571,21 @@ export default {
       }).catch(() => {
         this.commentLoading = false
       })
+    },
+
+    /**
+     * 点赞
+     */
+    favourClick() {
+      oaLogFavourOrCancelAPI({
+        isFavour: !this.detail.isFavour,
+        logId: this.detail.logId
+      }).then(res => {
+        const resData = res.data || {}
+        this.detail.isFavour = resData.isFavour
+        this.detail.favourUser = resData.favourUser
+      })
+        .catch(() => {})
     }
 
   }

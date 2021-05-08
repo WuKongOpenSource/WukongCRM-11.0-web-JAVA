@@ -99,6 +99,9 @@ export default {
 
     poolId() {
       this.fields = []
+      if (this.show) {
+        this.getList()
+      }
     }
   },
   mounted() {},
@@ -122,15 +125,16 @@ export default {
 
       request(params)
         .then(res => {
-          this.poolConfig = res.data.poolConfig
-          const showList = res.data.value.map(function(item, index) {
+          const resData = res.data || {}
+          this.poolConfig = resData.poolConfig
+          const showList = resData.value.map(function(item, index) {
             item.left = ''
             item.center = ''
             item.right = ''
             item.check = true
             return item
           })
-          const hideList = res.data.hideValue.map(function(item, index) {
+          const hideList = resData.hideValue.map(function(item, index) {
             item.left = ''
             item.center = ''
             item.right = ''
@@ -171,18 +175,30 @@ export default {
      * 保存更改
      */
     save() {
-      const noHideIds = this.fields.filter(item => item.check)
-      if (noHideIds.length < 2) {
+      const noHideFields = this.fields.filter(item => item.check)
+      if (noHideFields.length < 2) {
         this.$message.error('至少要显示两列')
       } else {
-        const hideIds = this.fields.filter(item => !item.check)
+        const hideFields = this.fields.filter(item => !item.check)
         this.loading = true
         let request = null
         const params = {
-          noHideIds: noHideIds
-            .map(item => item.id),
-          hideIds: hideIds
-            .map(item => item.id) }
+          noHideFields: noHideFields
+            .map(item => {
+              return {
+                id: item.id,
+                fieldName: item.fieldName,
+                style: item.style
+              }
+            }),
+          hideFields: hideFields
+            .map(item => {
+              return {
+                id: item.id,
+                fieldName: item.fieldName,
+                style: item.style
+              }
+            }) }
         if (this.isSeas) {
           request = crmPoolFieldConfigAPI
           params.poolId = this.poolId

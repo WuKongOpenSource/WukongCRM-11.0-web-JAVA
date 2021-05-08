@@ -5,6 +5,7 @@
     @mouseleave="hovering = false">
     <el-input
       v-model="dataValue.address"
+      :disabled="disabled"
       readonly
       clearable
       placeholder="点击定位"
@@ -49,7 +50,8 @@ export default {
     // eslint-disable-next-line vue/require-prop-types
     value: {
       required: true
-    }
+    },
+    disabled: Boolean
   },
 
   data() {
@@ -95,7 +97,9 @@ export default {
     },
 
     inputClick() {
-      this.pointDialogVisible = true
+      if (!this.disabled) {
+        this.pointDialogVisible = true
+      }
     },
 
     inputClear() {

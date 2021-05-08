@@ -64,7 +64,7 @@ export default {
     },
 
     previewClick(file, fileIndex) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: fileIndex,
         data: this.list.map(function(item) {
           return {

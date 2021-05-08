@@ -10,6 +10,7 @@
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
+        :validate-on-rule-change="false"
         class="wk-form"
         label-position="top">
         <wk-form-items
@@ -228,6 +229,17 @@ export default {
     formChange(field, index, value, valueList) {
       // 审批流逻辑
       this.debouncedGetWkFlowList(field.field, this.fieldForm)
+
+      if ([
+        'select',
+        'checkbox'
+      ].includes(field.formType) &&
+          field.remark === 'options_type' &&
+          field.optionsData) {
+        const { fieldForm, fieldRules } = this.getFormContentByOptionsChange(this.fieldList, this.fieldForm)
+        this.fieldForm = fieldForm
+        this.fieldRules = fieldRules
+      }
     },
 
     /**
@@ -341,6 +353,8 @@ export default {
      * 根据自定义字段获取自定义字段规则
      */
     getcrmRulesAndModel(list) {
+      const assistIds = this.getFormAssistIds(list)
+
       const baseFields = []
       const fieldList = []
       const fieldRules = {}
@@ -349,6 +363,7 @@ export default {
         const fields = []
         children.forEach(item => {
           const temp = this.getFormItemDefaultProperty(item)
+          temp.show = !assistIds.includes(item.formAssistId)
 
           fieldRules[temp.field] = this.getRules(item)
 
@@ -461,7 +476,8 @@ export default {
           if (item.formType == 'examine_cause' ||
           item.formType == 'business_cause') {
             if (this.action.type == 'update') {
-              const list = item.value.map(element => {
+              const itemValue = item.value || []
+              const list = itemValue.map(element => {
                 if (element.img) {
                   element.imgList = objDeepCopy(element.img || [])
                 } else {
@@ -474,7 +490,9 @@ export default {
               fieldForm[temp.field] = {} // 加入默认值 可能编辑的时候需要调整
             }
           } else {
-            fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+            if (temp.show) {
+              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+            }
           }
           fields.push(temp)
           baseFields.push(item)
@@ -503,7 +521,7 @@ export default {
               field: [],
               oaExamineTravelList: []
             }
-            this.getSubmiteParams(this.baseFields, params)
+            this.getSubmiteParams([].concat.apply([], this.fieldList), params)
             if (wkFlowResult.data) {
               params.examineFlowData = wkFlowResult.data
             }
@@ -608,7 +626,7 @@ export default {
         } else {
           perviewFile = file
         }
-        this.$bus.emit('preview-image-bus', {
+        this.$wkPreviewFile.preview({
           index: 0,
           data: [perviewFile]
         })
@@ -806,6 +824,10 @@ export default {
     .el-upload-list__item {
       width: 80px;
       height: 80px;
+      img {
+        object-fit: contain;
+        vertical-align: top;
+      }
     }
   }
   .img-box {

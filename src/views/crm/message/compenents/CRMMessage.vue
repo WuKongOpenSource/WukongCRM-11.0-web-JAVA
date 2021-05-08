@@ -13,50 +13,63 @@
       </el-tooltip>
     </div>
     <div class="option-bar">
-      <div v-if="selectionList.length == 0">
-        <el-select
+      <flexbox
+        v-if="selectionList.length == 0"
+        justify="space-between">
+        <el-tabs
           v-if="showOptions"
-          v-model="optionsType"
-          @change="refreshList">
-          <el-option
+          v-model="optionsType" @tab-click="refreshList">
+          <el-tab-pane
             v-for="item in options"
             :key="item.value"
             :label="item.name"
-            :value="item.value"/>
-        </el-select>
-        <el-select
-          v-if="showSubType"
-          v-model="isSubType"
-          :style="{'margin-left': showOptions ? '10px' : 0}"
-          style="width: 120px;"
-          @change="refreshList">
-          <el-option
-            v-for="item in [{name: '我的', value: 1}, {name: '我下属的', value: 2}]"
-            :key="item.value"
-            :label="item.name"
-            :value="item.value"/>
-        </el-select>
-        <el-button
-          v-if="showFilterView"
-          style="margin-left: 10px;"
-          type="primary"
-          class="filter-button el-button--margin "
-          icon="wk wk-screening"
-          @click="getFilterFieldInfo">高级筛选</el-button>
-        <filter-form
-          :field-list="filterFieldList"
-          :dialog-visible.sync="showFilter"
-          :obj="filterObj"
-          :crm-type="crmType"
-          :save-scene="false"
-          @filter="handleFilter"/>
-        <el-button
-          :disabled="!canMark"
-          class="el-button--margin "
-          icon="wk wk-tag"
-          style="margin-left: 10px;"
-          type="primary" plain @click="allMarkReadClick">全部标记已处理</el-button>
-      </div>
+            :name="item.value">
+            <el-badge
+              slot="label"
+              :value="item.num"
+              :hidden="item.num <= 0">
+              <span>
+                {{ item.name }}
+              </span>
+            </el-badge>
+          </el-tab-pane>
+        </el-tabs>
+
+        <div>
+          <el-select
+            v-if="showSubType"
+            v-model="isSubType"
+            :style="{'margin-left': showOptions ? '10px' : 0}"
+            style="width: 120px;"
+            @change="refreshList">
+            <el-option
+              v-for="item in [{name: '我的', value: 1}, {name: '我下属的', value: 2}]"
+              :key="item.value"
+              :label="item.name"
+              :value="item.value"/>
+          </el-select>
+          <el-button
+            v-if="showFilterView"
+            style="margin-left: 10px;"
+            type="primary"
+            class="filter-button el-button--margin "
+            icon="wk wk-screening"
+            @click="getFilterFieldInfo">高级筛选</el-button>
+          <filter-form
+            :field-list="filterFieldList"
+            :dialog-visible.sync="showFilter"
+            :obj="filterObj"
+            :crm-type="crmType"
+            :save-scene="false"
+            @filter="handleFilter"/>
+          <el-button
+            :disabled="!canMark"
+            class="el-button--margin "
+            icon="wk wk-tag"
+            style="margin-left: 10px;"
+            type="primary" plain @click="allMarkReadClick">全部标记已处理</el-button>
+        </div>
+      </flexbox>
       <flexbox
         v-else
         class="selection-bar">
@@ -115,14 +128,19 @@
             <span :style="getStatusStyle(row.checkStatus)" class="status-mark"/>
             <span>{{ getStatusName(row.checkStatus) }}</span>
           </template>
-          <wk-field-view
-            v-else-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
-            :form-type="item.formType"
-            :value="row[column.property]"
-          />
-          <template v-else>
+          <template v-else-if="item.prop == 'invoiceType'">
             {{ fieldFormatter(row, column, row[column.property], item) }}
           </template>
+          <wk-field-view
+            v-else
+            :props="item"
+            :form-type="item.formType"
+            :value="row[column.property]"
+          >
+            <template slot-scope="{ data }">
+              {{ fieldFormatter(row, column, row[column.property], item) }}
+            </template>
+          </wk-field-view>
         </template>
       </el-table-column>
       <el-table-column :resizable="false"/>
@@ -165,7 +183,6 @@ import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
 import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
 
 import MessageTableMixin from '../mixins/MessageTable'
-import { invoiceFilterFields } from '../../invoice/js/fields'
 
 export default {
   /** 客户管理 的待审核系统 */
@@ -224,7 +241,8 @@ export default {
 
   data() {
     return {
-      optionsType: 0,
+      optionsType: '0',
+      options: [],
       isSubType: 1, // 是否是下属
       /** 高级筛选 */
       showFilter: false, // 控制筛选框
@@ -294,45 +312,13 @@ export default {
         this.infoType == 'todayBusiness' ||
         this.infoType == 'todayLeads' ||
         this.infoType == 'putInPoolRemind' ||
-        this.infoType == 'returnVisitRemind'
+        this.infoType == 'returnVisitRemind' ||
+        this.infoType == 'followLeads' ||
+        this.infoType == 'followCustomer'
       ) {
         return true
       }
       return false
-    },
-
-    // 下拉数据
-    options() {
-      if (this.infoType == 'todayCustomer' ||
-        this.infoType == 'todayBusiness' ||
-        this.infoType == 'todayLeads') {
-        return [
-          { name: '今日需联系', value: 1 },
-          { name: '已逾期', value: 2 },
-          { name: '已联系', value: 3 }
-        ]
-      } else if (
-        this.infoType == 'followLeads' ||
-        this.infoType == 'followCustomer'
-      ) {
-        return [{ name: '待跟进', value: 1 }, { name: '已跟进', value: 2 }]
-      } else if (
-        this.infoType == 'checkContract' ||
-        this.infoType == 'checkReceivables' ||
-        this.infoType == 'checkInvoice'
-      ) {
-        return [{ name: '待审核', value: 1 }, { name: '已审核', value: 2 }]
-      } else if (this.infoType == 'remindReceivablesPlan') {
-        return [
-          { name: '待回款', value: 1 },
-          { name: '已回款', value: 2 },
-          { name: '已逾期', value: 3 }
-        ]
-      } else if (this.infoType == 'endContract') {
-        return [{ name: '即将到期', value: 1 }, { name: '已到期', value: 2 }]
-      }
-
-      return []
     },
 
     /**
@@ -341,7 +327,7 @@ export default {
     canMark() {
       if (this.options.length) {
         if (this.showSubType && this.showOptions) {
-          return this.optionsType == 1 && this.isSubType == 1
+          return this.optionsType == '1' && this.isSubType == 1
         }
 
         if (this.showSubType) {
@@ -349,7 +335,7 @@ export default {
         }
 
         if (this.showOptions) {
-          return this.optionsType == 1
+          return this.optionsType == '1'
         }
         return false
       }
@@ -360,6 +346,8 @@ export default {
 
   watch: {
     show() {
+      this.options = this.getOption()
+
       if (this.showOptions && this.options.length > 0) {
         this.optionsType = this.options[0].value
       }
@@ -368,6 +356,8 @@ export default {
   },
 
   mounted() {
+    this.options = this.getOption()
+
     if (this.showOptions && this.options.length > 0) {
       this.optionsType = this.options[0].value
     }
@@ -438,6 +428,8 @@ export default {
                   value: this.selectionList.length,
                   infoType: this.infoType
                 })
+
+                this.$parent.requestNumCount()
               })
               .catch(() => {})
           })
@@ -458,7 +450,7 @@ export default {
         crmMessagzealByIdAPI(params).then(res => {
           this.$message.success('操作成功')
           this.getList()
-          this.$parent.refreshNum()
+          this.$parent.requestNumCount()
         }).catch(() => {})
       }
     },
@@ -467,19 +459,14 @@ export default {
      * 获取高级筛选字段数据后展示
      */
     getFilterFieldInfo() {
-      if (this.crmType == 'invoice') {
-        this.filterFieldList = invoiceFilterFields
-        this.showFilter = true
-      } else {
-        filterIndexfieldsAPI({
-          label: crmTypeModel[this.crmType]
+      filterIndexfieldsAPI({
+        label: crmTypeModel[this.crmType]
+      })
+        .then(res => {
+          this.filterFieldList = res.data || []
+          this.showFilter = true
         })
-          .then(res => {
-            this.filterFieldList = res.data || []
-            this.showFilter = true
-          })
-          .catch(() => {})
-      }
+        .catch(() => {})
     },
 
     /**
@@ -540,6 +527,42 @@ export default {
      */
     selectionDisabled() {
       return this.canMark
+    },
+
+    /**
+     * 获取option
+     */
+    getOption() {
+      if (this.infoType == 'todayCustomer' ||
+        this.infoType == 'todayBusiness' ||
+        this.infoType == 'todayLeads') {
+        return [
+          { name: '今日需联系', value: '1', num: 0, isMenuNum: true },
+          { name: '已逾期', value: '2', num: 0, key: 'overtime' },
+          { name: '已联系', value: '3', num: 0 }
+        ]
+      } else if (
+        this.infoType == 'followLeads' ||
+        this.infoType == 'followCustomer'
+      ) {
+        return [{ name: '待跟进', value: '1', num: 0, isMenuNum: true }, { name: '已跟进', value: '2', num: 0 }]
+      } else if (
+        this.infoType == 'checkContract' ||
+        this.infoType == 'checkReceivables' ||
+        this.infoType == 'checkInvoice'
+      ) {
+        return [{ name: '待审核', value: '1', num: 0, isMenuNum: true }, { name: '已审核', value: '2', num: 0 }]
+      } else if (this.infoType == 'remindReceivablesPlan') {
+        return [
+          { name: '待回款', value: '1', num: 0, isMenuNum: true },
+          { name: '已回款', value: '2', num: 0, key: 'overtime' },
+          { name: '已逾期', value: '3', num: 0 }
+        ]
+      } else if (this.infoType == 'endContract') {
+        return [{ name: '即将到期', value: '1', num: 0, isMenuNum: true }, { name: '已到期', value: '2', num: 0 }]
+      }
+
+      return []
     }
   }
 }
@@ -590,6 +613,19 @@ export default {
 }
 .option-bar {
   padding: 15px 20px;
+  .el-tabs {
+    width: 280px;
+    /deep/ .el-tabs__header {
+      margin: 0;
+      .el-tabs__nav-wrap::after {
+        display: none;
+      }
+    }
+  }
+
+  .el-badge {
+    line-height: initial;
+  }
 }
 
 /** 勾选操作 */

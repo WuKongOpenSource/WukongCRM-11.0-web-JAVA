@@ -9,7 +9,8 @@
             <div v-for="(item, index) in primaryList" :key="index" class="show-img">
               <img
                 v-src="item.url"
-                :key="item.url">
+                :key="item.url"
+                style="object-fit: contain; vertical-align: top;">
               <div
                 class="img-model">
                 <i
@@ -48,6 +49,7 @@
               <img
                 v-src="item.url"
                 :key="item.url"
+                style="object-fit: contain; vertical-align: top;"
                 class="cross-two">
               <div
                 class="img-model">
@@ -215,7 +217,7 @@ export default {
      * 预览图片
      */
     previewImage(list, index) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: index,
         data: list
       })

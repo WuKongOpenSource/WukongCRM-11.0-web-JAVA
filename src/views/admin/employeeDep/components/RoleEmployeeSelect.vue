@@ -68,7 +68,9 @@ import PinyinMatch from 'pinyin-match'
 import merge from '@/utils/merge'
 
 const DefaultProps = {
-  onlyShowRole: false // 仅展示角色
+  onlyShowRole: false, // 仅展示角色
+  // 自定义角色请求
+  roleRequest: null
 }
 
 export default {
@@ -137,7 +139,8 @@ export default {
      * 获取角色列表
      */
     getRoleList() {
-      roleListAPI()
+      const request = this.config.roleRequest || roleListAPI
+      request()
         .then(res => {
           this.roleOption = res.data || []
         })

@@ -3,30 +3,30 @@
     v-loading="loading"
     class="chiefly-contacts">
     <flexbox
-      v-if="detail && canShowContacts"
+      v-if="contactsDetail && canShowContacts"
       class="cell"
       align="stretch">
       <xr-avatar
-        :name="detail.name"
+        :name="contactsDetail.name"
         :size="40"
         class="cell-hd" />
       <div class="cell-bd">
         <p class="cell-bd__name">
-          <span>{{ detail.name }}</span>
+          <span>{{ contactsDetail.name }}</span>
           <span
-            v-if="detail.post"
-            class="cell-bd__name--des">{{ detail.post }}</span>
+            v-if="contactsDetail.post"
+            class="cell-bd__name--des">{{ contactsDetail.post }}</span>
         </p>
         <p class="cell-bd__detail">
           <i class="wk wk-circle-iphone" />
-          <span v-if="detail.mobile">{{ detail.mobile }}</span>
+          <span v-if="contactsDetail.mobile">{{ contactsDetail.mobile }}</span>
           <span
             v-else
             class="no-data">暂无电话</span>
         </p>
         <p class="cell-bd__detail">
           <i class="wk wk-circle-email" />
-          <span v-if="detail.email">{{ detail.email }}</span>
+          <span v-if="contactsDetail.email">{{ contactsDetail.email }}</span>
           <span
             v-else
             class="no-data">暂无邮箱</span>
@@ -44,7 +44,8 @@
 
     <import-info
       v-if="list.length"
-      :list="list" />
+      :list="list"
+      :detail="detail" />
     <c-r-m-full-screen-detail
       :visible.sync="showFullDetail"
       :id="contactsId"
@@ -82,6 +83,12 @@ export default {
       type: String,
       default: ''
     },
+    detail: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
     // 是公海 默认是客户
     isSeas: {
       type: Boolean,
@@ -91,7 +98,7 @@ export default {
   data() {
     return {
       loading: false,
-      detail: null,
+      contactsDetail: null,
       list: [],
       showFullDetail: false
     }
@@ -125,13 +132,13 @@ export default {
   },
   watch: {
     contactsId() {
-      this.detail = null
+      this.contactsDetail = null
       this.getDetial()
     },
 
     id() {
       this.list = []
-      this.detail = null
+      this.contactsDetail = null
       this.getBaseInfo()
       this.getDetial()
     }
@@ -161,7 +168,7 @@ export default {
         })
           .then(res => {
             this.loading = false
-            this.detail = res.data
+            this.contactsDetail = res.data
           })
           .catch(() => {
             this.loading = false
@@ -186,7 +193,12 @@ export default {
 
       filedGetInformationAPI(params)
         .then(res => {
-          this.list = res.data
+          const list = res.data || []
+          this.list = list.filter(item => {
+            return item.formType !== 'file' &&
+        item.formType !== 'detail_table' &&
+        item.formType !== 'product'
+          })
           this.loading = false
         })
         .catch(() => {

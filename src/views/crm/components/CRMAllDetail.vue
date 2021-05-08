@@ -5,7 +5,6 @@
     :is="tabName"
     class="d-view"
     v-on="$listeners"
-    @handle="detailHandle"
     @hide-view="hiddenView"/>
 </template>
 
@@ -43,35 +42,34 @@ export default {
   },
   data() {
     return {
-      tabName: '' // 组件名
     }
   },
-  computed: {},
-  watch: {
-    crmType: function(type) {
+  computed: {
+    tabName(type) { // 组件名
       if (this.crmType == 'leads') {
-        this.tabName = 'LeadsDetail'
+        return 'LeadsDetail'
       } else if (this.crmType == 'customer') {
-        this.tabName = 'CustomerDetail'
+        return 'CustomerDetail'
       } else if (this.crmType == 'contacts') {
-        this.tabName = 'ContactsDetail'
+        return 'ContactsDetail'
       } else if (this.crmType == 'business') {
-        this.tabName = 'BusinessDetail'
+        return 'BusinessDetail'
       } else if (this.crmType == 'contract') {
-        this.tabName = 'ContractDetail'
+        return 'ContractDetail'
       } else if (this.crmType == 'product') {
-        this.tabName = 'ProductDetail'
+        return 'ProductDetail'
       } else if (this.crmType == 'receivables') {
-        this.tabName = 'ReceivablesDetail'
+        return 'ReceivablesDetail'
       } else if (this.crmType == 'visit') {
-        this.tabName = 'VisitDetail'
+        return 'VisitDetail'
       } else if (this.crmType == 'invoice') {
-        this.tabName = 'InvoiceDetail'
+        return 'InvoiceDetail'
       } else {
-        this.tabName = ''
+        return ''
       }
     }
   },
+  watch: {},
   mounted() {
     // if (this.visible) {
     //   this.$nextTick(() => {
@@ -91,16 +89,6 @@ export default {
   methods: {
     hiddenView() {
       this.$emit('update:visible', false)
-    },
-
-    /**
-     * 详情操作
-     */
-    detailHandle(data) {
-      if (data.type === 'alloc' || data.type === 'get' || data.type === 'transfer' || data.type === 'transform' || data.type === 'delete' || data.type === 'put_seas') {
-        this.hiddenView()
-      }
-      this.$emit('handle', data)
     }
   }
 }

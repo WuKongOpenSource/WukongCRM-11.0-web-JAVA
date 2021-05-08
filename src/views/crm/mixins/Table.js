@@ -42,6 +42,10 @@ import {
 import {
   crmReturnVisitIndexAPI
 } from '@/api/crm/visit'
+import {
+  crmInvoiceIndexAPI,
+  crmInvoiceExcelAllExportAPI
+} from '@/api/crm/invoice'
 
 import WkEmpty from '@/components/WkEmpty'
 import CRMListHead from '../components/CRMListHead'
@@ -57,7 +61,6 @@ import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Lockr from 'lockr'
 import { Loading } from 'element-ui'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
-import { separator } from '@/filters/vueNumeralFilter/filters'
 import { downloadExcelWithResData } from '@/utils'
 import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 
@@ -92,8 +95,6 @@ export default {
       sceneName: '', // 场景名字
       /** 勾选行 */
       selectionList: [], // 勾选数据 用于全局导出
-      // 金额字段
-      moneyFields: [],
       // 已经发请求 用于缓存区分
       isRequested: false,
       rowIndex: 0 // 行索引
@@ -218,6 +219,8 @@ export default {
         return crmReceivablesIndexAPI
       } else if (this.crmType === 'visit') {
         return crmReturnVisitIndexAPI
+      } else if (this.crmType === 'invoice') {
+        return crmInvoiceIndexAPI
       }
     },
 
@@ -242,7 +245,6 @@ export default {
         request(params)
           .then(res => {
             const fieldList = []
-            const moneyFields = []
             for (let index = 0; index < res.data.length; index++) {
               const element = res.data[index]
               var width = 0
@@ -256,11 +258,6 @@ export default {
                 width = element.width
               }
 
-              // 金额字段 需要格式化
-              if (element.formType === 'floatnumber') {
-                moneyFields.push(element.fieldName || '')
-              }
-
               fieldList.push({
                 prop: element.fieldName,
                 formType: element.formType,
@@ -270,7 +267,6 @@ export default {
               })
             }
 
-            this.moneyFields = moneyFields
             this.fieldList = fieldList
             // 获取好字段开始请求数据
             this.getList()
@@ -291,16 +287,13 @@ export default {
      * @param {*} cellValue
      */
     fieldFormatter(row, column, cellValue, field) {
-      if (this.moneyFields.includes(column.property)) {
-        return separator(row[column.property] || 0)
-      }
       // 如果需要格式化
       if (column.property === 'isTransform') {
         return ['否', '是'][row[column.property]] || '--'
       }
 
       if (field) {
-        return getFormFieldShowName(field.formType, row[column.property])
+        return getFormFieldShowName(field.formType, row[column.property], '--', field)
       }
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     },
@@ -434,6 +427,22 @@ export default {
         } else {
           this.showDview = false
         }
+      } else if (this.crmType == 'invoice') {
+        if (column.property === 'customerName') {
+          this.rowID = row.customerId
+          this.rowType = 'customer'
+          this.showDview = true
+        } else if (column.property === 'contractNum') {
+          this.rowID = row.contractId
+          this.rowType = 'contract'
+          this.showDview = true
+        } else if (column.property === 'invoiceApplyNumber') {
+          this.rowID = row.invoiceId
+          this.rowType = 'invoice'
+          this.showDview = true
+        } else {
+          this.showDview = false
+        }
       }
 
       this.rowIndex = this.getRowIndex()
@@ -491,7 +500,8 @@ export default {
           business: crmBusinessExcelAllExportAPI,
           contract: crmContractExcelAllExportAPI,
           receivables: crmReceivablesExcelAllExportAPI,
-          product: crmProductExcelAllExportAPI
+          product: crmProductExcelAllExportAPI,
+          invoice: crmInvoiceExcelAllExportAPI
         }[this.crmType]
       }
       const loading = Loading.service({ fullscreen: true, text: '导出中...' })
@@ -531,10 +541,23 @@ export default {
     },
 
     /**
+     * 刷新数据
+     */
+    refreshList() {
+      this.currentPage = 1
+      this.getFieldList()
+    },
+
+    /**
      * 勾选操作
      * @param {*} data
      */
     handleHandle(data) {
+      // 编辑是个动作，不是编辑成功。不执行操作
+      if (['edit'].includes(data.type)) {
+        return
+      }
+
       if (['alloc', 'get', 'transfer', 'transform', 'delete', 'put_seas', 'exit-team'].includes(data.type)) {
         this.showDview = false
       }

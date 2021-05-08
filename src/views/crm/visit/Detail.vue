@@ -42,7 +42,8 @@
                 :is="item.name"
                 :detail="detailData"
                 :id="id"
-                :crm-type="crmType" />
+                :crm-type="crmType"
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
         </flexbox>
@@ -162,20 +163,11 @@ export default {
     hideView() {
       this.$emit('hide-view')
     },
-
-    /**
-     * 编辑成功
-     */
-    editSaveSuccess() {
-      this.$emit('handle', { type: 'save-success' })
-      this.getDetial()
-    },
-
     /**
      * 预览图片
      */
     previewImage(list, index) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: index,
         data: list
       })

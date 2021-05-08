@@ -501,7 +501,7 @@ import {
   depSaveAPI,
   userAddAPI,
   userEditAPI,
-  roleListAPI,
+  adminRoleGetRoleListAPI,
   adminUsersUpdatePwdAPI,
   adminUsersUsernameEditAPI,
   adminUsersManagerUsernameEditAPI,
@@ -843,7 +843,9 @@ export default {
           type: 'editRole',
           icon: 'wk wk-edit'
         })
+      }
 
+      if (this.userUpdateAuth) {
         temps.push({
           name: '重置部门',
           type: 'editDep',
@@ -1128,7 +1130,7 @@ export default {
      */
     getRoleList() {
       // 角色列表
-      roleListAPI()
+      adminRoleGetRoleListAPI()
         .then(res => {
           this.groupsList = res.data
         })
@@ -1288,6 +1290,7 @@ export default {
                 this.$message.success('新增成功')
                 this.employeeCreateDialog = false
                 this.refreshUserList()
+                this.getUserCount()
                 this.getSelectUserList()
                 this.loading = false
               })
@@ -1377,6 +1380,7 @@ export default {
               .then(res => {
                 this.loading = false
                 this.$message.success('修改成功')
+                this.getUserCount()
                 this.getUserList()
               })
               .catch(() => {

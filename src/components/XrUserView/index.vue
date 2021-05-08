@@ -1,42 +1,43 @@
 <template>
   <div class="xr-user-view">
-    <div v-if="data" class="xr-mian">
+    <div v-if="userData" class="xr-mian">
       <flexbox class="xr-mian__hd user">
         <div class="user-info">
           <div class="user-info__name">
-            <span>{{ data.realname }}</span>
+            <span>{{ userData.realname }}</span>
             <i v-if="sexIcon" :class="sexIcon" />
           </div>
           <div class="user-info__company">
-            {{ data.companyName }}
+            {{ userData.companyName }}
           </div>
         </div>
 
-        <el-avatar
+        <xr-avatar
           :src="dataSrc"
+          :name="userData.realname"
           :size="44"
-          class="user-img">{{ showName }}</el-avatar>
+          class="user-img"/>
       </flexbox>
       <div class="xr-mian__bd">
         <flexbox class="info-cell">
           <i class="wk wk-department" />
           <div class="info-cell__label">部门</div>
-          <div class="info-cell__value text-one-line">{{ data.deptName }}</div>
+          <div class="info-cell__value text-one-line">{{ userData.deptName }}</div>
         </flexbox>
         <flexbox class="info-cell">
           <i class="wk wk-tie" />
           <div class="info-cell__label">岗位</div>
-          <div class="info-cell__value text-one-line">{{ data.post }}</div>
+          <div class="info-cell__value text-one-line">{{ userData.post }}</div>
         </flexbox>
         <flexbox class="info-cell">
           <i class="wk wk-b-mobile" />
           <div class="info-cell__label">手机</div>
-          <div :title="data.mobile" class="info-cell__value text-one-line">{{ data.mobile }}</div>
+          <div :title="userData.mobile" class="info-cell__value text-one-line">{{ userData.mobile }}</div>
         </flexbox>
         <flexbox class="info-cell">
           <i class="wk wk-email" />
           <div class="info-cell__label">邮箱</div>
-          <div :title="data.email" class="info-cell__value text-one-line">{{ data.email }}</div>
+          <div :title="userData.email" class="info-cell__value text-one-line">{{ userData.email }}</div>
         </flexbox>
       </div>
     </div>
@@ -44,42 +45,66 @@
 </template>
 
 <script>
+import { systemUserInfoAPI } from '@/api/common'
 
 export default {
   // 弹窗详情
   name: 'XrUserView',
   components: {},
   props: {
+    id: [String, Number],
     data: Object,
     src: String
   },
   data() {
-    return {}
+    return {
+      userInfo: null
+    }
   },
   computed: {
-    showName() {
-      return this.data.realname && this.data.realname.length > 2 ? this.data.realname.slice(-2) : this.data.realname
-    },
-
     sexIcon() {
       // 1 男 2 女
-      if (this.data.sex === 1) {
+      if (this.userData.sex === 1) {
         return 'wk wk-man'
-      } else if (this.data.sex === 2) {
+      } else if (this.userData.sex === 2) {
         return 'wk wk-woman'
       }
       return ''
     },
 
     dataSrc() {
-      return this.src || this.data.img
+      return this.src || this.userData.img
+    },
+
+    userData() {
+      return this.userInfo || this.data
     }
   },
-  watch: {},
+  watch: {
+    id: {
+      handler(val) {
+        if (val) {
+          this.userInfo = null
+          this.getUserData()
+        }
+      },
+      immediate: true
+    }
+  },
   mounted() {},
 
   beforeDestroy() {},
-  methods: {}
+  methods: {
+    getUserData() {
+      systemUserInfoAPI({
+        userId: this.id
+      })
+        .then(res => {
+          this.userInfo = res.data
+        })
+        .catch(() => {})
+    }
+  }
 }
 </script>
 

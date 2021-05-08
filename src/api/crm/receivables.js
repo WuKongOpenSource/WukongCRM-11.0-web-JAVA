@@ -158,3 +158,58 @@ export function crmReceivablesPlanSaveAPI(data) {
     }
   })
 }
+// 团队操作
+/**
+ * 团队成员创建
+ * @param {*} data
+ */
+export function crmReceivablesSettingTeamSaveAPI(data) {
+  return request({
+    url: 'crmReceivables/addMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+export function crmReceivablesSettingTeamDeleteAPI(data) {
+  return request({
+    url: 'crmReceivables/deleteMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+export function crmReceivablesTeamMembersAPI(data) {
+  return request({
+    url: `crmReceivables/getMembers/${data.id}`,
+    method: 'post'
+  })
+}
+
+export function crmReceivablesUpdateMembersAPI(data) {
+  return request({
+    url: 'crmReceivables/updateMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 退出团队
+ * @param {*} data
+ */
+export function crmReceivablesExitTeamAPI(data) {
+  return request({
+    url: `crmReceivables/exitTeam/${data.id}`,
+    method: 'post'
+  })
+}

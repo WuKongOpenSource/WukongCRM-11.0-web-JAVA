@@ -9,7 +9,7 @@ export default class Field {
     this.isHidden = obj.isHidden || 0 // 是否隐藏字段
     this.inputTips = obj.inputTips || '' // 输入提示
     if (this.formType === 'textarea') {
-      this.maxLength = obj.maxLength || 1000 // textarea 多行文本有最大数量
+      this.maxLength = obj.maxLength || 800 // textarea 多行文本有最大数量
     }
 
     if (this.formType === 'checkbox') {

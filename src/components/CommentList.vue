@@ -43,7 +43,8 @@
       <template v-if="item.childCommentList && item.childCommentList.length > 0">
         <div
           v-for="(child, childIndex) in item.childCommentList"
-          :key="childIndex">
+          :key="childIndex"
+          class="child-reply-list">
           <div class="child-reply reply">
             <div class="user-info">
               <xr-avatar
@@ -314,6 +315,10 @@ export default {
       .reply-comment {
         margin-top: 10px;
       }
+    }
+
+    .child-reply-list {
+      padding-left: 50px;
     }
   }
 </style>

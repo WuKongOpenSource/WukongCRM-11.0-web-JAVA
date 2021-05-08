@@ -52,7 +52,7 @@ export default {
       optionName: '合同金额',
       optionValue: 1,
       chartOption: {
-        color: ['#6ca2ff', '#ff7474'],
+        color: [],
         tooltip: {
           trigger: 'axis',
           axisPointer: {
@@ -111,24 +111,7 @@ export default {
             }
           }
         ],
-        series: [
-          {
-            name: '当月目标金额',
-            type: 'bar',
-            stack: 'one',
-            barMaxWidth: 25,
-            barGap: '0',
-            data: []
-          },
-          {
-            name: '金额',
-            type: 'bar',
-            stack: 'two',
-            barMaxWidth: 25,
-            barGap: '0%',
-            data: []
-          }
-        ]
+        series: []
       },
       chartObj: null,
       loading: false
@@ -182,24 +165,52 @@ export default {
         // }
 
         const list = res.data.list || []
-        const contractList = []
-        const receivablesList = []
+        const achievementList = []
+        const moneyList = []
         const xAxisData = []
         for (let index = 0; index < list.length; index++) {
           const element = list[index]
-          contractList.push(element.achievement)
-          receivablesList.push(element.money)
+          achievementList.push(element.achievement)
+          moneyList.push(element.money)
           xAxisData.push(element.type)
         }
         this.chartOption.xAxis[0].data = xAxisData
-        this.chartOption.series[0].data = contractList
-        this.chartOption.series[1].data = receivablesList
-
+        // 大于6当做天展示
+        const showTarget = !(list.length > 0 && String(list[0].type).length > 6)
+        this.chartOption.series = this.getChartSeries(achievementList, moneyList, showTarget)
+        this.chartOption.color = showTarget ? ['#ff7474', '#6ca2ff'] : ['#6ca2ff']
         this.chartObj.setOption(this.chartOption, true)
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
+    },
+
+    /**
+     * 获取展示系列
+     */
+    getChartSeries(achievementList, moneyList, showTarget) {
+      const series = []
+      if (showTarget) {
+        series.push({
+          name: '当月目标金额',
+          type: 'line',
+          stack: 'one',
+          barGap: '0',
+          data: achievementList
+        })
+      }
+
+      series.push({
+        name: '金额',
+        type: 'bar',
+        stack: 'two',
+        barMaxWidth: 25,
+        barGap: '0%',
+        data: moneyList
+      })
+
+      return series
     },
 
     /**

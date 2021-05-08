@@ -141,7 +141,8 @@ import Repeat from './Repeat'
 import { mapGetters } from 'vuex'
 import {
   canlendarSaveAPI,
-  canlendarUpdateAPI
+  canlendarUpdateAPI,
+  canlendarQueryTypeListAPI
 } from '@/api/calendar'
 export default {
   components: {
@@ -168,12 +169,12 @@ export default {
         return []
       }
     },
-    cusCheck: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
+    // cusCheck: {
+    //   type: Array,
+    //   default: () => {
+    //     return []
+    //   }
+    // },
     todayDetailData: {
       type: Object,
       default: () => {
@@ -247,7 +248,8 @@ export default {
         disabledDate(time) {
           return time.getTime() <= (Date.now() - 24 * 60 * 60 * 1000)
         }
-      }
+      },
+      cusCheck: []
     }
   },
   computed: {
@@ -283,7 +285,7 @@ export default {
         }
 
         this.allData = {}
-        this.getDetail()
+        this.getCusCheck()
         this.choseMore = false
       }
     },
@@ -577,6 +579,17 @@ export default {
           return time.getTime() <= template - 24 * 60 * 60 * 1000
         }
       }
+    },
+
+    /**
+     * 获取类型
+     */
+    getCusCheck() {
+      canlendarQueryTypeListAPI().then(res => {
+        this.cusCheck = res.data
+        this.getDetail()
+      }
+      ).catch()
     }
   }
 }

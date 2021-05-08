@@ -21,7 +21,7 @@
       </div>
     </flexbox>
 
-    <import-info v-if="list.length" :list="list" />
+    <import-info v-if="list.length" :list="list" :detail="detail" />
 
   </div>
 </template>

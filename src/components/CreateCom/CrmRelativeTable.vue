@@ -382,6 +382,8 @@ export default {
               params[field] = this.action.data.params[field]
             }
           }
+          // 不分页
+          params.pageType = 0
         }
       } else {
         params.page = this.currentPage
@@ -409,7 +411,11 @@ export default {
             this.list = res.data.list
           }
 
-          this.totalPage = Math.ceil(res.data.totalRow / 10)
+          if (params.hasOwnProperty('pageType') && params.pageType === 0) {
+            this.totalPage = 0
+          } else {
+            this.totalPage = Math.ceil(res.data.totalRow / 10)
+          }
           this.loading = false
         })
         .catch(() => {

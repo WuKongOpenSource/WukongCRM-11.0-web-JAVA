@@ -1,6 +1,7 @@
 <template>
   <div class="setting-precisions">
     <el-select
+      :disabled="!optionsEditAuth"
       v-model="field.precisions"
       placeholder="请选择">
       <el-option
@@ -13,6 +14,8 @@
 </template>
 
 <script>
+import { getFieldAuth } from '../../utils'
+
 export default {
   name: 'SettingPrecisions',
   props: {
@@ -26,12 +29,20 @@ export default {
       options: []
     }
   },
+  computed: {
+    // 选项不能配置
+    optionsEditAuth() {
+      return getFieldAuth(this.field.operating).optionsEdit
+    }
+  },
   watch: {
     field: {
       handler() {
         if (![
           'date_interval',
-          'position'
+          'position',
+          'select',
+          'checkbox'
         ].includes(this.field.formType)) return
         if (this.field.formType === 'date_interval') {
           this.options = [
@@ -45,6 +56,14 @@ export default {
             { label: '省/地区、市', value: 3 },
             { label: '省/地区', value: 4 }
           ]
+        } else {
+          this.options = [
+            { label: '平铺', value: 1 },
+            { label: '下拉', value: 2 }
+          ]
+          if (!this.field.precisions) {
+            this.$set(this.field, 'precisions', this.field.formType === 'checkbox' ? 1 : 2)
+          }
         }
         if (!this.field.precisions) {
           this.$set(this.field, 'precisions', 1)

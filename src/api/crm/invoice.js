@@ -1,12 +1,13 @@
 import request from '@/utils/request'
 
 /**
- * 新建
+ * 新建编辑
  * @param {*} data
  */
 export function crmInvoiceSaveAPI(data) {
+  const url = data.entity && data.entity.invoiceId ? 'update' : 'add'
   return request({
-    url: 'crmInvoice/save',
+    url: 'crmInvoice/' + url,
     method: 'post',
     data: data,
     headers: {
@@ -177,5 +178,21 @@ export function crmInvoiceDeleteInvoiceInfoAPI(data) {
     url: 'crmInvoice/deleteInvoiceInfo',
     method: 'post',
     data: data
+  })
+}
+
+/**
+ * 全部导出
+ * @param {*} data
+ */
+export function crmInvoiceExcelAllExportAPI(data) {
+  return request({
+    url: 'crmInvoice/allExportExcel',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
   })
 }

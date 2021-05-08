@@ -9,6 +9,7 @@
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
+        :validate-on-rule-change="false"
         class="wk-form"
         label-position="top">
         <wk-form-items
@@ -144,6 +145,8 @@ export default {
         .then(res => {
           const list = res.data || []
 
+          const assistIds = this.getFormAssistIds(list)
+
           const baseFields = []
           const fieldList = []
           const fieldRules = {}
@@ -152,10 +155,11 @@ export default {
             const fields = []
             children.forEach(item => {
               const temp = this.getFormItemDefaultProperty(item)
+              temp.show = !assistIds.includes(item.formAssistId)
 
               const canEdit = this.getItemIsCanEdit(item, this.action.type)
               // 是否能编辑权限
-              if (canEdit) {
+              if (temp.show && canEdit) {
                 fieldRules[temp.field] = this.getRules(item)
               }
 
@@ -187,7 +191,9 @@ export default {
               }
 
               // 获取默认值
-              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+              if (temp.show) {
+                fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+              }
               fields.push(temp)
               baseFields.push(item)
             })
@@ -215,7 +221,7 @@ export default {
       const crmForm = this.$refs.crmForm
       crmForm.validate(valid => {
         if (valid) {
-          const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
+          const params = this.getSubmiteParams([].concat.apply([], this.fieldList), this.fieldForm)
           this.submiteParams(params)
         } else {
           this.loading = false
@@ -274,6 +280,16 @@ export default {
      * change
      */
     formChange(field, index, value, valueList) {
+      if ([
+        'select',
+        'checkbox'
+      ].includes(field.formType) &&
+          field.remark === 'options_type' &&
+          field.optionsData) {
+        const { fieldForm, fieldRules } = this.getFormContentByOptionsChange(this.fieldList, this.fieldForm)
+        this.fieldForm = fieldForm
+        this.fieldRules = fieldRules
+      }
     },
 
     /**

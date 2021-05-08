@@ -3,6 +3,14 @@
     <el-input
       v-if="type === 'text'"
       v-model="field.defaultValue"
+      :maxlength="field.maxLength || 100"
+      :disabled="disabled"
+      @blur="inputBlur" />
+
+    <el-input
+      v-else-if="type === 'textarea'"
+      v-model="field.defaultValue"
+      :maxlength="field.maxLength || 800"
       :disabled="disabled"
       @blur="inputBlur" />
 
@@ -79,7 +87,7 @@ import WkDistpicker from '@/components/NewCom/WkDistpicker'
 
 import { isEmpty, isArray } from '@/utils/types'
 import { regexIsCRMMobile, regexIsCRMEmail, objDeepCopy } from '@/utils'
-import { getFieldAuth } from '../utils'
+import { getFieldAuth } from '../../utils'
 
 export default {
   name: 'SettingDefault',
@@ -136,6 +144,8 @@ export default {
           return 'date_interval'
         case 'position':
           return 'position'
+        case 'textarea':
+          return 'textarea'
         default:
           return 'text'
       }

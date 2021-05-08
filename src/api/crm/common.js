@@ -61,7 +61,8 @@ export function filedUpdateTableFieldAPI(data) {
     5: 'crmBusiness',
     6: 'crmContract',
     7: 'crmReceivables',
-    17: 'crmReturnVisit'
+    17: 'crmReturnVisit',
+    18: 'crmInvoice'
   }[data.label]
   return request({
     url: `${url}/updateInformation`,

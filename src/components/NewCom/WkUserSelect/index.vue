@@ -267,7 +267,7 @@ export default {
       }
 
       if (this.params) {
-        params = this.params
+        params = { ...params, ...this.params }
       }
 
       request(params)

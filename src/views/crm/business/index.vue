@@ -58,11 +58,14 @@
           show-overflow-tooltip>
           <template slot-scope="{ row, column, $index }">
             <wk-field-view
-              v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+              :props="item"
               :form-type="item.formType"
               :value="row[column.property]"
-            />
-            <template v-else>{{ fieldFormatter(row, column, row[column.property], item) }}</template>
+            >
+              <template slot-scope="{ data }">
+                {{ fieldFormatter(row, column, row[column.property], item) }}
+              </template>
+            </wk-field-view>
           </template>
         </el-table-column>
         <el-table-column/>

@@ -3,12 +3,15 @@
     <wk-distpicker
       :hide-area="hideArea"
       :only-province="onlyProvince"
+      :disabled="disabled"
+      v-bind="$attrs"
       v-model="distpickerValue"
       clearable
       @change="valueChange"/>
     <el-input
       v-if="showDetail"
       :rows="2"
+      :disabled="disabled"
       v-model="detailAddress"
       :maxlength="100"
       type="textarea"
@@ -42,7 +45,8 @@ export default {
     // eslint-disable-next-line vue/require-prop-types
     value: {
       required: true
-    }
+    },
+    disabled: Boolean
   },
 
   data() {

@@ -3,7 +3,6 @@
     :is="componentName"
     v-bind="$attrs"
     v-on="$listeners"
-    @save-success="createSaveSuccess"
     @hiden-view="hiddenView"
     @close="hiddenView"/>
 </template>
@@ -68,10 +67,6 @@ export default {
   methods: {
     hiddenView() {
       this.$emit('close')
-    },
-
-    createSaveSuccess(data) {
-      this.$emit('save-success', data)
     }
   }
 }

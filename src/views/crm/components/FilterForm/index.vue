@@ -26,23 +26,23 @@
               </el-select>
             </el-col>
 
-            <el-col
-              v-if="showCalCondition(formItem.formType)"
-              :span="1">&nbsp;</el-col>
-            <el-col
-              v-if="showCalCondition(formItem.formType)"
-              :span="4">
-              <el-select
-                v-model="formItem.condition"
-                placeholder="请选择范围"
-                @change="selectChange($event,formItem)">
-                <el-option
-                  v-for="item in getAdvancedFilterOptions(formItem.formType)"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"/>
-              </el-select>
-            </el-col>
+            <template v-if="showCalCondition(formItem.formType, formItem.fieldName)">
+              <el-col
+                :span="1">&nbsp;</el-col>
+              <el-col
+                :span="4">
+                <el-select
+                  v-model="formItem.condition"
+                  placeholder="请选择范围"
+                  @change="selectChange($event,formItem)">
+                  <el-option
+                    v-for="item in getAdvancedFilterOptions(formItem.formType, formItem.fieldName)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"/>
+                </el-select>
+              </el-col>
+            </template>
 
             <!-- 商机组 -->
             <el-col
@@ -63,76 +63,132 @@
             </el-col>
 
             <el-col :span="1">&nbsp;</el-col>
-            <el-col :span="formItem.formType === 'datetime' || formItem.formType === 'date' || formItem.formType === 'map_address' ? 13 : 8">
-              <el-select
-                v-if="formItem.formType === 'checkStatus'
-                  || formItem.formType === 'dealStatus'
-                || (formItem.formType === 'select' && getSettingValueType(formItem.setting) != 'string')"
-                v-model="formItem.value"
-                placeholder="请选择筛选条件">
-                <el-option
-                  v-for="item in formItem.setting"
-                  :key="item.value"
-                  :label="item.name"
-                  :value="item.value"/>
-              </el-select>
-              <el-select
-                v-else-if="formItem.formType === 'select' || formItem.formType === 'checkbox'"
-                v-model="formItem.value"
-                multiple
-                placeholder="请选择筛选条件">
-                <el-option
-                  v-for="item in formItem.setting"
-                  :key="item"
-                  :label="item"
-                  :value="item"/>
-              </el-select>
-              <el-date-picker
-                v-else-if="formItem.formType === 'date' || formItem.formType === 'datetime'"
-                v-model="formItem.value"
-                :value-format="formItem.formType === 'date' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
-                :type="formItem.formType === 'date' ? 'daterange' : 'datetimerange'"
-                style="padding: 0px 10px;"
-                range-separator="-"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"/>
-              <el-select
-                v-else-if="formItem.formType === 'business_type'"
-                v-model="formItem.statusId">
-                <el-option
-                  v-for="item in formItem.statusOption"
-                  :key="item.statusId"
-                  :label="item.name"
-                  :value="item.statusId"/>
-              </el-select>
-              <xh-user-cell
-                v-else-if="formItem.formType === 'user' || formItem.formType === 'single_user'"
-                :item="formItem"
-                :info-params="infoParams"
-                :value="formItem.value"
-                @value-change="arrayValueChange"/>
-              <xh-structure-cell
-                v-else-if="formItem.formType === 'structure'"
-                :item="formItem"
-                :value="formItem.value"
-                @value-change="arrayValueChange"/>
-              <xh-prouct-cate
-                v-else-if="formItem.formType === 'category'"
-                :item="formItem"
-                :value="formItem.value"
-                @value-change="arrayValueChange"/>
-              <v-distpicker
-                v-else-if="formItem.formType === 'map_address'"
-                :province="formItem.address.state"
-                :city="formItem.address.city"
-                :area="formItem.address.area"
-                @province="selectProvince($event,formItem)"
-                @city="selectCity($event,formItem)"
-                @area="selectArea($event,formItem)"/>
-              <el-input
-                v-else
-                v-model="formItem.value"
-                placeholder="多个条件请用；隔开"/>
+            <el-col :span="getValueSpan(formItem.formType, formItem.fieldName) ? 8 : 13" style="position: relative;">
+              <template
+                v-if="formItem.condition === 'isNull' ||
+                formItem.condition === 'isNotNull'">
+                &nbsp;
+              </template>
+              <template v-else>
+                <el-select
+                  v-if="formItem.formType === 'checkStatus'
+                    || formItem.formType === 'dealStatus'
+                    || formItem.fieldName === 'invoiceStatus'
+                  || (formItem.formType === 'select' && getSettingValueType(formItem.setting) != 'string')"
+                  v-model="formItem.value"
+                  placeholder="请选择筛选条件">
+                  <el-option
+                    v-for="item in formItem.setting"
+                    :key="item.value"
+                    :label="item.name"
+                    :value="item.value"/>
+                </el-select>
+                <el-select
+                  v-else-if="formItem.formType === 'select' || formItem.formType === 'checkbox'"
+                  v-model="formItem.value"
+                  multiple
+                  placeholder="请选择筛选条件">
+                  <el-option
+                    v-for="item in formItem.setting"
+                    :key="item"
+                    :label="item"
+                    :value="item"/>
+                </el-select>
+                <template
+                  v-else-if="formItem.formType == 'number' ||
+                    formItem.formType == 'floatnumber' ||
+                  formItem.formType == 'percent'">
+                  <div v-if="formItem.type === 14">
+                    <el-input-number
+                      v-model="formItem.min"
+                      :controls="false"
+                      style="width: 100px;"
+                      class="small"/>
+                    <span>-</span>
+                    <el-input-number
+                      v-model="formItem.max"
+                      :controls="false"
+                      style="width: 100px;"
+                      class="small"/>
+                  </div>
+                  <el-input-number
+                    v-else
+                    v-model="formItem.value"
+                    :controls="false"
+                    style="width: 200px;"
+                    class="small"/>
+                </template>
+                <template v-else-if="formItem.formType === 'date' || formItem.formType === 'datetime'">
+                  <el-date-picker
+                    v-show="formItem.type === 14"
+                    :ref="`wkDatePicker${index}`"
+                    v-model="formItem.range"
+                    :picker-options="getPickerOptions(formItem, index)"
+                    :type="formItem.formType === 'date' ? 'daterange' : 'datetimerange'"
+                    :value-format="formItem.formType === 'date' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
+                    range-separator="-"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    align="right"
+                    @change="datePickerChange(formItem)"/>
+                  <div
+                    v-if="formItem.timeType"
+                    class="date-range-content"
+                    @click="dateRangeSelect(formItem, index)">{{ formItem.timeTypeName }}</div>
+                  <el-date-picker
+                    v-show="formItem.type !== 14"
+                    v-model="formItem.value"
+                    :value-format="formItem.formType === 'date' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
+                    :type="formItem.formType"
+                    placeholder="选择日期"/>
+                </template>
+                <el-select
+                  v-else-if="formItem.formType === 'business_type'"
+                  v-model="formItem.statusId">
+                  <el-option
+                    v-for="item in formItem.statusOption"
+                    :key="item.statusId"
+                    :label="item.name"
+                    :value="item.statusId"/>
+                </el-select>
+                <wk-user-select
+                  v-else-if="formItem.formType === 'user' || formItem.formType === 'single_user'"
+                  :radio="false"
+                  v-model="formItem.value"
+                  @change="userDepChange(formItem, arguments[0], arguments[1])"/>
+                <wk-dep-select
+                  v-else-if="formItem.formType === 'structure'"
+                  :radio="false"
+                  v-model="formItem.value"
+                  @change="userDepChange(formItem, arguments[0], arguments[1])"/>
+                <el-switch
+                  v-else-if="formItem.formType == 'boolean_value'"
+                  v-model="formItem.value"
+                  active-value="1"
+                  inactive-value="0"/>
+                <xh-prouct-cate
+                  v-else-if="formItem.formType === 'category'"
+                  :item="formItem"
+                  :value="formItem.value"
+                  @value-change="arrayValueChange"/>
+                <v-distpicker
+                  v-else-if="formItem.formType === 'map_address'"
+                  :province="formItem.address.state"
+                  :city="formItem.address.city"
+                  :area="formItem.address.area"
+                  @province="selectProvince($event,formItem)"
+                  @city="selectCity($event,formItem)"
+                  @area="selectArea($event,formItem)"/>
+                <wk-position
+                  v-else-if="formItem.formType == 'position'"
+                  :show-detail="false"
+                  :props="{ checkStrictly: true }"
+                  v-model="formItem.value"/>
+                <el-input
+                  v-else
+                  v-model="formItem.value"
+                  placeholder="多个条件请用；隔开"/>
+              </template>
             </el-col>
             <el-col
               :span="1"
@@ -181,11 +237,15 @@
 </template>
 
 <script>
-import { XhUserCell, XhProuctCate, XhStructureCell } from '@/components/CreateCom'
+import { XhProuctCate } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
 import VDistpicker from '@/components/VDistpicker'
+import WkPosition from '@/components/NewCom/WkPosition'
 
 import { objDeepCopy } from '@/utils'
 import AdvancedFilterMixin from '@/mixins/AdvancedFilter'
+import { isEmpty } from '@/utils/types'
 
 /**
  * fieldList: 高级筛选的字段
@@ -194,10 +254,11 @@ import AdvancedFilterMixin from '@/mixins/AdvancedFilter'
 export default {
   name: 'Index',
   components: {
-    XhUserCell,
+    WkUserSelect,
     XhProuctCate,
     VDistpicker,
-    XhStructureCell
+    WkDepSelect,
+    WkPosition
   },
   mixins: [AdvancedFilterMixin],
   props: {
@@ -242,9 +303,6 @@ export default {
     }
   },
   computed: {
-    infoParams() {
-      return this.crmType ? { m: 'crm', c: this.crmType, a: 'index' } : {}
-    }
   },
   watch: {
     dialogVisible: {
@@ -315,6 +373,7 @@ export default {
       }
       formItem.statusId = ''
     },
+
     /**
      * 用户创建人
      * 产品类别
@@ -329,30 +388,41 @@ export default {
     },
 
     /**
+     * 用户部门change
+     */
+    userDepChange(formItem, dataIds, data) {
+      // 用于部门员工的展示
+      formItem.valueContent = data
+    },
+
+    /**
      * 连接条件的变更
      */
     selectChange(event, formItem) {
-      this.getAdvancedFilterOptions(formItem.formType).forEach(item => {
+      this.getAdvancedFilterOptions(formItem.formType, formItem.fieldName).forEach(item => {
         if (item.value === event) {
           formItem.type = item.type
         }
       })
     },
+
     /**
      * 是否展示条件
      */
-    showCalCondition(formType) {
-      if (
-        formType == 'date' ||
-        formType == 'datetime' ||
-        formType == 'business_type' ||
-        formType == 'category' ||
-        formType == 'map_address'
-      ) {
-        return false
-      }
-      return true
+    showCalCondition(formType, fieldName) {
+      return this.getAdvancedFilterOptions(formType, fieldName).length > 0
     },
+
+    /**
+     * 值span
+     */
+    getValueSpan(formType, fieldName) {
+      if (formType == 'business_type') {
+        return 8
+      }
+      return this.showCalCondition(formType, fieldName) ? 8 : 13
+    },
+
     /**
      * 聚焦
      */
@@ -390,44 +460,44 @@ export default {
             area: ''
           }
         } else if (
-          formItem.formType === 'date' ||
-          formItem.formType === 'datetime' ||
           formItem.formType === 'user' ||
           formItem.formType === 'single_user' ||
           formItem.formType === 'structure' ||
-          formItem.formType === 'category'
+          formItem.formType === 'category' ||
+          formItem.formType === 'position'
         ) {
           formItem.value = []
+        } else if (
+          formItem.formType === 'date' ||
+          formItem.formType === 'datetime'
+        ) {
+          formItem.value = '' // 时间点
+          this.$set(formItem, 'timeType', '')
+          this.$set(formItem, 'timeTypeName', '')
+          this.$set(formItem, 'range', [])
         } else if (
           formItem.formType == 'select' ||
           formItem.formType === 'checkbox'
         ) {
           formItem.setting = obj.setting || []
           formItem.value = []
+        } else if (
+          formItem.formType == 'number' ||
+          formItem.formType == 'floatnumber' ||
+          formItem.formType == 'percent'
+        ) {
+          formItem.min = ''
+          formItem.max = ''
+          formItem.value = ''
         } else {
           formItem.value = ''
         }
 
-        // 条件校准
-        if (
-          formItem.formType == 'checkbox' ||
-        formItem.formType == 'checkStatus' ||
-        formItem.formType == 'dealStatus'
-        ) {
-          formItem.type = 1
-          formItem.condition = 'is'
-        } else if (
-          formItem.formType == 'user' ||
-          formItem.formType == 'single_user' ||
-          formItem.formType == 'structure'
-        ) {
-          formItem.condition = 'contains'
-          formItem.type = 3
-        } else if (
-          formItem.formType == 'select'
-        ) {
-          formItem.condition = 'in'
-          formItem.type = 1
+        const conditions = this.getAdvancedFilterOptions(formItem.formType, formItem.fieldName)
+        if (conditions.length > 0) {
+          const conditionObj = conditions[0]
+          formItem.condition = conditionObj.value
+          formItem.type = conditionObj.type
         } else {
           formItem.condition = 'is'
           formItem.type = 1
@@ -474,6 +544,7 @@ export default {
           return
         }
       }
+
       for (let i = 0; i < this.form.length; i++) {
         const o = this.form[i]
         if (!o.fieldName || o.fieldName === '') {
@@ -492,12 +563,46 @@ export default {
           }
         } else if (
           o.formType == 'date' ||
-          o.formType == 'datetime' ||
+          o.formType == 'datetime'
+        ) {
+          if (o.condition != 'isNull' && o.condition != 'isNotNull') {
+            if (o.type === 14) {
+              if (isEmpty(o.timeType) && isEmpty(o.range)) {
+                this.$message.error('筛选内容不能为空！')
+                return
+              }
+            } else {
+              if (isEmpty(o.value)) {
+                this.$message.error('筛选内容不能为空！')
+                return
+              }
+            }
+          }
+        } else if (
+          o.formType == 'number' ||
+          o.formType == 'floatnumber' ||
+          o.formType == 'percent'
+        ) {
+          if (o.condition != 'isNull' && o.condition != 'isNotNull') {
+            if (o.type === 14) {
+              if (isEmpty(o.min) || isEmpty(o.max)) {
+                this.$message.error('筛选内容不能为空！')
+                return
+              }
+            } else {
+              if (isEmpty(o.value)) {
+                this.$message.error('筛选内容不能为空！')
+                return
+              }
+            }
+          }
+        } else if (
           o.formType == 'user' ||
           o.formType == 'single_user' ||
           o.formType == 'structure' ||
           o.formType == 'category' ||
-          o.formType == 'checkbox'
+          o.formType == 'checkbox' ||
+          o.formType == 'position'
         ) {
           if (!o.value || o.value.length === 0) {
             if (o.condition != 'isNull' && o.condition != 'isNotNull') {
@@ -505,9 +610,9 @@ export default {
               return
             }
           }
-        } else if (o.value === '' || o.value === undefined || o.value === null) {
+        } else if (isEmpty(o.value)) {
           if (o.condition != 'isNull' && o.condition != 'isNotNull') {
-            this.$message.error('筛选内容不能为空')
+            this.$message.error('筛选内容不能为空！')
             return
           }
         }
@@ -515,11 +620,38 @@ export default {
       const obj = []
       this.form.forEach(o => {
         if (o.formType == 'datetime' || o.formType == 'date') {
+          let dataValues = []
+          if (o.type === 14) {
+            if (!isEmpty(o.timeType)) {
+              dataValues = [o.timeType]
+            } else {
+              dataValues = o.range
+            }
+          } else {
+            dataValues = [o.value]
+          }
           obj.push({
             formType: o.formType,
             name: o.fieldName,
-            type: o.formType == 'date' ? 11 : 12,
-            values: o.value
+            type: o.type,
+            values: dataValues
+          })
+        } else if (
+          o.formType == 'number' ||
+          o.formType == 'floatnumber' ||
+          o.formType == 'percent'
+        ) {
+          let dataValues = []
+          if (o.type === 14) {
+            dataValues = [isEmpty(o.min) ? '' : o.min, isEmpty(o.max) ? '' : o.max]
+          } else {
+            dataValues = [o.value]
+          }
+          obj.push({
+            formType: o.formType,
+            name: o.fieldName,
+            type: o.type,
+            values: dataValues
           })
         } else if (o.formType == 'business_type') {
           obj.push({
@@ -531,14 +663,21 @@ export default {
         } else if (o.formType == 'user' || o.formType == 'single_user') {
           obj.push({
             type: o.type,
-            values: [o.value[0].userId],
+            values: o.value,
+            formType: o.formType,
+            name: o.fieldName
+          })
+        } else if (o.formType == 'position') {
+          obj.push({
+            type: o.type,
+            values: o.value.filter(item => !isEmpty(item.name)).map(item => JSON.stringify(item)),
             formType: o.formType,
             name: o.fieldName
           })
         } else if (o.formType == 'structure') {
           obj.push({
             type: o.type,
-            values: [o.value[0].id],
+            values: o.value,
             formType: o.formType,
             name: o.fieldName
           })
@@ -650,6 +789,72 @@ export default {
         return typeof value
       }
       return []
+    },
+
+    /**
+     * 聚焦datepicker
+     */
+    dateRangeSelect(formItem, index) {
+      const datePicker = this.$refs[`wkDatePicker${index}`][0]
+      this.$nextTick(() => {
+        datePicker.focus()
+        datePicker.pickerVisible = true
+      })
+    },
+
+    /**
+     * datepicker change
+     */
+    datePickerChange(formItem) {
+      formItem.timeTypeName = ''
+      formItem.timeType = ''
+    },
+
+    /**
+     * 时间筛选配置
+     */
+    getPickerOptions(item, itemIndex) {
+      const types = [
+        { text: '本年度', value: 'year' },
+        { text: '上一年度', value: 'lastYear' },
+        { text: '下一年度', value: 'nextYear' },
+        { text: '上半年', value: 'firstHalfYear' },
+        { text: '下半年', value: 'nextHalfYear' },
+        { text: '本季度', value: 'quarter' },
+        { text: '上一季度', value: 'lastQuarter' },
+        { text: '下一季度', value: 'nextQuarter' },
+        { text: '本月', value: 'month' },
+        { text: '上月', value: 'lastMonth' },
+        { text: '下月', value: 'nextMonth' },
+        { text: '本周', value: 'week' },
+        { text: '上周', value: 'lastWeek' },
+        { text: '下周', value: 'nextWeek' },
+        { text: '今天', value: 'today' },
+        { text: '昨天', value: 'yesterday' },
+        { text: '明天', value: 'tomorrow' },
+        { text: '过去7天', value: 'previous7day' },
+        { text: '过去30天', value: 'previous30day' },
+        { text: '未来7天', value: 'future7day' },
+        { text: '未来30天', value: 'future30day' }
+      ]
+      const shortcuts = []
+      for (let index = 0; index < types.length; index++) {
+        const element = types[index]
+        shortcuts.push({
+          text: element.text,
+          onClick: (picker) => {
+            picker.$emit('pick', [], false)
+            this.$nextTick(() => {
+              item.timeTypeName = element.text
+              item.timeType = element.value
+            })
+          }
+        })
+      }
+
+      return {
+        shortcuts: shortcuts
+      }
     }
   }
 }
@@ -697,6 +902,28 @@ export default {
   .el-select,
   .el-date-editor {
     width: 100%;
+    /deep/ .el-range__icon {
+      line-height: 26px;
+    }
+  }
+
+  .el-input-number {
+    /deep/ input {
+      text-align: left;
+      padding: 0 8px;
+    }
+  }
+
+  .date-range-content {
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    top: 4px;
+    height: 30px;
+    line-height: 30px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
   }
 }
 
@@ -708,16 +935,5 @@ export default {
   .desc {
     padding-left: 8px;
   }
-}
-
-.distpicker-address-wrapper /deep/ select {
-  border-radius: 2px;
-  font-size: 13px;
-  height: 34px;
-  -webkit-appearance: none;
-  background-image: url(data:image/png;base64,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czp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOCAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMTgtMDctMjdUMDc6NTY6NDctMDc6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDE4LTA3LTI3VDA3OjU5OjA4LTA3OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDE4LTA3LTI3VDA3OjU5OjA4LTA3OjAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9IkRpc3BsYXkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OWVmMTg3ZTUtMWVmNy00NzlhLWE1Y2QtMmVkMTE5NjQ2Y2ZmIiB4bXBNTTpEb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6MTRmNTk5YTMtYTc1Zi05NDQxLTk3ZDQtMmY3OTNjNWQ3NTI3IiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6M2FmYmY3ZWYtNWFiOS00MTk4LWFjODUtNzY2NzE2NDk2ODM1Ij4gPHhtcE1NOkhpc3Rvcnk+IDxyZGY6U2VxPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0iY3JlYXRlZCIgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDozYWZiZjdlZi01YWI5LTQxOTgtYWM4NS03NjY3MTY0OTY4MzUiIHN0RXZ0OndoZW49IjIwMTgtMDctMjdUMDc6NTY6NDctMDc6MDAiIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkFkb2JlIFBob3Rvc2hvcCBDQyAyMDE4IChNYWNpbnRvc2gpIi8+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJzYXZlZCIgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDo5ZWYxODdlNS0xZWY3LTQ3OWEtYTVjZC0yZWQxMTk2NDZjZmYiIHN0RXZ0OndoZW49IjIwMTgtMDctMjdUMDc6NTk6MDgtMDc6MDAiIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkFkb2JlIFBob3Rvc2hvcCBDQyAyMDE4IChNYWNpbnRvc2gpIiBzdEV2dDpjaGFuZ2VkPSIvIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pr46tjAAAACBSURBVCjPY/j//z8DOgaCVVjFsSgMB2IQIxuvYiBgBuJHUMXfgVgCn+I+qEIYXoxVMRBYoymEYX9sio/hUHz79+/fCMVAUIxDIQy3Q9UxyAPxPwKKQdgEHKZAfI4IvJ8BW+DjwoNFMUkeJCnoSIoUkqOb5IREUhIlOfGTlK0IZVgAkODRpD7i30MAAAAASUVORK5CYII=);
-  background-position: calc(100% - 4px) 50%;
-  background-repeat: no-repeat;
-  background-size: 5px 11px;
 }
 </style>

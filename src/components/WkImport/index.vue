@@ -1,147 +1,152 @@
 <template>
-  <el-dialog
-    :visible="show"
-    :title="'导入'+crmTypeName"
-    :append-to-body="true"
-    :close-on-click-modal="false"
-    width="750px"
-    @close="closeView">
-    <div class="dialog-body">
-      <el-steps
-        :active="stepsActive"
-        simple>
-        <el-step
-          v-for="(item, index) in stepList"
-          :key="index"
-          :title="item.title"
-          :icon="item.icon"
-          :status="item.status" />
-      </el-steps>
+  <div>
+    <el-dialog
+      :visible="showCRMImport"
+      :title="'导入'+crmTypeName"
+      :append-to-body="true"
+      :close-on-click-modal="false"
+      width="750px"
+      @close="closeView">
+      <div class="dialog-body">
+        <el-steps
+          :active="stepsActive"
+          simple>
+          <el-step
+            v-for="(item, index) in stepList"
+            :key="index"
+            :title="item.title"
+            :icon="item.icon"
+            :status="item.status" />
+        </el-steps>
 
-      <div v-if="stepsActive == 1" class="step-section">
-        <div class="sections">
-          <div class="sections__title">一、请按照数据模板的格式准备要导入的数据。<span
-            class="download"
-            @click="download">点击下载《{{ crmTypeName }}导入模板》</span></div>
-          <div class="sections__tips">导入文件请勿超过2MB（约10,000条数据）</div>
-        </div>
-        <div v-if="config.repeatHandleShow" class="sections">
-          <div class="sections__title">二、请选择数据重复时的处理方式{{ config.repeatRuleShow ? `（查重规则：【${ fieldUniqueInfo }】）` : '' }}</div>
-          <div v-if="config.repeatRuleShow" class="sections__tips">查重规则为：添加{{ crmTypeName }}时所需填写的所有唯一字段，当前设置唯一字段为：{{ fieldUniqueInfo }}</div>
-          <div class="content">
-            <el-select
-              v-model="repeatHandling"
-              placeholder="请选择">
-              <el-option
-                v-for="(item, index) in [{name: '覆盖系统原有数据',value: 1},{name: '跳过',value: 2}]"
-                :key="index"
-                :label="item.name"
-                :value="item.value"/>
-            </el-select>
+        <div v-if="stepsActive == 1" class="step-section">
+          <div class="sections">
+            <div class="sections__title">一、请按照数据模板的格式准备要导入的数据。<span
+              class="download"
+              @click="download">点击下载《{{ crmTypeName }}导入模板》</span></div>
+            <div class="sections__tips">导入文件请勿超过2MB（约10,000条数据）</div>
           </div>
-        </div>
-        <div class="sections">
-          <div class="sections__title">{{ config.repeatHandleShow ? '三' : '二' }}、请选择需要导入的文件</div>
-          <div class="content">
-            <flexbox class="file-select">
-              <el-input
-                v-model="file.name"
-                :disabled="true"/>
-              <el-button
-                type="primary"
-                @click="selectFile">选择文件</el-button>
-            </flexbox>
-          </div>
-        </div>
-        <div v-if="config.ownerSelectShow" class="sections">
-          <div class="sections__title">四、请选择负责人（负责人为必填字段，若不填写，则会导致导入失败）</div>
-          <div class="content">
-            <div class="user-cell">
-              <xh-user-cell
-                :value="user"
-                @value-change="userSelect"/>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="config.poolSelectShow" class="sections">
-          <div class="sections__title">四、请选择公海</div>
-          <div class="content">
-            <div class="user-cell">
-              <el-select v-model="poolId" placeholder="请选择">
+          <div v-if="config.repeatHandleShow" class="sections">
+            <div class="sections__title">二、请选择数据重复时的处理方式{{ config.repeatRuleShow ? `（查重规则：【${ fieldUniqueInfo }】）` : '' }}</div>
+            <div v-if="config.repeatRuleShow" class="sections__tips">查重规则为：添加{{ crmTypeName }}时所需填写的所有唯一字段，当前设置唯一字段为：{{ fieldUniqueInfo }}</div>
+            <div class="content">
+              <el-select
+                v-model="repeatHandling"
+                placeholder="请选择">
                 <el-option
-                  v-for="item in poolList"
-                  :key="item.poolId"
-                  :label="item.poolName"
-                  :value="item.poolId"/>
+                  v-for="(item, index) in [{name: '覆盖系统原有数据',value: 1},{name: '跳过',value: 2}]"
+                  :key="index"
+                  :label="item.name"
+                  :value="item.value"/>
               </el-select>
             </div>
           </div>
+          <div class="sections">
+            <div class="sections__title">{{ config.repeatHandleShow ? '三' : '二' }}、请选择需要导入的文件</div>
+            <div class="content">
+              <flexbox class="file-select">
+                <el-input
+                  v-model="file.name"
+                  :disabled="true"/>
+                <el-button
+                  type="primary"
+                  @click="selectFile">选择文件</el-button>
+              </flexbox>
+            </div>
+          </div>
+          <div v-if="config.ownerSelectShow" class="sections">
+            <div class="sections__title">四、请选择负责人（负责人为必填字段，若不填写，则会导致导入失败）</div>
+            <div class="content">
+              <div class="user-cell">
+                <xh-user-cell
+                  :value="user"
+                  @value-change="userSelect"/>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="config.poolSelectShow" class="sections">
+            <div class="sections__title">四、请选择公海</div>
+            <div class="content">
+              <div class="user-cell">
+                <el-select v-model="poolId" placeholder="请选择">
+                  <el-option
+                    v-for="item in poolList"
+                    :key="item.poolId"
+                    :label="item.poolName"
+                    :value="item.poolId"/>
+                </el-select>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div
-        v-loading="loading"
-        v-else-if="stepsActive == 2"
-        :element-loading-text="importLoadingText"
-        element-loading-spinner="el-icon-loading"
-        class="step-section">
-        <div class="step-section__tips">当前数据正在导入，您可以点击【最小化】隐藏该页面，数据导入不受影响。</div>
-      </div>
+        <div
+          v-loading="loading"
+          v-else-if="stepsActive == 2"
+          :element-loading-text="importLoadingText"
+          element-loading-spinner="el-icon-loading"
+          class="step-section">
+          <div class="step-section__tips">当前数据正在导入，您可以点击【最小化】隐藏该页面，数据导入不受影响。</div>
+        </div>
 
-      <div
-        v-loading="loading"
-        v-else-if="stepsActive == 3"
-        class="step-section">
-        <div class="result-info">
-          <i class="wk wk-success result-info__icon" />
-          <p class="result-info__des">数据导入完成</p>
-          <p v-if="resultData" class="result-info__detail">导入总数据<span class="result-info__detail--all">{{ resultData.totalSize }}</span>条，<template v-if="resultData.updateSize">覆盖<span class="result-info__detail--suc">{{ resultData.updateSize }}</span>条，</template>导入成功<span class="result-info__detail--suc">{{ resultData.totalSize - resultData.errSize }}</span>条，导入失败<span class="result-info__detail--err">{{ resultData.errSize }}</span>条</p>
+        <div
+          v-loading="loading"
+          v-else-if="stepsActive == 3"
+          class="step-section">
+          <div class="result-info">
+            <i class="wk wk-success result-info__icon" />
+            <p class="result-info__des">数据导入完成</p>
+            <p v-if="resultData" class="result-info__detail">导入总数据<span class="result-info__detail--all">{{ resultData.totalSize }}</span>条，<template v-if="resultData.updateSize">覆盖<span class="result-info__detail--suc">{{ resultData.updateSize }}</span>条，</template>导入成功<span class="result-info__detail--suc">{{ resultData.totalSize - resultData.errSize }}</span>条，导入失败<span class="result-info__detail--err">{{ resultData.errSize }}</span>条</p>
+            <el-button
+              v-if="resultData && resultData.errSize > 0"
+              class="result-info__btn--err"
+              type="text"
+              @click="downloadErrData(resultData)">下载错误数据</el-button>
+          </div>
+        </div>
+
+        <input
+          id="importInputFile"
+          type="file"
+          @change="uploadFile">
+      </div>
+      <span
+        slot="footer"
+        class="dialog-footer">
+        <el-popover
+          v-if="config.historyShow"
+          v-model="historyPopoverShow"
+          placement="top"
+          width="800"
+          popper-class="no-padding-popover"
+          trigger="click">
+          <import-history
+            :show="historyPopoverShow"
+            :crm-type="crmType"
+            :props="crmProps"
+            @close="historyPopoverShow = false" />
           <el-button
-            v-if="resultData && resultData.errSize > 0"
-            class="result-info__btn--err"
-            type="text"
-            @click="downloadErrData(resultData)">下载错误数据</el-button>
-        </div>
-      </div>
-
-      <input
-        id="importInputFile"
-        type="file"
-        @change="uploadFile">
-    </div>
-    <span
-      slot="footer"
-      class="dialog-footer">
-      <el-popover
-        v-if="config.historyShow"
-        v-model="historyPopoverShow"
-        placement="top"
-        width="800"
-        popper-class="no-padding-popover"
-        trigger="click">
-        <c-r-m-import-history
-          :show="historyPopoverShow"
-          :crm-type="crmType"
-          :props="props"
-          @close="historyPopoverShow = false" />
+            slot="reference"
+            class="history-btn"
+            type="text">查看历史导入记录</el-button>
+        </el-popover>
         <el-button
-          slot="reference"
-          class="history-btn"
-          type="text">查看历史导入记录</el-button>
-      </el-popover>
+          :class="{ 'is-hidden': !showCancel }"
+          @click="closeView">取消</el-button>
+        <el-button
+          v-if="sureTitle"
+          type="primary"
+          @click="sureClick">{{ sureTitle }}</el-button>
+      </span>
+    </el-dialog>
 
+    <xr-import
+      v-if="showFixImport"
+      :process-status="crmImportStatus"
+      @click.native="fixImportClick"/>
 
-
-      <el-button
-        :class="{ 'is-hidden': !showCancel }"
-        @click="closeView">取消</el-button>
-      <el-button
-        v-if="sureTitle"
-        type="primary"
-        @click="sureClick">{{ sureTitle }}</el-button>
-    </span>
-  </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -154,6 +159,7 @@ import {
 import {
   crmCustomerExcelImportAPI,
   crmCustomerDownloadExcelAPI,
+  crmCustomerPoolDownloadExcelAPI,
   crmCustomerPoolNameListAPI,
   crmCustomerPoolExcelImportAPI
 } from '@/api/crm/customer'
@@ -171,18 +177,20 @@ import {
 } from '@/api/crm/product'
 
 import { XhUserCell } from '@/components/CreateCom'
-import CRMImportHistory from './CRMImportHistory'
+import ImportHistory from './ImportHistory'
+import XrImport from './XrImport'
 
-import { mapGetters } from 'vuex'
+// import { mapGetters } from 'vuex'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import { downloadExcelWithResData, verifyFileTypeWithFileName } from '@/utils'
 import Lockr from 'lockr'
 import merge from '@/utils/merge'
+import ImportMixins from './ImportMixins'
 
 const DefaultProps = {
   typeName: '', // 模块名称
   ownerSelectShow: false,
-  poolSelectShow: false,
+  poolSelectShow: false, // 代表是公海 导入模板也不一样
   historyShow: true,
   repeatHandleShow: true,
   repeatRuleShow: true, // 步骤二的重复规则是否展示
@@ -191,40 +199,43 @@ const DefaultProps = {
   templateRequest: null, // 模板请求
   templateParams: null, // 导入模板参数
   noImportProcess: false, // 无导入过程，上传完附件直接出结果
-  downloadErrFuc: null // 自定义下载错误的方法
+  downloadErrFuc: null, // 自定义下载错误的方法
+  userInfo: null // 当前登录人信息
 }
 
 export default {
-  name: 'CRMImport', // 文件导入
+  name: 'WkCRMImport', // 文件导入
   components: {
     XhUserCell,
-    CRMImportHistory
+    ImportHistory,
+    XrImport
   },
+  mixins: [ImportMixins],
   props: {
-    show: {
-      type: Boolean,
-      default: false
-    },
-    // CRM类型
-    crmType: {
-      type: String,
-      default: ''
-    },
-    props: {
-      type: Object,
-      default: () => {
-        return {}
-      }
-    },
+    // show: {
+    //   type: Boolean,
+    //   default: false
+    // }
+    // // CRM类型
+    // crmType: {
+    //   type: String,
+    //   default: ''
+    // },
+    // props: {
+    //   type: Object,
+    //   default: () => {
+    //     return {}
+    //   }
+    // },
     // 是有缓存的信息展示的页面 是否完成状态
-    cacheShow: {
-      type: Boolean,
-      default: false
-    },
-    cacheDone: {
-      type: Boolean,
-      default: false
-    }
+    // cacheShow: {
+    //   type: Boolean,
+    //   default: false
+    // },
+    // cacheDone: {
+    //   type: Boolean,
+    //   default: false
+    // }
   },
   data() {
     return {
@@ -268,11 +279,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['userInfo']),
-
+    // ...mapGetters(['userInfo']),
     crmTypeName() {
-      if (this.props && this.props.typeName) {
-        return this.props.typeName
+      if (this.crmProps && this.crmProps.typeName) {
+        return this.crmProps.typeName
       }
 
       return (
@@ -312,7 +322,7 @@ export default {
     },
 
     config() {
-      return merge({ ...DefaultProps }, this.props || {})
+      return merge({ ...DefaultProps }, this.crmProps || {})
     }
   },
   watch: {
@@ -320,7 +330,8 @@ export default {
       handler(val) {
         // 展示缓存
         if (val) {
-          this.$emit('update:cacheShow', false)
+          // this.$emit('update:cacheShow', false)
+          this.cacheShow = false
           const beforeImportInfo = Lockr.get('crmImportInfo')
           if (beforeImportInfo && beforeImportInfo.messageId) {
             this.loading = true
@@ -343,33 +354,42 @@ export default {
       immediate: true
     },
 
-    show: function(val) {
-      if (val) {
-        // 阶段一展示 需要获取的信息
-        if (this.stepsActive == 1) {
-          if (this.userInfo) {
-            this.user = [this.userInfo]
+    showCRMImport: {
+      handler(val) {
+        if (val) {
+          // 阶段一展示 需要获取的信息
+          if (this.stepsActive == 1) {
+            if (this.config.userInfo) {
+              this.user = [this.config.userInfo]
+            }
+
+            if (this.config.poolSelectShow) {
+              this.getPoolList()
+            }
+
+            if (this.config.repeatRuleShow && this.config.repeatHandleShow) {
+              this.getField()
+            }
+          }
+        } else {
+          if (this.stepsActive == 3) {
+            this.resetData()
           }
 
-          if (this.config.poolSelectShow) {
-            this.getPoolList()
-          }
-
-          if (this.config.repeatRuleShow && this.config.repeatHandleShow) {
-            this.getField()
-          }
+          this.fieldList = []
         }
-      } else {
-        if (this.stepsActive == 3) {
-          this.resetData()
-        }
-
-        this.fieldList = []
-      }
+      },
+      immediate: true
     },
 
     stepsActive() {
-      this.$emit('status', {
+      // this.$emit('status', {
+      //   1: 'wait',
+      //   2: 'process',
+      //   3: 'finish'
+      // }[this.stepsActive])
+
+      this.crmImportChange({
         1: 'wait',
         2: 'process',
         3: 'finish'
@@ -387,6 +407,15 @@ export default {
   },
   created() {},
   methods: {
+    import(crmType, props) {
+      if (this.crmType != crmType && this.showFixImport) {
+        this.$message.error('请先处理当前导入的数据')
+      } else {
+        this.crmType = crmType
+        this.crmProps = props
+        this.showCRMImport = true
+      }
+    },
     sureClick() {
       if (this.stepsActive == 1) {
         if (this.stepList[0].status == 'finish') {
@@ -556,7 +585,7 @@ export default {
     // 下载模板操作
     download() {
       const request = this.config.templateRequest || {
-        customer: crmCustomerDownloadExcelAPI,
+        customer: this.config.poolSelectShow ? crmCustomerPoolDownloadExcelAPI : crmCustomerDownloadExcelAPI,
         leads: crmLeadsDownloadExcelAPI,
         contacts: crmContactsDownloadExcelAPI,
         product: crmProductDownloadExcelAPI
@@ -621,12 +650,14 @@ export default {
 
     // 关闭操作
     closeView() {
-      this.$emit('update:show', false)
+      // this.$emit('update:show', false)
+      this.showCRMImport = false
       if (this.stepsActive == 3) {
         this.$bus.emit('import-crm-done-bus', this.crmType)
         Lockr.rm('crmImportInfo')
       }
-      this.$emit('close', this.stepsActive == 3 ? 'finish' : '')
+      // this.$emit('close', this.stepsActive == 3 ? 'finish' : '')
+      this.crmImportClose(this.stepsActive == 3 ? 'finish' : '')
     },
 
     /**

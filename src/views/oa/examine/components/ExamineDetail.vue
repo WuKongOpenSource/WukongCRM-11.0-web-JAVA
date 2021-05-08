@@ -18,7 +18,7 @@
         </div>
         <div class="header-name">{{ categoryName }}</div>
       </flexbox>
-      <div class="detail-body">
+      <el-form class="detail-body">
         <!-- 基本信息 -->
         <flexbox
           :gutter="0"
@@ -29,8 +29,9 @@
             v-if="item.formType !== 'examine_cause' && item.formType !== 'business_cause'"
             :span="0.5"
             :key="index"
+            :class="[{'is-block': isBlockShowField(item)}, `is-${item.formType}`]"
             class="b-cell">
-            <div
+            <!-- <div
               v-if="item.formType === 'checkbox'"
               class="b-cell-b">
               <div class="b-cell-name">{{ item.name }}</div>
@@ -67,23 +68,21 @@
                     @click.native="handleFile('download', file, index)">下载</el-button>
                 </flexbox>
               </div>
-            </div>
+            </div> -->
 
             <div
-              v-else
               class="b-cell-b">
               <div class="b-cell-name">{{ item.name }}</div>
               <div class="b-cell-value">
                 <wk-field-view
-                  v-if="item.formType == 'boolean_value'
-                    || item.formType == 'handwriting_sign'
-                    || item.formType == 'desc_text'
-                    || item.formType == 'location'
-                  || item.formType == 'website'"
+                  :props="item"
                   :form-type="item.formType"
                   :value="item.value"
-                />
-                <template v-else>{{ getCommonShowValue(item) }}</template>
+                >
+                  <template slot-scope="{ data }">
+                    {{ getCommonShowValue(item) }}
+                  </template>
+                </wk-field-view>
               </div>
             </div>
           </flexbox-item>
@@ -99,7 +98,8 @@
             @click="imgZoom(imgList, k)">
             <img
               v-src="imgItem.url"
-              :key="imgItem.url">
+              :key="imgItem.url"
+              style="object-fit: contain; vertical-align: top;">
           </div>
         </div>
 
@@ -202,7 +202,7 @@
             examine-type="oa_examine"
             @on-handle="examineHandle" />
         </div>
-      </div>
+      </el-form>
     </flexbox>
     <c-r-m-full-screen-detail
       :visible.sync="showRelatedDetail"
@@ -223,6 +223,7 @@ import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
 import { downloadFile, fileSize } from '@/utils'
 import ExamineMixin from '@/views/taskExamine/examine/components/ExamineMixin'
 import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
+import CustomFieldsMixin from '@/mixins/CustomFields'
 
 export default {
   /** 审批详情 */
@@ -242,7 +243,7 @@ export default {
       return name + '(' + fileSize(file.size) + ')'
     }
   },
-  mixins: [ExamineMixin],
+  mixins: [ExamineMixin, CustomFieldsMixin],
   props: {
     // 详情信息id
     id: [String, Number],
@@ -260,7 +261,7 @@ export default {
     return {
       loading: false,
       categoryId: '',
-      type: '',
+      type: '', // 区分 3 是行程 5 是报销
       detail: null,
       list: [], // 基本信息
       categoryName: '',
@@ -341,7 +342,9 @@ export default {
       this.getDetail()
     },
 
-    // 获取基础信息
+    /**
+     * 获取基础信息
+     */
     getBaseInfo() {
       this.loading = true
       oaExamineGetFieldAPI({
@@ -350,13 +353,26 @@ export default {
         type: 1 // 一维数组
       })
         .then(res => {
-          this.list = res.data
+          const list = res.data || []
+          list.forEach(item => {
+            if (item.formType === 'examine_cause') {
+              this.type = 5
+            } else if (item.formType === 'business_cause') {
+              this.type = 3
+            }
+            if (item.formType === 'detail_table') {
+              this.getFormItemDefaultProperty(item, false)
+              item.value = this.getItemValue(item, null, 'update')
+            }
+          })
+          this.list = list
           this.loading = false
         })
         .catch(() => {
           this.loading = false
         })
     },
+
     getDetail() {
       this.loading = true
       oaExamineReadAPI(this.id)
@@ -378,23 +394,30 @@ export default {
           this.hideView()
         })
     },
-    //* * 点击关闭按钮隐藏视图 */
+
+    /**
+     * 点击关闭按钮隐藏视图
+     */
     hideView() {
       this.$emit('hide-view')
     },
-    // 查看相关信息详情
+
+    /**
+     * 查看相关信息详情
+     */
     checkRelatedDetail(crmType, item) {
       this.relatedID = item[crmType + 'Id'] || item.id
       this.relatedCRMType = crmType
       this.showRelatedDetail = true
     },
+
     /**
      * 附件查看
      */
     handleFile(type, files, index) {
       if (type === 'preview') {
         if (files && files.length > 0) {
-          this.$bus.emit('preview-image-bus', {
+          this.$wkPreviewFile.preview({
             index: index,
             data: files
           })
@@ -403,9 +426,12 @@ export default {
         downloadFile({ path: files.url, name: files.name })
       }
     },
-    // 放大图片
+
+    /**
+     * 放大图片
+     */
     imgZoom(images, k) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: k,
         data: images
       })
@@ -413,7 +439,10 @@ export default {
     downloadFile(file) {
       downloadFile({ path: file.url, name: file.name })
     },
-    // 审批操作
+
+    /**
+     * 审批操作
+     */
     examineHandle(data) {
       // this.$store.dispatch('GetOAMessageNum', 'examine')
       this.$emit('on-examine-handle', data, this.detailIndex)
@@ -424,7 +453,17 @@ export default {
      * 获取非附件类型的展示值
      */
     getCommonShowValue(item) {
-      return getFormFieldShowName(item.formType, item.value, '')
+      return getFormFieldShowName(item.formType, item.value, '', item)
+    },
+
+    /**
+     * 是整行展示字段
+     */
+    isBlockShowField(item) {
+      return [
+        'map_address',
+        'file',
+        'detail_table'].includes(item.formType)
     }
   }
 }
@@ -607,6 +646,10 @@ export default {
   width: 100%;
 }
 
+.is-block {
+  flex-basis: 100% !important;
+}
+
 // 行程 报销效果
 .table-sections {
   margin-top: 8px;
@@ -634,6 +677,7 @@ export default {
 
 // 审核信息
 .examine-section {
+  margin: 0 10px;
   padding: 10px 20px;
   border: 1px solid $xr-border-line-color;
   border-radius: $xr-border-radius-base;

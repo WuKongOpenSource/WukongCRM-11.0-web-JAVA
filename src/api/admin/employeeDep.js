@@ -60,6 +60,43 @@ export function roleListAPI(data) {
   })
 }
 
+// 部分角色列表
+export function adminRoleGetRoleListAPI(data) {
+  return request({
+    url: 'adminRole/getRoleList',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 查询配置的角色范围
+ * @param {*} data
+ * @returns
+ */
+export function adminRoleQueryAuthRoleAPI(roleId) {
+  return request({
+    url: `adminRole/queryAuthRole/${roleId}`,
+    method: 'post'
+  })
+}
+
+/**
+ * 更新配置的角色范围
+ * @param {*} data
+ * @returns
+ */
+export function adminRoleUpdateAuthRoleAPI(roleId, data) {
+  return request({
+    url: `adminRole/updateAuthRole/${roleId}`,
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
 /**
  * 批量修改密码接口
  * @param {*} data

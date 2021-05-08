@@ -108,7 +108,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['crm']),
+    ...mapGetters(['crm', 'userInfo']),
     canSave() {
       if (this.isSeas) {
         return false
@@ -149,9 +149,10 @@ export default {
       if (command == 'out') {
         this.$emit('on-export')
       } else if (command == 'enter') {
-        this.$bus.emit('import-crm-bus', this.crmType, {
+        this.$wkImport.import(this.crmType, {
           ownerSelectShow: false, // 去除选择负责人逻辑
-          poolSelectShow: this.isSeas
+          poolSelectShow: this.isSeas,
+          userInfo: this.userInfo
         })
       }
     },

@@ -10,19 +10,19 @@ export default {
       crmProps: null,
       crmImportStatus: '',
       cacheShow: false, // 缓存展示
-      cacheDone: false // 缓存导入是否完成
+      cacheDone: false, // 缓存导入是否完成
+
+      userInfo: null
     }
   },
 
   created() {
-    this.addImportBus()
-
     // 处理上次缓存
     const beforeImportInfo = Lockr.get('crmImportInfo')
     if (beforeImportInfo && beforeImportInfo.messageId) {
       this.crmType = beforeImportInfo.crmType
       this.crmProps = beforeImportInfo.crmProps
-      this.secondQueryNum(beforeImportInfo.messageId)
+      this.lockrSecondQueryNum(beforeImportInfo.messageId)
       this.cacheShow = true
     } else {
       this.cacheShow = false
@@ -39,18 +39,6 @@ export default {
   watch: {},
 
   methods: {
-    addImportBus() {
-      this.$bus.on('import-crm-bus', (crmType, props) => {
-        if (this.crmType != crmType && this.showFixImport) {
-          this.$message.error('请先处理当前导入的数据')
-        } else {
-          this.crmType = crmType
-          this.crmProps = props
-          this.showCRMImport = true
-        }
-      })
-    },
-
     crmImportChange(status) {
       this.crmImportStatus = this.showCRMImport && status == 'finish' ? '' : status
     },
@@ -68,7 +56,7 @@ export default {
     /**
      * 第二步查询数量
      */
-    secondQueryNum(messageId) {
+    lockrSecondQueryNum(messageId) {
       crmQueryImportNumAPI({ messageId: messageId })
         .then(res => {
           if (res.data === null) { // 结束 否则 进行中

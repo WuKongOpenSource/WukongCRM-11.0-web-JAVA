@@ -363,3 +363,10 @@ div[lazy=loading] {
     }
   }
 }
+
+// 时间区间选择快捷键
+.el-picker-panel {
+  .el-picker-panel__sidebar {
+    padding-bottom: 40px;
+  }
+}

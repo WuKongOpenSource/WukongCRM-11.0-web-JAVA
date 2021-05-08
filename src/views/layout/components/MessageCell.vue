@@ -183,7 +183,14 @@ export default {
         34: `${this.data.realname}回复了您评论的日志`,
         35: `${this.data.realname}拒绝您的`,
         36: `${this.data.realname}已经审核通过您的`,
-        37: `${this.data.realname}提交了`
+        37: `${this.data.realname}提交了`,
+        77: `${this.data.realname}点赞了您的`,
+        120: `${this.data.realname}将您添加为联系人`,
+        121: `${this.data.realname}将您添加为回款`,
+        122: `${this.data.realname}退出了您联系人`,
+        123: `${this.data.realname}退出了您回款`,
+        124: `${this.data.realname}将您移出了联系人`,
+        125: `${this.data.realname}将您移出了回款`
       }[this.data.type]
     },
 
@@ -256,7 +263,14 @@ export default {
         34: `：“${this.data.content}”，请及时查看`,
         35: `发票审批，拒绝理由：“${this.data.content}”，请及时处理`,
         36: `发票审批，请及时查看`,
-        37: `发票审批，请及时处理`
+        37: `发票审批，请及时处理`,
+        77: `日志，请及时查看`,
+        120: `的成员`,
+        121: `的成员`,
+        122: `的团队`,
+        123: `的团队`,
+        124: `的团队`,
+        125: `的团队`
       }[this.data.type]
     }
   },

@@ -1,7 +1,10 @@
 <template>
   <div
+    v-if="visible"
     id="vue-picture-viewer"
-    :style="maskContainer">
+    ref="vuePictureViewer"
+    :style="maskContainer"
+    @mouseup="removeMove()">
     <!-- 头部 -->
     <div class="perview-header">
       <span>{{ title }}</span>
@@ -9,14 +12,26 @@
     <!-- 图片容器 -->
     <div
       ref="imgContainer"
-      :style="imgContainer"
       class="imgContainer">
       <img
         v-src="bigImgUrl"
         v-if="bigShowType.isImage"
         ref="bigImg"
-        :style="bigImgStyle"
-        alt="">
+        :style="
+          'transform: scale(' +
+            imgScale +
+            ') rotate(' +
+            imgRotate +
+            'deg);margin-top:' +
+            imgTop +
+            'px;margin-left:' +
+            imgLeft +
+            'px;' +
+            'max-width:80%;max-height:80%;'
+        "
+        alt=""
+        @click.stop=""
+        @mousedown="addMove">
       <div
         v-if="!bigShowType.isImage"
         class="file-show">
@@ -135,40 +150,25 @@ import {
 import { downloadFileAPI } from '@/api/common'
 
 export default {
-  name: 'VuePictureViewer',
-  props: {
-    imgData: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
-    background: {
-      type: String,
-      default: 'rgba(0,0,0,0.4)'
-    },
-    // 选择的索引
-    selectIndex: {
-      type: Number,
-      default: -1
-    }
-  },
+  name: 'WkPreviewFile',
+  props: {},
   data() {
     return {
+      visible: false,
+      imgData: [],
+      background: 'rgba(0,0,0,0.4)',
+      // 选择的索引
+      selectIndex: -1,
       // 默认不显示左右切换箭头
       leftArrowShow: false,
       rightArrowShow: false,
       // 图片容器数据
-      rotateDeg: 0,
-      // bigImgUrl: '',
       bigShowType: { isImage: true, icon: '' }, // 不是图片的时候 展示 icon
       bigImgName: '',
       imgLength: 0,
       imgIndex: 0,
       showTips: false,
       tipsText: '',
-      bigImgConWidth: '',
-      bigImgConHeight: '',
       maskContainer: {
         width: '100%',
         height: '100%',
@@ -179,26 +179,13 @@ export default {
         right: 0,
         bottom: 0
       },
-      imgContainer: {
-        width: 'auto',
-        height: 'auto',
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        'z-index': 100,
-        transform: 'translate(-50%, -50%)'
-      },
-      bigImgStyle: {
-        display: 'block',
-        width: '80px',
-        height: '80px',
-        position: 'absolute',
-        top: 50 + '%',
-        left: 50 + '%',
-        marginLeft: '',
-        marginTop: '',
-        userSelect: 'none'
-      }
+      // 预览图片样式
+      imgTop: 0,
+      imgLeft: 0,
+      imgScale: 1,
+      imgRotate: 0,
+      clientX: 0,
+      clientY: 0
     }
   },
   computed: {
@@ -220,170 +207,95 @@ export default {
       return canPreviewFile(this.currentFile.name)
     }
   },
-  mounted() {
-    // for (let index = 0; index < this.imgData.length; index++) {
-    //   const element = this.imgData[index]
-    //   if (this.isShowImage(element.name)) {
-    //     this.getImageSrc(element.url, element.name, index)
-    //   }
-    // }
-
-    document
-      .getElementById('vue-picture-viewer')
-      .addEventListener('click', e => {
-        e.stopPropagation()
-      })
-
-    this.imgLength = this.imgData.length
-    this.imgIndex = this.selectIndex
-    this.$nextTick(() => {
-      // this.bigImgUrl = this.imgData[this.imgIndex].url
-      this.bigImgName = this.imgData[this.imgIndex].name
-      this.getShowTypeInfo(this.bigImgName)
-
-      if (this.imgLength > 1) {
-        // 大于1的时候才会展示缩略图
-        var item = this.$refs.thumbnailItem
-        item[this.imgIndex].className = 'borderActive'
-      }
-    })
-    var self = this
-    this.$refs.bigImg.onload = () => {
-      self.init()
-    }
-
-    this.maskContainer['z-index'] = getMaxIndex()
-  },
-  beforeDestroy() {
-    if (document.getElementById('vue-picture-viewer')) {
-      document
-        .getElementById('vue-picture-viewer')
-        .removeEventListener('click', e => {
-          e.stopPropagation()
-        })
-    }
-  },
   methods: {
-    // getImageSrc(url, name, index) {
-    //   getImageData(url).then((data) => {
-    //     this.$set(this.imgData[index], 'blob', data.blob)
-    //     this.$set(this.imgData[index], 'src', data.src)
-    //   }).catch(() => {})
-    // },
+    /**
+     * 预览
+     */
+    preview(data) {
+      this.selectIndex = data.index
+      this.imgData = data.data
+      this.imgLength = this.imgData.length
+      this.imgIndex = this.selectIndex
+      this.visible = true
 
-    // init
-    init() {
-      const screenW =
-        document.documentElement.offsetWidth || document.body.offsetWidth
-      const screenH =
-        document.documentElement.scrollHeight || document.body.scrollHeight
-      this.$nextTick(function() {
-        const ratio = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9]
-        for (const item of ratio) {
-          if (
-            this.$refs.bigImg.naturalWidth * item < screenW &&
-            this.$refs.bigImg.naturalHeight * item < screenH - 200
-          ) {
-            this.bigImgConWidth = this.$refs.bigImg.naturalWidth * item
-            this.bigImgConHeight = this.$refs.bigImg.naturalHeight * item
-            this.imgContainer.width = this.bigImgConWidth + 'px'
-            this.imgContainer.height = this.bigImgConHeight + 'px'
-            this.bigImgStyle.width = this.bigImgConWidth + 'px'
-            this.bigImgStyle.height = this.bigImgConHeight + 'px'
-            this.bigImgStyle.marginLeft = -(this.bigImgConWidth / 2) + 'px'
-            this.bigImgStyle.marginTop = -(this.bigImgConHeight / 2) + 'px'
+      this.$nextTick(() => {
+        const _dom = document.getElementById('vue-picture-viewer')
+        _dom.onmousewheel = this.scrollFunc
+        // 火狐浏览器没有onmousewheel事件，用DOMMouseScroll代替(滚轮事件)
+        document.body.addEventListener('DOMMouseScroll', this.scrollFunc)
+        // 禁止火狐浏览器下拖拽图片的默认事件
+        document.ondragstart = function() {
+          return false
+        }
+
+        document
+          .getElementById('vue-picture-viewer')
+          .addEventListener('click', e => {
+            e.stopPropagation()
+          })
+
+        this.$nextTick(() => {
+          this.bigImgName = this.imgData[this.imgIndex].name
+          this.getShowTypeInfo(this.bigImgName)
+
+          if (this.imgLength > 1) {
+            // 大于1的时候才会展示缩略图
+            var item = this.$refs.thumbnailItem
+            item[this.imgIndex].className = 'borderActive'
           }
-        }
+
+          this.init()
+        })
+
+        this.maskContainer['z-index'] = getMaxIndex()
       })
     },
-    // rotate init
-    rotateInit() {
-      const screenH =
-        document.documentElement.scrollHeight || document.body.scrollHeight
-      const ratio = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9]
-      for (const item of ratio) {
-        if (this.$refs.bigImg.naturalWidth * item < screenH - 160) {
-          this.bigImgConWidth = this.$refs.bigImg.naturalWidth * item
-          this.bigImgConHeight = this.$refs.bigImg.naturalHeight * item
-          this.imgContainer.width = this.bigImgConWidth + 'px'
-          this.imgContainer.height = this.bigImgConHeight + 'px'
-          this.bigImgStyle.width = this.bigImgConWidth + 'px'
-          this.bigImgStyle.height = this.bigImgConHeight + 'px'
-          this.bigImgStyle.marginLeft = -(this.bigImgConWidth / 2) + 'px'
-          this.bigImgStyle.marginTop = -(this.bigImgConHeight / 2) + 'px'
-        }
-      }
+
+    /**
+     * init
+     */
+    init() {
+      this.imgTop = 0
+      this.imgLeft = 0
+      this.imgScale = 1
+      this.imgRotate = 0
+      this.clientX = 0
+      this.clientY = 0
     },
-    // 放大
+
+    /**
+     * 放大
+     */
     enlarge() {
-      this.$nextTick(function() {
-        const screenW =
-          document.documentElement.offsetWidth || document.body.offsetWidth
-        const screenH =
-          document.documentElement.scrollHeight || document.body.scrollHeight
-        if (
-          (this.$refs.bigImg.offsetWidth >= this.$refs.bigImg.offsetHeight &&
-            this.$refs.bigImg.offsetHeight * 2 < screenH * 2) ||
-          (this.$refs.bigImg.offsetHeight >= this.$refs.bigImg.offsetWidth &&
-            this.$refs.bigImg.offsetWidth * 2 < screenW * 2)
-        ) {
-          this.$refs.bigImg.style.width =
-            this.$refs.bigImg.offsetWidth * 1.3 + 'px'
-          this.$refs.bigImg.style.height =
-            this.$refs.bigImg.offsetHeight * 1.3 + 'px'
-          this.$refs.bigImg.style.left = '50%'
-          this.$refs.bigImg.style.top = '50%'
-          this.bigImgStyle.marginLeft =
-            -this.$refs.bigImg.offsetWidth / 2 + 'px'
-          this.bigImgStyle.marginTop =
-            -this.$refs.bigImg.offsetHeight / 2 + 'px'
-        }
-      })
+      if (this.imgScale >= 5) return
+      this.imgScale += 0.15
     },
-    // 缩小
+
+    /**
+     * 缩小
+     */
     reduce() {
-      if (this.$refs.bigImg.offsetWidth > 80) {
-        /**
-           * clientWidth = width + padding
-             offsetWidth = width + padding + border  */
-        this.$refs.bigImg.style.width =
-          this.$refs.bigImg.offsetWidth * 0.7 + 'px'
-        this.$refs.bigImg.style.height =
-          this.$refs.bigImg.offsetHeight * 0.7 + 'px'
-        this.$refs.bigImg.style.left = '50%'
-        this.$refs.bigImg.style.top = '50%'
-        this.bigImgStyle.marginLeft = -this.$refs.bigImg.offsetWidth / 2 + 'px'
-        this.bigImgStyle.marginTop = -this.$refs.bigImg.offsetHeight / 2 + 'px'
-      }
+      if (this.imgScale <= 0.2) return
+
+      this.imgScale -= 0.15
     },
-    // 旋转
+
+    /**
+     * 旋转
+     */
     rotate() {
-      if (this.rotateDeg === 0) {
-        this.$refs.bigImg.style.transform = 'rotate(90deg)'
-        this.rotateInit()
-        this.rotateDeg++
-      } else if (this.rotateDeg === 1) {
-        this.$refs.bigImg.style.transform = 'rotate(180deg)'
-        this.init()
-        this.rotateDeg++
-      } else if (this.rotateDeg === 2) {
-        this.$refs.bigImg.style.transform = 'rotate(270deg)'
-        this.rotateInit()
-        this.rotateDeg++
-      } else if (this.rotateDeg === 3) {
-        this.$refs.bigImg.style.transform = 'rotate(360deg)'
-        this.init()
-        this.rotateDeg = 0
-      }
+      this.imgRotate -= 90
     },
-    // 点击缩略图切换图片
+
+    /**
+     * 点击缩略图切换图片
+     */
     switchImgUrl(num, e) {
       var item = this.$refs.thumbnailItem
       item.forEach(function(i) {
         i.className = ''
       })
       this.imgIndex = num
-      // this.bigImgUrl = this.imgData[num].url
       this.bigImgName = this.imgData[num].name
       this.getShowTypeInfo(this.bigImgName)
       e.currentTarget.className = 'borderActive'
@@ -391,19 +303,16 @@ export default {
         this.init()
       }
     },
-    // 切换到上一张
+
+    /**
+     * 切换到上一张
+     */
     handlePrev() {
       if (this.imgIndex <= 0) {
         this.tips('已经是第一张了!')
         this.imgIndex = 0
       } else {
-        if (this.$refs.bigImg) {
-          this.$refs.bigImg.style.transform = 'rotate(0deg)'
-          this.rotateDeg = 0
-        }
-
         this.imgIndex--
-        // this.bigImgUrl = this.imgData[this.imgIndex].url
         this.bigImgName = this.imgData[this.imgIndex].name
         this.getShowTypeInfo(this.bigImgName)
 
@@ -417,18 +326,15 @@ export default {
         }
       }
     },
-    // 切换到下一张
+
+    /**
+     * 切换到下一张
+     */
     handleNext() {
       if (this.imgIndex + 1 >= this.imgData.length) {
         this.tips('已经是最后一张了!')
       } else {
-        if (this.$refs.bigImg) {
-          this.$refs.bigImg.style.transform = 'rotate(0deg)'
-          this.rotateDeg = 0
-        }
-
         this.imgIndex++
-        // this.bigImgUrl = this.imgData[this.imgIndex].url
         this.bigImgName = this.imgData[this.imgIndex].name
         this.getShowTypeInfo(this.bigImgName)
 
@@ -442,7 +348,10 @@ export default {
         }
       }
     },
-    // 提示框
+
+    /**
+     * 提示框
+     */
     tips(msg) {
       this.showTips = true
       this.tipsText = msg
@@ -451,36 +360,59 @@ export default {
         _this.showTips = false
       }, 10000)
     },
-    // 鼠标左移
+
+    /**
+     * 鼠标左移
+     */
     enterLeft() {
       this.leftArrowShow = true
     },
     outLeft() {
       this.leftArrowShow = false
     },
-    // 鼠标右移
+
+    /**
+     * 鼠标右移
+     */
     enterRight() {
       this.rightArrowShow = true
     },
     outRight() {
       this.rightArrowShow = false
     },
-    // 关闭查看器
+
+    /**
+     * 关闭查看器
+     */
     closeViewer() {
-      this.$emit('close-viewer')
+      if (document.getElementById('vue-picture-viewer')) {
+        document
+          .getElementById('vue-picture-viewer')
+          .removeEventListener('click', e => {
+            e.stopPropagation()
+          })
+        // 移除火狐浏览器下的鼠标滚动事件
+        document.body.removeEventListener('DOMMouseScroll', this.scrollFunc)
+        // 恢复火狐及Safari浏览器下的图片拖拽
+        document.ondragstart = null
+      }
+
+      this.visible = false
+      this.imgData = []
+      this.selectIndex = -1
+      this.showTips = false
     },
-    /** 附件逻辑 */
+
+    /**
+     * 附件逻辑
+     */
     downloadFile() {
-      // if (this.currentFile.src) {
-      //   downloadFileWithBuffer(this.currentFile.blob, this.currentFile.name)
-      // } else {
       downloadFileAPI(this.currentFile.url).then(res => {
         const blob = new Blob([res.data], {
           type: ''
         })
         downloadFileWithBuffer(blob, this.currentFile.name)
       }).catch(() => {})
-      // }
     },
     previewFile() {
       if (this.currentFile.url) {
@@ -520,10 +452,53 @@ export default {
       }
       return ['jpg', 'png', 'gif', 'jpeg'].includes(ext.toLowerCase())
     },
-    arrayContain(array, string) {
-      return array.some(item => {
-        return item === string
-      })
+    removeMove() {
+      this.$refs.vuePictureViewer.onmousemove = null
+    },
+
+    /**
+     * 鼠标按下
+     */
+    addMove(e) {
+      e = e || window.event
+      this.clientX = e.clientX
+      this.clientY = e.clientY
+      this.$refs.vuePictureViewer.onmousemove = this.moveFunc
+    },
+
+    /**
+     * 鼠标拖动
+     */
+    moveFunc(e) {
+      e = e || window.event
+      e.preventDefault()
+      const movementX = e.clientX - this.clientX
+      const movementY = e.clientY - this.clientY
+      // event.clientY;
+      this.imgLeft += movementX * 2
+      this.imgTop += movementY * 2
+      this.clientX = e.clientX
+      this.clientY = e.clientY
+    },
+
+    /**
+     * 鼠标滚轮缩放
+     */
+    scrollFunc(e) {
+      e = e || window.event
+      // e.returnValue = false // ie
+      // 火狐下没有wheelDelta，用detail代替，由于detail值的正负和wheelDelta相反，所以取反
+      e.delta = e.wheelDelta || -e.detail
+
+      e.preventDefault()
+      if (e.delta > 0) {
+        // 当滑轮向上滚动时
+        this.enlarge()
+      }
+      if (e.delta < 0) {
+        // 当滑轮向下滚动时
+        this.reduce()
+      }
     }
   }
 }
@@ -581,6 +556,17 @@ export default {
   margin-top: -60px;
   transition: all 0.5s;
   pointer-events: none;
+}
+.imgContainer {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  vertical-align: middle;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,.3);
 }
 .imgContainer .tips {
   background: rgba(0, 0, 0, 0.7);
@@ -701,11 +687,10 @@ ul li {
   margin-right: 10px;
 }
 .thumbnailContainer ul li img {
-  display: inline-block;
-  width: 38px;
-  height: 38px;
-  border-radius: 3px;
-  box-sizing: content-box;
+  object-fit: contain;
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
 }
 .fade-enter-active,
 .fade-leave-active {

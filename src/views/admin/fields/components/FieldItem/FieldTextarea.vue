@@ -12,7 +12,7 @@
         {{ typeof field.defaultValue == 'string' ? field.defaultValue : '' }}
       </div>
       <div class="max-tips">
-        {{ field.defaultValue.length+'/'+field.maxLength }}
+        {{ field.defaultValue.length+'/'+(field.maxLength || 800) }}
       </div>
     </div>
 

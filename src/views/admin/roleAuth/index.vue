@@ -173,13 +173,19 @@
                         style="height: 0;"
                         empty-text=""
                         default-expand-all>
+
                         <span
                           slot-scope="{ node }"
-                          :class="{ 'node-label': node.level == 1 || node.level == 2} ">{{ node.label }}<el-button
-                            v-if="node.level == 2 && canSetField(node.data.realm)"
-                            icon="wk wk-manage"
-                            type="text"
-                            @click="fieldSetClick(node)" >字段授权</el-button></span>
+                          :class="{ 'node-label': node.level == 1 || node.level == 2,
+                                    'common-node-label': node.data.menuId === 935} ">{{ node.label }}<el-button
+                                      v-if="node.level == 2 && canSetField(node.data.realm)"
+                                      icon="wk wk-manage"
+                                      type="text"
+                                      @click="fieldSetClick(node)" >字段授权</el-button><!-- 下是系统管理的配置  上是客户管理的配置 --><el-button
+                                        v-else-if="node.data.menuId === 935"
+                                        icon="wk wk-manage"
+                                        type="text"
+                                        @click="checkRangeSetClick(node)" >配置查看范围</el-button></span>
                       </el-tree>
                     </div>
                   </div>
@@ -223,6 +229,12 @@
       :visible.sync="editRoleDialogShow"
       @change="getUserList"
     />
+    <role-range-set-dialog
+      v-if="setRoleRangeShow"
+      :visible.sync="setRoleRangeShow"
+      :role-id="roleId"
+    />
+
   </div>
 </template>
 
@@ -241,6 +253,7 @@ import {
 
 import RelateEmpoyee from './components/RelateEmpoyee'
 import FieldSetDialog from './components/FieldSetDialog'
+import RoleRangeSetDialog from './components/RoleRangeSetDialog'
 import Reminder from '@/components/Reminder'
 import XrHeader from '@/components/XrHeader'
 import EditRoleDialog from '../employeeDep/components/EditRoleDialog'
@@ -251,6 +264,7 @@ export default {
   components: {
     RelateEmpoyee,
     FieldSetDialog,
+    RoleRangeSetDialog,
     Reminder,
     XrHeader,
     EditRoleDialog
@@ -308,7 +322,10 @@ export default {
       // 角色操作
       selectionList: [],
       editRoleType: '',
-      editRoleDialogShow: false
+      editRoleDialogShow: false,
+
+      // 角色范围设置
+      setRoleRangeShow: false
     }
   },
 
@@ -865,7 +882,7 @@ export default {
      */
     canSetField(type) {
       if (this.pid == 10) return false
-      return ['leads', 'customer', 'contacts', 'business', 'contract', 'receivables', 'product', 'visit'].includes(type) &&
+      return ['leads', 'customer', 'contacts', 'business', 'contract', 'receivables', 'product', 'visit', 'invoice'].includes(type) &&
       this.ruleMenuIndex === 'data'
     },
 
@@ -875,6 +892,13 @@ export default {
     fieldSetClick(node) {
       this.setFieldLabel = crmTypeModel[node.data.realm]
       this.setFieldShow = true
+    },
+
+    /**
+     * 权限设置
+     */
+    checkRangeSetClick(node) {
+      this.setRoleRangeShow = true
     }
   }
 }
@@ -1116,6 +1140,19 @@ export default {
     position: absolute;
     top: -8px;
     right: -80px;
+    /deep/ span {
+      margin-left: 3px;
+    }
+  }
+}
+
+.common-node-label {
+  position: relative;
+
+  .el-button {
+    position: absolute;
+    top: -8px;
+    right: -105px;
     /deep/ span {
       margin-left: 3px;
     }

@@ -1,11 +1,14 @@
 <template>
-  <div v-if="typeObj" class="field-setting">
+  <div
+    v-clickoutside="clickOutSide"
+    v-if="typeObj"
+    class="field-setting">
     <div class="setting-title">
       {{ typeObj.name }}
     </div>
 
     <div class="setting-body">
-      <template v-if="!canDescText">
+      <template v-if="!isDescText">
         <div class="item-section">
           <div class="name">标识名</div>
           <el-input
@@ -24,14 +27,32 @@
           <div class="input-tips"><span>*</span>显示在标识名右侧的说明文字</div>
         </div>
 
-        <div v-if="canOptions" class="item-section">
-          <div class="name">选项内容</div>
-          <setting-options :field="field" />
-        </div>
+        <setting-detail-table
+          v-if="field.formType === 'detail_table'"
+          :field="field"
+          @child-edit="emitChildEdit" />
+
+        <template v-if="canOptions">
+          <div class="item-section">
+            <div class="name">选项内容</div>
+            <div class="input-tips"><span>*</span>修改选项后该项设置的逻辑表单会失效</div>
+            <setting-options
+              :field="field"
+              :is-table-child="isTableChild" />
+          </div>
+
+          <div v-if="!isTableChild" class="item-section">
+            <div class="name">逻辑表单</div>
+            <setting-logic-form
+              :field="field"
+              :point="point"
+              :field-arr="fieldArr" />
+          </div>
+        </template>
 
         <div v-if="canPrecisions" class="item-section">
           <div class="name">
-            {{ field.formType === 'date_interval' ? '日期类型' : '地址精度' }}
+            {{ precisionsTitle }}
           </div>
           <setting-precisions :field="field" />
         </div>
@@ -46,7 +67,7 @@
         </div>
       </template>
 
-      <div v-if="canDescText" class="item-section">
+      <div v-if="isDescText" class="item-section">
         <div class="name">内容</div>
         <setting-desc-text :field="field" />
       </div>
@@ -85,33 +106,32 @@
         </el-select>
       </div>
 
-      <template v-if="!canDescText">
-        <div class="item-check-section">
+      <template v-if="!isDescText">
+        <div
+          v-if="fieldAuth.nullEdit"
+          class="item-check-section">
           <el-checkbox
             v-model="field.isNull"
             :true-label="1"
-            :false-label="0"
-            :disabled="!fieldAuth.nullEdit">设为必填</el-checkbox>
+            :false-label="0">设为必填</el-checkbox>
         </div>
 
         <div
-          v-if="canUnique"
+          v-if="fieldAuth.uniqueEdit"
           class="item-check-section">
           <el-checkbox
             v-model="field.isUnique"
             :true-label="1"
-            :false-label="0"
-            :disabled="!fieldAuth.uniqueEdit">设为唯一</el-checkbox>
+            :false-label="0">设为唯一</el-checkbox>
         </div>
 
         <div
-          v-if="showHidden"
+          v-if="fieldAuth.hiddenEdit"
           class="item-check-section">
           <el-checkbox
             v-model="field.isHidden"
             :true-label="1"
-            :false-label="0"
-            :disabled="!fieldAuth.hiddenEdit">隐藏字段</el-checkbox>
+            :false-label="0">隐藏字段</el-checkbox>
         </div>
       </template>
 
@@ -125,9 +145,11 @@ import SettingOptions from './SettingOptions'
 import SettingNumber from './SettingNumber'
 import SettingPrecisions from './SettingPrecisions'
 import SettingDescText from './SettingDescText'
+import SettingDetailTable from './SettingDetailTable'
+import SettingLogicForm from './SettingLogicForm'
 
 import FieldTypeLib from '../../fieldTypeLib'
-import { getFieldAuth } from '../utils'
+import { getFieldAuth } from '../../utils'
 
 export default {
   name: 'FieldSetting',
@@ -136,18 +158,24 @@ export default {
     SettingOptions,
     SettingNumber,
     SettingPrecisions,
-    SettingDescText
+    SettingDescText,
+    SettingDetailTable,
+    SettingLogicForm
   },
   props: {
     // 是否开启转移  转移对应数据
     canTransform: Boolean,
-    canUnique: {
-      type: Boolean,
-      default: true
-    },
     transformData: Object,
-    field: {
+    field: { // 要编辑的字段信息
       type: Object,
+      required: true
+    },
+    fieldArr: { // 所有字段
+      type: Array,
+      required: true
+    },
+    point: { // 被选中的字段坐标
+      type: Array,
       required: true
     }
   },
@@ -177,7 +205,8 @@ export default {
         'structure',
         'file',
         'location',
-        'handwriting_sign'
+        'handwriting_sign',
+        'detail_table'
       ].includes(this.field.formType)
     },
     // 是否允许设置选项内容
@@ -195,18 +224,40 @@ export default {
         'percent'
       ].includes(this.field.formType)
     },
+    // 精度
     canPrecisions() {
       return [
         'date_interval',
-        'position'
+        'position',
+        'select',
+        'checkbox'
       ].includes(this.field.formType)
     },
-    canDescText() {
+    // 精度标题
+    precisionsTitle() {
+      if (!this.canPrecisions) return ''
+      switch (this.field.formType) {
+        case 'date_interval':
+          return '日期类型'
+        case 'position':
+          return '地址精度'
+        case 'select':
+          return '展示方式'
+        case 'checkbox':
+          return '展示方式'
+        default:
+          return '精度'
+      }
+    },
+    // 是否为描述文字类型
+    isDescText() {
       return this.field.formType === 'desc_text'
     },
-    // 办公审批不允许控制字段显隐
-    showHidden() {
-      return this.$route.params.type !== 'oa_examine'
+
+    // 是否为明细表格内部字段
+    isTableChild() {
+      const fatherField = this.fieldArr[this.point[0]][this.point[1]]
+      return fatherField.formType === 'detail_table'
     }
   },
   watch: {
@@ -221,6 +272,12 @@ export default {
   methods: {
     emitUpdateWidth() {
       this.$emit('update-width')
+    },
+    emitChildEdit(field = null) {
+      this.$emit('child-edit', field)
+    },
+    clickOutSide() {
+      this.emitChildEdit()
     }
   }
 }

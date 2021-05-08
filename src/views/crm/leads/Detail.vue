@@ -52,7 +52,8 @@
                 :detail="detailData"
                 :id="id"
                 :handle="activityHandle"
-                :crm-type="crmType" />
+                :crm-type="crmType"
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
           <transition name="slide-fade">
@@ -65,7 +66,7 @@
                 label="重要信息"
                 name="chiefly-contacts"
                 lazy>
-                <import-info :list="importList" class="import-info" />
+                <import-info :list="importList" :detail="detailData" class="import-info" />
               </el-tab-pane>
             </el-tabs>
           </transition>

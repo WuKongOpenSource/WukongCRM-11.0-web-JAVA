@@ -83,7 +83,7 @@ export default {
           label: '工资条',
           value: 68
         }, {
-          label: '绩效考核',
+          label: '考核计划',
           value: 69
         }]
       }, {

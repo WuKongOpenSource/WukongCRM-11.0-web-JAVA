@@ -211,7 +211,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['crm']),
+    ...mapGetters(['crm', 'userInfo']),
 
     followRecordAuth() {
       return this.crm.followRecord
@@ -400,7 +400,8 @@ export default {
           .catch(() => {})
       } else if (command == 'enter') {
         const labelObj = this.options.find(item => item.value === this.requestParams.label)
-        this.$bus.emit('import-crm-bus', 'crmFollowLog', {
+
+        this.$wkImport.import('crmFollowLog', {
           typeName: `${labelObj.label}跟进记录`,
           ownerSelectShow: false,
           repeatHandleShow: false,
@@ -410,7 +411,8 @@ export default {
           importParams: { crmType: this.requestParams.label },
           templateRequest: crmInstrumentDownloadRecordExcelAPI, // 模板请求
           templateParams: { crmType: this.requestParams.label },
-          downloadErrFuc: this.getImportError
+          downloadErrFuc: this.getImportError,
+          userInfo: this.userInfo
         })
       }
     },

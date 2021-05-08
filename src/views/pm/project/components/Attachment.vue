@@ -226,7 +226,7 @@ export default {
      */
     handleFile(type, item) {
       if (type === 'preview') {
-        this.$bus.emit('preview-image-bus', {
+        this.$wkPreviewFile.preview({
           index: item.$index,
           data: this.list
         })

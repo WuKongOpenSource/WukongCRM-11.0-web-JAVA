@@ -51,7 +51,9 @@
                 :detail="detailData"
                 :id="id"
                 :crm-type="crmType"
-                :filed-list="baseDetailList" />
+                :other-list="baseDetailList"
+                :ignore-fields="['invoiceType']"
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -67,7 +69,7 @@
 
     <create
       v-if="isCreate"
-      :detail="detailData"
+      :action="{type: 'update', id: id, batchId: detailData.batchId, detail: detailData}"
       @save-success="editSaveSuccess"
       @close="isCreate = false"/>
   </slide-view>
@@ -78,7 +80,7 @@ import { crmInvoiceReadAPI } from '@/api/crm/invoice'
 
 import SlideView from '@/components/SlideView'
 import CRMDetailHead from '../components/CRMDetailHead'
-import CRMBaseInfo from '../components/CRMBaseInfo' // 基本信息
+import CRMEditBaseInfo from '../components/CRMEditBaseInfo' // 基本信息
 import RelativeFiles from '../components/RelativeFiles' // 相关附件
 import RelativeHandle from '../components/RelativeHandle' // 相关操作
 import ExamineInfo from '@/components/Examine/ExamineInfo'
@@ -93,7 +95,7 @@ export default {
   components: {
     SlideView,
     CRMDetailHead,
-    CRMBaseInfo,
+    CRMEditBaseInfo,
     RelativeFiles,
     RelativeHandle,
     ExamineInfo,
@@ -137,7 +139,7 @@ export default {
         { title: '发票号码', value: '' },
         { title: '实际开票日期', value: '' }
       ],
-      tabCurrentName: 'CRMBaseInfo',
+      tabCurrentName: 'CRMEditBaseInfo',
       baseDetailList: [], // 基本详情list
       // 编辑操作
       isCreate: false
@@ -146,7 +148,7 @@ export default {
   computed: {
     tabNames() {
       return [
-        { label: '详细资料', name: 'CRMBaseInfo' },
+        { label: '详细资料', name: 'CRMEditBaseInfo' },
         {
           label: this.getTabName('附件', this.tabsNumber.fileCount),
           name: 'RelativeFiles'
@@ -190,77 +192,77 @@ export default {
      */
     getBaseList(data) {
       this.baseDetailList = [
-        {
-          name: '基本信息',
-          list: [
-            {
-              name: '发票申请编号',
-              formType: 'text',
-              value: data.invoiceApplyNumber
-            },
-            {
-              name: '客户名称',
-              formType: 'customer',
-              value: data
-            },
-            {
-              name: '合同编号',
-              formType: 'contract',
-              value: data
-            },
-            {
-              name: '合同金额',
-              formType: 'text',
-              value: data.contractMoney
-            },
-            {
-              name: '开票金额（元）',
-              formType: 'text',
-              value: data.invoiceMoney
-            },
-            {
-              name: '开票日期',
-              formType: 'text',
-              value: data.invoiceDate
-            },
-            {
-              name: '开票类型',
-              formType: 'text',
-              value: {
-                1: '增值税专用发票',
-                2: '增值税普通发票',
-                3: '国税通用机打发票',
-                4: '地税通用机打发票',
-                5: '收据'
-              }[data.invoiceType]
-            },
-            {
-              name: '备注',
-              formType: 'text',
-              value: data.remark
-            },
-            {
-              name: '创建人',
-              formType: 'text',
-              value: data.createUserName
-            },
-            {
-              name: '负责人',
-              formType: 'text',
-              value: data.ownerUserName
-            },
-            {
-              name: '创建时间',
-              formType: 'text',
-              value: data.createTime
-            },
-            {
-              name: '更新时间',
-              formType: 'text',
-              value: data.updateTime
-            }
-          ]
-        },
+        // {
+        //   name: '基本信息',
+        //   list: [
+        //     {
+        //       name: '发票申请编号',
+        //       formType: 'text',
+        //       value: data.invoiceApplyNumber
+        //     },
+        //     {
+        //       name: '客户名称',
+        //       formType: 'customer',
+        //       value: data
+        //     },
+        //     {
+        //       name: '合同编号',
+        //       formType: 'contract',
+        //       value: data
+        //     },
+        //     {
+        //       name: '合同金额',
+        //       formType: 'text',
+        //       value: data.contractMoney
+        //     },
+        //     {
+        //       name: '开票金额（元）',
+        //       formType: 'text',
+        //       value: data.invoiceMoney
+        //     },
+        //     {
+        //       name: '开票日期',
+        //       formType: 'text',
+        //       value: data.invoiceDate
+        //     },
+        //     {
+        //       name: '开票类型',
+        //       formType: 'text',
+        //       value: {
+        //         1: '增值税专用发票',
+        //         2: '增值税普通发票',
+        //         3: '国税通用机打发票',
+        //         4: '地税通用机打发票',
+        //         5: '收据'
+        //       }[data.invoiceType]
+        //     },
+        //     {
+        //       name: '备注',
+        //       formType: 'text',
+        //       value: data.remark
+        //     },
+        //     {
+        //       name: '创建人',
+        //       formType: 'text',
+        //       value: data.createUserName
+        //     },
+        //     {
+        //       name: '负责人',
+        //       formType: 'text',
+        //       value: data.ownerUserName
+        //     },
+        //     {
+        //       name: '创建时间',
+        //       formType: 'text',
+        //       value: data.createTime
+        //     },
+        //     {
+        //       name: '更新时间',
+        //       formType: 'text',
+        //       value: data.updateTime
+        //     }
+        //   ]
+        // },
         {
           name: '发票信息',
           list: [
@@ -335,18 +337,10 @@ export default {
     },
 
     /**
-     * 编辑成功
-     */
-    editSaveSuccess() {
-      this.$emit('handle', { type: 'save-success' })
-      this.getDetial()
-    },
-
-    /**
      * 审核操作
      */
     examineHandle() {
-      this.$emit('handle', { type: 'examine' })
+      this.detailHeadHandle({ type: 'examine' })
     }
   }
 }

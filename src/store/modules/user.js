@@ -136,6 +136,8 @@ const user = {
           resetRouter()
           resolve()
         }).catch(error => {
+          removeAuth()
+          resetRouter()
           reject(error)
         })
       })

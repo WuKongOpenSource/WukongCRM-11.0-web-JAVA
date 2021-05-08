@@ -8,32 +8,49 @@
     <create-sections title="基本信息">
       <el-form
         ref="crmForm"
-        :model="baseFrom"
-        :rules="rules"
+        :model="fieldForm"
+        :rules="fieldRules"
+        :validate-on-rule-change="false"
+        class="wk-form"
         label-position="top">
-        <el-form-item
-          v-for="(item, index) in baseFields"
-          :key="item.key"
-          :prop="item.field">
-          <span slot="label">
-            {{ item.name }}
-            <span style="color:#999;">
-              {{ item.tips || '' }}
-            </span>
-          </span>
-          <component
-            :is="item.formType | typeToComponent"
-            :value="baseFrom[item.field]"
-            :index="index"
-            :item="item"
-            :relation="item.relation"
-            :relative-type="item.formType"
-            :disabled="item.disabled"
-            :clearable="false"
-            @value-change="fieldValueChange"/>
-        </el-form-item>
-      </el-form>
-    </create-sections>
+        <wk-form-items
+          v-for="(children, index) in fieldList"
+          :key="index"
+          :field-from="fieldForm"
+          :field-list="children"
+          :ignore-fields="ignoreFields"
+          @change="formChange"
+        >
+          <template slot-scope="{ data, index }">
+            <el-select
+              v-if="data && data.field == 'invoiceType'"
+              v-model="fieldForm[data.field]"
+              style="width: 100%;"
+              @change="formChange(data, index, $event)">
+              <el-option
+                v-for="item in invoiceTypeOptions"
+                :key="item.value"
+                :label="item.name"
+                :value="item.value"/>
+            </el-select>
+            <crm-relative-cell
+              v-if="data && data.formType == 'customer'"
+              :value="fieldForm[data.field]"
+              :disabled="data.disabled"
+              relative-type="customer"
+              @value-change="otherChange($event, data)"
+            />
+            <crm-relative-cell
+              v-if="data && data.formType == 'contract'"
+              :value="fieldForm[data.field]"
+              :disabled="data.disabled"
+              :relation="data.relation"
+              :relative-type="data.formType"
+              @value-change="otherChange($event, data)"
+            />
+          </template>
+        </wk-form-items>
+    </el-form></create-sections>
 
     <create-sections title="发票信息">
       <div style="padding: 10px 20px; text-align: right;">
@@ -54,7 +71,7 @@
             @changeCheckout="titleSelectChange"/>
           <el-button
             slot="reference"
-            :disabled="!(baseFrom.customerId && baseFrom.customerId.length > 0)"
+            :disabled="!(fieldForm.customerId && fieldForm.customerId.length > 0)"
             type="primary"
             @click="showSelectView=true">选择发票信息</el-button>
         </el-popover>
@@ -138,22 +155,28 @@
 </template>
 
 <script>
-import { crmInvoiceSaveAPI, crmInvoiceUpdateAPI, crmInvoiceNumberConfigAPI } from '@/api/crm/invoice'
+import { filedGetFieldAPI } from '@/api/crm/common'
+import { crmInvoiceSaveAPI } from '@/api/crm/invoice'
 import { crmCustomerInvoiceInfoAPI } from '@/api/crm/customer'
 
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
+import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
 import WkApprovalFlowApplyMixin from '@/components/Examine/mixins/WkApprovalFlowApply'
-
 import {
   XhInput,
   XhTextarea,
   XhSelect,
   XhDate,
+  XhReceivablesPlan,
   CrmRelativeCell
 } from '@/components/CreateCom'
 import CrmRelative from '@/components/CreateCom/CrmRelative'
+
+import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import CustomFieldsMixin from '@/mixins/CustomFields'
+import { objDeepCopy } from '@/utils'
 
 export default {
   // 订单创建
@@ -167,7 +190,9 @@ export default {
     XhDate,
     CrmRelativeCell,
     CrmRelative,
-    WkApprovalFlowApply
+    WkApprovalFlowApply,
+    XhReceivablesPlan,
+    WkFormItems
   },
   filters: {
     /** 根据type 找到组件 */
@@ -185,30 +210,43 @@ export default {
       }
     }
   },
-  mixins: [WkApprovalFlowApplyMixin],
+  mixins: [CustomFieldsMixin, WkApprovalFlowApplyMixin],
   props: {
-    detail: Object
+    action: {
+      type: Object,
+      default: () => {
+        return {
+          type: 'save', // save relative 新建 相关新建   update 编辑
+          id: '',
+          data: {}
+        }
+      }
+    }
   },
   data() {
     return {
       loading: false,
+      invoiceTypeOptions: [{
+        name: '增值税专用发票',
+        value: 1
+      }, {
+        name: '增值税普通发票',
+        value: 2
+      }, {
+        name: '国税通用机打发票',
+        value: 3
+      }, {
+        name: '地税通用机打发票',
+        value: 4
+      }, {
+        name: '收据',
+        value: 5
+      }],
+      ignoreFields: ['invoiceType'],
       baseFields: [],
-      rules: {
-        customerId: [
-          { required: true, message: '请选择客户名称', trigger: 'change' }
-        ],
-        contractId: [
-          { required: true, message: '请选择合同编号', trigger: 'change' }
-        ],
-        invoiceMoney: [
-          { required: true, message: '请输入开票金额', trigger: ['blur', 'change'] }
-        ],
-        invoiceType: [
-          { required: true, message: '请选择开票类型', trigger: 'change' }
-        ]
-      },
-      baseFrom: {
-      },
+      fieldList: [],
+      fieldForm: {},
+      fieldRules: {},
       showPopover: false,
       titleAction: {
         type: 'default'
@@ -232,10 +270,7 @@ export default {
   },
   computed: {
     editId() {
-      if (this.detail) {
-        return this.detail.invoiceId
-      }
-      return ''
+      return this.action.type == 'update' ? this.action.id : ''
     },
 
     title() {
@@ -255,161 +290,175 @@ export default {
   },
   watch: {},
   created() {
-    this.getInvoiceNumberConfig()
-
-    // 是编辑
-    if (this.detail) {
-      const baseFrom = {}
-      baseFrom.invoiceApplyNumber = this.detail.invoiceApplyNumber
-      baseFrom.customerId = this.detail.customerId ? [{
-        customerName: this.detail.customerName,
-        customerId: this.detail.customerId
-      }] : []
-
-      if (this.detail.customerId) {
-        this.titleAction = {
-          type: 'default',
-          request: crmCustomerInvoiceInfoAPI,
-          showScene: false,
-          showSearch: false,
-          showCreate: false,
-          canShowDetail: true,
-          params: {
-            customerId: this.detail.customerId
-          }
-        }
-      }
-
-      baseFrom.contractId = this.detail.contractId ? [{
-        num: this.detail.contractNum,
-        contractId: this.detail.contractId
-      }] : []
-
-      baseFrom.contractMoney = this.detail.contractMoney
-      baseFrom.invoiceMoney = this.detail.invoiceMoney
-      baseFrom.invoiceDate = this.detail.invoiceDate
-      baseFrom.invoiceType = this.detail.invoiceType
-      baseFrom.remark = this.detail.remark
-      this.baseFrom = baseFrom
-
-      const otherFrom = {}
-      otherFrom.titleType = this.detail.titleType
-      otherFrom.invoiceTitle = this.detail.invoiceTitle
-      otherFrom.taxNumber = this.detail.taxNumber
-      otherFrom.depositBank = this.detail.depositBank
-      otherFrom.depositAccount = this.detail.depositAccount
-      otherFrom.depositAddress = this.detail.depositAddress
-      otherFrom.telephone = this.detail.telephone
-      this.otherFrom = otherFrom
-
-      const mailFrom = {}
-      mailFrom.contactsName = this.detail.contactsName
-      mailFrom.contactsMobile = this.detail.contactsMobile
-      mailFrom.contactsAddress = this.detail.contactsAddress
-      this.mailFrom = mailFrom
-    }
-
-    // 审核信息
-    this.initWkFlowData({
-      params: { label: 3 },
-      fieldForm: this.baseFrom
-    }, res => {
-      this.wkFlowList = res.list
-      this.flowRemarks = res.resData ? res.resData.remarks : ''
-    })
+    this.getField()
   },
   mounted() {},
 
   beforeDestroy() {},
   methods: {
+    /**
+     * 获取数据
+     */
+    getField() {
+      this.loading = true
+      const params = {
+        label: crmTypeModel.invoice
+      }
 
-    getInvoiceNumberConfig() {
-      crmInvoiceNumberConfigAPI().then(res => {
-        this.getField(res.data.status)
-      }).catch(() => {})
+      if (this.action.type == 'update') {
+        params.id = this.action.id
+      }
+
+      filedGetFieldAPI(params)
+        .then(res => {
+          const list = res.data || []
+
+          const assistIds = this.getFormAssistIds(list)
+
+          const baseFields = []
+          const fieldList = []
+          const fieldRules = {}
+          const fieldForm = {}
+          list.forEach(children => {
+            const fields = []
+            children.forEach(item => {
+              const temp = this.getFormItemDefaultProperty(item)
+              temp.show = !assistIds.includes(item.formAssistId)
+
+              if (this.ignoreFields.includes(temp.field)) {
+                // 防止影响普通单选的验证方式
+                delete temp.optionsData
+                delete item.optionsData
+              }
+
+              const canEdit = this.getItemIsCanEdit(item, this.action.type)
+              // 是否能编辑权限
+              if (temp.show && canEdit) {
+              // 自动生成编号
+                if (item.autoGeneNumber == 1) {
+                  temp.placeholder = '根据编号规则自动生成，支持手动输入'
+                  const copyItem = objDeepCopy(item)
+                  copyItem.isNull = 0
+                  fieldRules[temp.field] = this.getRules(copyItem)
+                } else {
+                  fieldRules[temp.field] = this.getRules(item)
+                }
+              }
+
+              // 是否可编辑
+              temp.disabled = !canEdit
+
+              // 禁止某些业务组件选择
+              if (
+                temp.formType == 'contract' ||
+                temp.formType == 'customer') {
+                if (this.action.type === 'save') {
+                  temp.disabled = item.formType === 'contract'
+                } else if (this.action.type == 'relative') {
+                  const customerObj = this.action.data.customer
+                  if (temp.formType == 'customer') {
+                    temp.disabled = !!customerObj
+                  } else {
+                    temp.disabled = !customerObj
+                  }
+                }
+              }
+
+              // 合同金额字段展示用
+              if (temp.field === 'contractMoney') {
+                temp.disabled = true
+              }
+
+              // 处理关联
+              if (this.action.type == 'update' ||
+              this.action.type == 'relative') {
+                if (item.formType == 'contract') { // 合同 需要客户信息
+                  const customerItem = this.getItemRelatveInfo(list, 'customer')
+                  if (customerItem) {
+                    customerItem['moduleType'] = 'customer'
+                    customerItem['params'] = { checkStatus: 1 }
+                    temp['relation'] = customerItem
+
+                    this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
+                    this.$set(this.mailFrom, 'contactsMobile', customerItem.contactsMobile)
+                    this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
+
+                    this.titleAction = {
+                      type: 'default',
+                      request: crmCustomerInvoiceInfoAPI,
+                      showScene: false,
+                      showSearch: false,
+                      showCreate: false,
+                      canShowDetail: true,
+                      params: {
+                        customerId: customerItem.customerId
+                      }
+                    }
+                  }
+                }
+              }
+
+              // 特殊字段允许多选
+              this.getItemRadio(item, temp)
+
+              // 获取默认值
+              if (temp.show) {
+                if (this.ignoreFields.includes(temp.field)) {
+                  fieldForm[temp.field] = this.isEdit ? temp.value : temp.defaultValue
+                } else {
+                  fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+                }
+              }
+              fields.push(temp)
+              baseFields.push(item)
+            })
+            fieldList.push(fields)
+          })
+
+          this.baseFields = baseFields
+          this.fieldList = fieldList
+          this.fieldForm = fieldForm
+          this.fieldRules = fieldRules
+
+          // 审核信息
+          this.initWkFlowData({
+            params: { label: 3 },
+            fieldForm: this.fieldForm
+          }, res => {
+            this.wkFlowList = res.list
+            this.flowRemarks = res.resData ? res.resData.remarks : ''
+          })
+
+          // 获取其他块字段
+          this.getOtherField()
+          // relative 下赋值联系人信息
+          if (this.isEdit || this.action.type === 'relative') {
+            const detail = this.action.detail
+
+            const otherFrom = {}
+            otherFrom.titleType = detail.titleType
+            otherFrom.invoiceTitle = detail.invoiceTitle
+            otherFrom.taxNumber = detail.taxNumber
+            otherFrom.depositBank = detail.depositBank
+            otherFrom.depositAccount = detail.depositAccount
+            otherFrom.depositAddress = detail.depositAddress
+            otherFrom.telephone = detail.telephone
+            this.otherFrom = otherFrom
+
+            const mailFrom = {}
+            mailFrom.contactsName = detail.contactsName
+            mailFrom.contactsMobile = detail.contactsMobile
+            mailFrom.contactsAddress = detail.contactsAddress
+            this.mailFrom = mailFrom
+          }
+          this.loading = false
+        })
+        .catch(() => {
+          this.loading = false
+        })
     },
 
-    getField(status) {
-      if (status != 1) {
-        this.$set(this.rules, 'invoiceApplyNumber', [
-          { required: true, message: '请输入发票申请编号', trigger: ['blur', 'change'] }
-        ])
-      }
-      this.baseFields = [
-        {
-          name: '发票申请编号',
-          field: 'invoiceApplyNumber',
-          formType: 'text',
-          autoGeneNumber: status,
-          setting: []
-        },
-        {
-          name: '客户名称',
-          field: 'customerId',
-          formType: 'customer',
-          setting: []
-        },
-        {
-          name: '合同编号',
-          field: 'contractId',
-          formType: 'contract',
-          disabled: !(this.detail && this.detail.customerId),
-          relation: this.detail && this.detail.customerId ? {
-            moduleType: 'customer',
-            params: { checkStatus: 1 },
-            customerName: this.detail.customerName,
-            customerId: this.detail.customerId
-          } : null,
-          setting: []
-        },
-        {
-          name: '合同金额',
-          field: 'contractMoney',
-          formType: 'text',
-          disabled: true,
-          setting: []
-        },
-        {
-          name: '开票金额（元）',
-          field: 'invoiceMoney',
-          formType: 'floatnumber',
-          setting: []
-        },
-        {
-          name: '开票日期',
-          field: 'invoiceDate',
-          formType: 'date',
-          setting: []
-        },
-        {
-          name: '开票类型',
-          field: 'invoiceType',
-          formType: 'select',
-          setting: [{
-            name: '增值税专用发票',
-            value: 1
-          }, {
-            name: '增值税普通发票',
-            value: 2
-          }, {
-            name: '国税通用机打发票',
-            value: 3
-          }, {
-            name: '地税通用机打发票',
-            value: 4
-          }, {
-            name: '收据',
-            value: 5
-          }]
-        },
-        {
-          name: '备注',
-          field: 'remark',
-          formType: 'textarea',
-          setting: []
-        }]
-
-
+    getOtherField() {
       this.otherFields = [
         {
           name: '抬头类型',
@@ -497,62 +546,62 @@ export default {
       }
     },
 
-    fieldValueChange(data) {
-      const item = this.baseFields[data.index]
-      const dataValue = data.value
-      this.$set(this.baseFrom, item.field, dataValue)
+    // fieldValueChange(data) {
+    //   const item = this.baseFields[data.index]
+    //   const dataValue = data.value
+    //   this.$set(this.fieldForm, item.field, dataValue)
 
-      if (item.formType == 'customer') {
-        const contractItem = this.baseFields[data.index + 1]
-        if (dataValue.length) {
-          contractItem.disabled = false
-          const customerItem = dataValue[0]
-          customerItem['moduleType'] = 'customer'
-          customerItem['params'] = { checkStatus: 1 }
-          contractItem['relation'] = customerItem
+    //   if (item.formType == 'customer') {
+    //     const contractItem = this.baseFields[data.index + 1]
+    //     if (dataValue.length) {
+    //       contractItem.disabled = false
+    //       const customerItem = dataValue[0]
+    //       customerItem['moduleType'] = 'customer'
+    //       customerItem['params'] = { checkStatus: 1 }
+    //       contractItem['relation'] = customerItem
 
-          this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
-          this.$set(this.mailFrom, 'contactsMobile', customerItem.contactsMobile)
-          this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
+    //       this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
+    //       this.$set(this.mailFrom, 'contactsMobile', customerItem.contactsMobile)
+    //       this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
 
-          this.titleAction = {
-            type: 'default',
-            request: crmCustomerInvoiceInfoAPI,
-            showScene: false,
-            showSearch: false,
-            showCreate: false,
-            canShowDetail: true,
-            params: {
-              customerId: customerItem.customerId
-            }
-          }
-        } else {
-          contractItem.disabled = true
-          contractItem['relation'] = {}
-          // 重置发票信息
-          this.otherFields.forEach(item => {
-            if (item.field !== 'titleType') {
-              this.otherFrom[item.field] = ''
-            }
-          })
-        }
+    //       this.titleAction = {
+    //         type: 'default',
+    //         request: crmCustomerInvoiceInfoAPI,
+    //         showScene: false,
+    //         showSearch: false,
+    //         showCreate: false,
+    //         canShowDetail: true,
+    //         params: {
+    //           customerId: customerItem.customerId
+    //         }
+    //       }
+    //     } else {
+    //       contractItem.disabled = true
+    //       contractItem['relation'] = {}
+    //       // 重置发票信息
+    //       this.otherFields.forEach(item => {
+    //         if (item.field !== 'titleType') {
+    //           this.otherFrom[item.field] = ''
+    //         }
+    //       })
+    //     }
 
-        this.$set(this.baseFrom, 'contractId', [])
-        this.$set(this.baseFrom, 'invoiceMoney', '')
-        this.$set(this.baseFrom, 'contractMoney', '')
-        this.$refs.crmForm.validateField(item.field)
-        this.debouncedGetWkFlowList('invoiceMoney', this.baseFrom)
-      } else if (item.formType == 'contract') {
-        const contractValue = dataValue && dataValue.length ? dataValue[0] : null
-        this.$set(this.baseFrom, 'contractMoney', contractValue ? contractValue.money : '')
-        this.$set(this.baseFrom, 'invoiceMoney', contractValue ? contractValue.money : '')
-        this.$refs.crmForm.validateField(item.field)
-        this.debouncedGetWkFlowList('invoiceMoney', this.baseFrom)
-      } else {
-        // 审批流逻辑
-        this.debouncedGetWkFlowList(item.field, this.baseFrom)
-      }
-    },
+    //     this.$set(this.fieldForm, 'contractId', [])
+    //     this.$set(this.fieldForm, 'invoiceMoney', '')
+    //     this.$set(this.fieldForm, 'contractMoney', '')
+    //     this.$refs.crmForm.validateField(item.field)
+    //     this.debouncedGetWkFlowList('invoiceMoney', this.fieldForm)
+    //   } else if (item.formType == 'contract') {
+    //     const contractValue = dataValue && dataValue.length ? dataValue[0] : null
+    //     this.$set(this.fieldForm, 'contractMoney', contractValue ? contractValue.money : '')
+    //     this.$set(this.fieldForm, 'invoiceMoney', contractValue ? contractValue.money : '')
+    //     this.$refs.crmForm.validateField(item.field)
+    //     this.debouncedGetWkFlowList('invoiceMoney', this.fieldForm)
+    //   } else {
+    //     // 审批流逻辑
+    //     this.debouncedGetWkFlowList(item.field, this.fieldForm)
+    //   }
+    // },
 
     otherFieldValueChange(data) {
       const item = this.otherFields[data.index]
@@ -579,53 +628,39 @@ export default {
     },
 
     saveClick() {
-      this.$refs.crmForm.validate(valid => {
+      this.loading = true
+      const crmForm = this.$refs.crmForm
+      crmForm.validate(valid => {
         if (valid) {
           const wkFlowResult = this.validateWkFlowData(this.wkFlowList)
           if (wkFlowResult.pass) {
-            const params = {}
+            const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
 
             if (wkFlowResult.data) {
               params.examineFlowData = wkFlowResult.data
             }
 
-            for (let index = 0; index < this.baseFields.length; index++) {
-              const element = this.baseFields[index]
-              if (!element.disabled) {
-                if (element.formType == 'customer') {
-                  const customerValue = this.baseFrom.customerId && this.baseFrom.customerId.length ? this.baseFrom.customerId[0] : null
-                  params[element.field] = customerValue ? customerValue.customerId : ''
-                } else if (element.formType == 'contract') {
-                  const contractValue = this.baseFrom.contractId && this.baseFrom.contractId.length ? this.baseFrom.contractId[0] : null
-                  params[element.field] = contractValue ? contractValue.contractId : ''
-                } else {
-                  params[element.field] = this.baseFrom[element.field]
-                }
-              }
-            }
-
+            const entityParams = params.entity // 系统字段
             for (let index = 0; index < this.otherFields.length; index++) {
               const element = this.otherFields[index]
               if (!element.disabled) {
-                params[element.field] = this.otherFrom[element.field]
+                entityParams[element.field] = this.otherFrom[element.field]
               }
             }
 
             for (let index = 0; index < this.mailFields.length; index++) {
               const element = this.mailFields[index]
               if (!element.disabled) {
-                params[element.field] = this.mailFrom[element.field]
+                entityParams[element.field] = this.mailFrom[element.field]
               }
             }
 
             if (this.isEdit) {
-              params.invoiceId = this.detail.invoiceId
-              params.batchId = this.detail.batchId
+              entityParams.invoiceId = this.action.id
+              entityParams.batchId = this.action.batchId
             }
 
-            const request = this.isEdit ? crmInvoiceUpdateAPI : crmInvoiceSaveAPI
-            this.loading = true
-            request(params)
+            crmInvoiceSaveAPI(params)
               .then(res => {
                 this.loading = false
                 this.close()
@@ -639,8 +674,98 @@ export default {
             this.loading = false
             this.$message.error('请完善审批信息')
           }
+        } else {
+          this.loading = false
+          // 提示第一个error
+          this.getFormErrorMessage(crmForm)
+          return false
         }
       })
+    },
+
+    /**
+     * 验证唯一
+     */
+    UniquePromise({ field, value }) {
+      return this.getUniquePromise(field, value, this.action)
+    },
+
+    /**
+     * change
+     */
+    formChange(field, index, value, valueList) {
+      // 审批流逻辑
+      this.debouncedGetWkFlowList(field.field, this.fieldForm)
+
+      if ([
+        'select',
+        'checkbox'
+      ].includes(field.formType) &&
+          field.remark === 'options_type' &&
+          field.optionsData) {
+        const { fieldForm, fieldRules } = this.getFormContentByOptionsChange(this.fieldList, this.fieldForm)
+        this.fieldForm = fieldForm
+        this.fieldRules = fieldRules
+      }
+    },
+
+    /**
+     * 地址change
+     */
+    otherChange(data, field) {
+      if (field.formType === 'customer') {
+        this.itemsForEach(this.fieldList, fieldItem => {
+          if (fieldItem.formType === 'contract') {
+            // 如果是合同 改变合同样式和传入客户ID
+            if (data.value.length > 0) {
+              fieldItem.disabled = false
+              const customerItem = data.value[0]
+              customerItem['moduleType'] = 'customer'
+              customerItem['params'] = { checkStatus: 1 }
+              fieldItem['relation'] = customerItem
+
+              this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
+              this.$set(this.mailFrom, 'contactsMobile', customerItem.contactsMobile)
+              this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
+
+              this.titleAction = {
+                type: 'default',
+                request: crmCustomerInvoiceInfoAPI,
+                showScene: false,
+                showSearch: false,
+                showCreate: false,
+                canShowDetail: true,
+                params: {
+                  customerId: customerItem.customerId
+                }
+              }
+            } else {
+              fieldItem.disabled = true
+              fieldItem['relation'] = {}
+              // 重置发票信息
+              this.otherFields.forEach(item => {
+                if (item.field !== 'titleType') {
+                  this.otherFrom[item.field] = ''
+                }
+              })
+            }
+            this.fieldForm[fieldItem.field] = []
+          }
+        })
+
+
+        // this.$set(this.fieldForm, 'contractId', [])
+        this.$set(this.fieldForm, 'invoiceMoney', '')
+        this.$set(this.fieldForm, 'contractMoney', '')
+        this.debouncedGetWkFlowList('invoiceMoney', this.fieldForm)
+      } else if (field.formType === 'contract') {
+        const contractValue = data.value && data.value.length ? data.value[0] : null
+        this.$set(this.fieldForm, 'contractMoney', contractValue ? contractValue.money : '')
+        this.$set(this.fieldForm, 'invoiceMoney', contractValue ? contractValue.money : '')
+        this.debouncedGetWkFlowList('invoiceMoney', this.fieldForm)
+      }
+      this.$set(this.fieldForm, field.field, data.value)
+      this.$refs.crmForm.validateField(field.field)
     }
   }
 }

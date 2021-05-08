@@ -42,7 +42,6 @@
 <script>
 import CRMMessage from './compenents/CRMMessage' // 系统消息
 import { mapGetters } from 'vuex'
-import { objDeepCopy } from '@/utils'
 import XrMenuItem from '@/components/XrMenu/XrMenuItem'
 
 export default {
@@ -263,14 +262,7 @@ export default {
     /**
      * 消息页面点击操作
      */
-    messageHandle(data) {
-      if (data.type == 'follow') {
-        const copyNum = objDeepCopy(this.messageNum)
-        const num = parseInt(copyNum[data.infoType]) - data.value
-        copyNum[data.infoType] = num > 0 ? num : 0
-        this.$store.commit('SET_MESSAGENUM', copyNum)
-      }
-    },
+    messageHandle(data) {},
 
     /**
      * 侧边点击

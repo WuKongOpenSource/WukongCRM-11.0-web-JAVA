@@ -28,7 +28,7 @@ export default {
   methods: {
     // 放大图片
     imgZoom(val, k) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: k,
         data: val.map(function(item, index, array) {
           return {

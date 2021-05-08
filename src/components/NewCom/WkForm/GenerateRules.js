@@ -8,7 +8,7 @@ import {
   regexIsCRMMobile,
   regexIsCRMEmail
 } from '@/utils'
-import { isEmpty, isObject } from '@/utils/types'
+import { isEmpty, isObject, isArray } from '@/utils/types'
 
 
 export default {
@@ -21,7 +21,6 @@ export default {
      */
     UniquePromise(data) {
       return new Promise(resolve => {
-        console.log(data)
         resolve()
       })
     },
@@ -41,6 +40,33 @@ export default {
           message: item.name + '不能为空',
           trigger: ['blur', 'change']
         })
+
+        if (item.formType == 'detail_table') {
+          tempList.push({
+            validator: ({ item }, value, callback) => {
+              if (this.getDetailTableIsEmpty(item.fieldExtendList, value)) {
+                callback(new Error(item.name + '不能为空'))
+              } else {
+                callback()
+              }
+            },
+            item: item,
+            trigger: ['blur', 'change']
+          })
+        } else if (item.formType == 'checkbox') {
+          tempList.push({
+            validator: ({ item }, value, callback) => {
+              if (!isArray(value) || value.length === 0) {
+                callback(new Error(item.name + '不能为空'))
+              } else {
+                const emptyObj = value.find(valueItem => isEmpty(valueItem))
+                emptyObj === '' ? callback(new Error(item.name + '不能为空')) : callback()
+              }
+            },
+            item: item,
+            trigger: ['blur', 'change']
+          })
+        }
       }
 
       // 验证唯一
@@ -66,7 +92,7 @@ export default {
           item: item,
           trigger:
             item.formType == 'checkbox' || item.formType == 'select'
-              ? ['change']
+              ? ['change', 'blur']
               : ['blur']
         })
       }
@@ -183,6 +209,39 @@ export default {
       } else {
         callback()
       }
+    },
+
+    /**
+     * 判断明细表格是否是空
+     * @param {*} fieldList
+     * @param {*} valueObj
+     */
+    getDetailTableIsEmpty(fieldList, valueObjs) {
+      for (let index = 0; index < valueObjs.length; index++) {
+        const valueObj = valueObjs[index]
+        if (this.judgeFormValueIsEmpty(fieldList, valueObj)) {
+          return true
+        }
+      }
+      return false
+    },
+
+    /**
+     * 判断对象值是否是空
+     */
+    judgeFormValueIsEmpty(fieldList, valueObj) {
+      for (let index = 0; index < fieldList.length; index++) {
+        const field = fieldList[index]
+        const value = valueObj[field.fieldName]
+        if (field.formType === 'location') {
+          if (isObject(value) && (!isEmpty(value.lat) || !isEmpty(value.lng) || !isEmpty(value.address))) {
+            return false
+          }
+        } else if (!isEmpty(value)) {
+          return false
+        }
+      }
+      return true
     }
   }
 }

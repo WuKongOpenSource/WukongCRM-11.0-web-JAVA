@@ -73,6 +73,25 @@ export default {
           } else {
             return isEmpty(item.defaultValue) ? undefined : item.defaultValue
           }
+        } else if (item.formType == 'detail_table') {
+          const baseFieldList = item.value || [item.fieldExtendList]
+          // 二维数组
+          const tableValue = []
+          baseFieldList.forEach(bigItem => {
+            const subForm = {}
+            tableValue.push(subForm)
+            bigItem.forEach(subItem => {
+              // 未转换 取 fieldName 值
+              if ([
+                'select',
+                'checkbox'
+              ].includes(subItem.formType)) {
+                subItem.optionsData = null
+              }
+              subForm[subItem.fieldName] = this.getItemValue(subItem, null, type)
+            })
+          })
+          return tableValue
         } else {
           if (type == 'update') {
             return item.value || ''
@@ -90,34 +109,7 @@ export default {
       return new Promise((resolve, reject) => {
         var validatesParams = {}
         validatesParams.fieldId = field.fieldId
-        if (isArray(value)) {
-          let postValue = ''
-          if (value.length > 0) {
-            if (
-              field.formType == 'user' ||
-                  field.formType == 'structure'
-            ) {
-              postValue = value
-                .map(valueItem => {
-                  return field.formType == 'user'
-                    ? valueItem.userId
-                    : valueItem.id
-                })
-                .join(',')
-            } else if (field.fieldName == 'categoryId') {
-              if (value && value.length) {
-                postValue = value[value.length - 1]
-              } else {
-                postValue = ''
-              }
-            } else if (field.formType == 'checkbox') {
-              postValue = value.join(',')
-            }
-          }
-          validatesParams.value = postValue
-        } else {
-          validatesParams.value = value
-        }
+        validatesParams.value = this.getRealParams(field, value)
         if (detail.type == 'update') {
           validatesParams.batchId = detail.batchId
         }
@@ -145,16 +137,10 @@ export default {
     /**
      * 获取字段默认内容
      */
-    getFormItemDefaultProperty(item) {
-      const temp = {}
+    getFormItemDefaultProperty(item, isCopy = true) {
+      const temp = isCopy ? objDeepCopy(item) : item
       temp.field = item.fieldName
-      temp.formType = item.formType
-      temp.fieldId = item.fieldId
-      temp.inputTips = item.inputTips
-      temp.name = item.name
-      temp.setting = item.setting
-      temp.stylePercent = item.stylePercent
-      temp.precisions = item.precisions
+
       // 细化 precisions
       if (item.formType === 'date_interval') {
         // 1 日期  2 时间日期
@@ -171,6 +157,42 @@ export default {
         temp.showDetail = item.precisions === 1
         temp.hideArea = item.precisions === 3 || item.precisions === 4
         temp.onlyProvince = item.precisions === 4
+      } else if (item.formType === 'detail_table') {
+        // 校准默认单元数据
+        // authLevel 1 不能查看不能编辑 2可查看  3 可编辑可查看
+        const fieldForm = {}
+        temp.fieldExtendList.forEach(extendItem => {
+          const copyExtendItem = objDeepCopy(extendItem)
+          this.getFormItemDefaultProperty(extendItem, false)
+          extendItem.show = extendItem.isHidden !== 1
+          if (extendItem.show) {
+            extendItem.rules = this.getRules(copyExtendItem)
+          }
+          this.getItemRadio(extendItem, extendItem)
+          fieldForm[extendItem.fieldName] = this.getItemValue(extendItem)
+        })
+        temp.fieldForm = fieldForm // 用于追加新事项
+
+        const fieldExtendList = objDeepCopy(item.fieldExtendList)
+        const baseFieldList = isEmpty(item.value) ? [fieldExtendList] : item.value
+        // 二维数组
+        const tableFieldList = []
+        baseFieldList.forEach(bigItem => {
+          const subValue = []
+          bigItem.forEach(subItem => {
+            const copySubItem = objDeepCopy(subItem)
+            const subTemp = this.getFormItemDefaultProperty(subItem, false)
+            // 特殊字段允许多选
+            this.getItemRadio(subItem, subTemp)
+            subTemp.show = subTemp.isHidden !== 1
+            if (subTemp.show) {
+              subTemp.rules = this.getRules(copySubItem)
+            }
+            subValue.push(subTemp)
+          })
+          tableFieldList.push(subValue)
+        })
+        temp.fieldList = tableFieldList
       }
       return temp
     },
@@ -281,12 +303,18 @@ export default {
       var params = { entity: {}, field: [] }
       for (let index = 0; index < array.length; index++) {
         const field = array[index]
+        let dataValue = null
+        if (field.hasOwnProperty('show')) {
+          dataValue = field.show ? data[field.fieldName] : null
+        } else {
+          dataValue = data[field.fieldName]
+        }
         if (field.formType == 'product') {
-          this.getProductParams(params, data[field.fieldName])
+          this.getProductParams(params, dataValue)
         } else if (field.formType == 'map_address') {
-          this.getCustomerAddressParams(params.entity, data[field.fieldName])
+          this.getCustomerAddressParams(params.entity, dataValue)
         } else if (field.fieldType == 1) {
-          const fieldValue = this.getRealParams(field, data[field.fieldName])
+          const fieldValue = this.getRealParams(field, dataValue)
           params.entity[field.fieldName] = isEmpty(fieldValue) ? '' : fieldValue
         } else if (field.formType !== 'desc_text') { //  描述文字忽略
           params.field.push({
@@ -295,7 +323,7 @@ export default {
             name: field.name,
             type: field.type,
             fieldId: field.fieldId,
-            value: this.getRealParams(field, data[field.fieldName])
+            value: this.getRealParams(field, dataValue)
           })
         }
       }
@@ -330,13 +358,21 @@ export default {
      * 获取客户位置提交参数
      */
     getCustomerAddressParams(params, dataValue) {
-      params['address'] = dataValue.address
-        ? dataValue.address.join(',')
-        : ''
-      params['detailAddress'] = dataValue.detailAddress
-      params['location'] = dataValue.location
-      params['lng'] = dataValue.lng
-      params['lat'] = dataValue.lat
+      if (dataValue) {
+        params['address'] = dataValue.address
+          ? dataValue.address.join(',')
+          : ''
+        params['detailAddress'] = dataValue.detailAddress
+        params['location'] = dataValue.location
+        params['lng'] = dataValue.lng
+        params['lat'] = dataValue.lat
+      } else {
+        params['address'] = ''
+        params['detailAddress'] = ''
+        params['location'] = ''
+        params['lng'] = ''
+        params['lat'] = ''
+      }
     },
 
     /**
@@ -358,7 +394,15 @@ export default {
         field.formType == 'user' ||
         field.formType == 'structure'
       ) {
-        return dataValue ? dataValue.join(',') : ''
+        let newDataValue = dataValue || []
+        if (isArray(dataValue) && dataValue.length > 0) {
+          if (isObject(dataValue[0])) {
+            newDataValue = dataValue.map(valueItem => field.formType == 'user'
+              ? valueItem.userId
+              : valueItem.id)
+          }
+        }
+        return newDataValue.join(',')
       } else if (field.formType == 'file') {
         if (dataValue && dataValue.length > 0) {
           return dataValue[0].batchId
@@ -370,13 +414,186 @@ export default {
         }
         return ''
       } else if (field.formType == 'checkbox') {
-        if (dataValue && dataValue.length > 0) {
+        if (isArray(dataValue)) {
           return dataValue.join(',')
         }
-        return ''
+        return dataValue
+      } else if (field.formType == 'select') {
+        return dataValue
+      } else if (field.formType == 'detail_table') {
+        const fieldExtendList = field.fieldExtendList || []
+        const values = []
+        const tableValues = Array.isArray(dataValue) ? dataValue : []
+
+        for (let tableValueIndex = 0; tableValueIndex < tableValues.length; tableValueIndex++) {
+          const tableValue = tableValues[tableValueIndex]
+          // 去除空值数据
+          if (!this.getFormValueIsEmpty(fieldExtendList, tableValue)) {
+            const valuesItems = []
+            fieldExtendList.forEach(tableField => {
+              const copyTableField = objDeepCopy(tableField)
+              delete copyTableField.companyId
+              copyTableField.value = this.getRealParams(copyTableField, tableValue[copyTableField.fieldName])
+              valuesItems.push(copyTableField)
+            })
+            values.push(valuesItems)
+          }
+        }
+
+        return values
       }
 
       return dataValue
+    },
+
+    /**
+     * 判断对象值是否是空
+     */
+    getFormValueIsEmpty(fieldList, valueObj) {
+      for (let index = 0; index < fieldList.length; index++) {
+        const field = fieldList[index]
+        const value = valueObj[field.fieldName]
+        if (field.formType === 'select' || field.formType === 'checkbox') {
+          if (isObject(value) && !isEmpty(value.select)) {
+            return false
+          }
+        } else if (field.formType === 'location') {
+          if (isObject(value) && (!isEmpty(value.lat) || !isEmpty(value.lng) || !isEmpty(value.address))) {
+            return false
+          }
+        } else if (!isEmpty(value)) {
+          return false
+        }
+      }
+      return true
+    },
+
+    /**
+     * 获取逻辑表单隐藏id
+     */
+    getFormAssistIds(list, valueObj) {
+      let allIds = []
+      list.forEach(items => {
+        items.forEach(item => {
+          if ([
+            'select',
+            'checkbox'
+          ].includes(item.formType) &&
+          item.remark === 'options_type' &&
+          item.optionsData) {
+            for (const key in item.optionsData) {
+              allIds = allIds.concat(item.optionsData[key] || [])
+            }
+          }
+        })
+      })
+
+      allIds = allIds.filter(o => Boolean(o))
+      allIds = Array.from(new Set(allIds))
+
+      const ignoreIds = []
+      this.getFormAssistData(list, valueObj, allIds, ignoreIds)
+      return allIds.filter(o => !ignoreIds.includes(o))
+    },
+
+    /**
+     * 获取信息
+     */
+    getFormAssistData(list, valueObj, allIds, ignoreIds) {
+      // let ignorIds = []
+      const ignoreLength = ignoreIds.length
+      list.forEach(items => {
+        items.forEach(item => {
+          if ([
+            'select',
+            'checkbox'
+          ].includes(item.formType) &&
+          item.remark === 'options_type' &&
+          item.optionsData) {
+            let value = valueObj ? valueObj[item.field || item.fieldName] : item.value
+            if (!allIds.includes(item.formAssistId)) {
+              if (item.formType === 'select') {
+                if (isEmpty(value)) {
+                  value = []
+                } else {
+                  value = item.setting.includes(value) ? [value] : ['其他']
+                }
+              } else if (item.formType === 'checkbox') {
+                if (isArray(value)) {
+                  const copyValue = objDeepCopy(value)
+                  const otherItem = copyValue.filter((name) => !item.setting.includes(name))
+                  if (otherItem.length > 0) {
+                    const newValue = copyValue.filter((name) => !otherItem.includes(name))
+                    newValue.push('其他')
+                    value = newValue
+                  }
+                } else {
+                  value = []
+                }
+              }
+
+              for (const key in item.optionsData) {
+                if (value && value.includes(key)) {
+                  const keyValue = item.optionsData[key] || []
+                  for (let index = 0; index < keyValue.length; index++) {
+                    const id = keyValue[index]
+                    if (!ignoreIds.includes(id)) {
+                      ignoreIds.push(id)
+                    }
+                  }
+                }
+              }
+            }
+          }
+        })
+      })
+
+      if (ignoreLength !== ignoreIds.length) {
+        const newAllIds = allIds.filter(o => !ignoreIds.includes(o))
+        this.getFormAssistData(list, valueObj, newAllIds, ignoreIds)
+      }
+    },
+
+    /**
+     * 获取表单展示内容
+     * data 用于相关模块新建填充模块值
+     * type 新建编辑
+     */
+    getFormContentByOptionsChange(fieldList, formObj, rules = {}, data = {}, type) {
+      const allFieldRules = this.fieldRules || rules
+      const actionData = this.action && this.action.data ? this.action.data : data
+      const actionType = this.action && this.action.type ? this.action.type : type
+
+      const fieldRules = {}
+      const fieldForm = {}
+
+      // 依据最新的值，获取隐藏的ids
+      const assistIds = this.getFormAssistIds(fieldList, formObj)
+      this.itemsForEach(fieldList, fieldItem => {
+        fieldItem.show = !assistIds.includes(fieldItem.formAssistId)
+        // 展示 并且 允许编辑，加入验证规则
+        if (fieldItem.show && !fieldItem.disabled) {
+          if (allFieldRules[fieldItem.field]) {
+            fieldRules[fieldItem.field] = allFieldRules[fieldItem.field]
+          } else {
+            fieldRules[fieldItem.field] = this.getRules(fieldItem)
+          }
+        }
+
+        // 值获取
+        if (fieldItem.show) {
+          if (formObj[fieldItem.field]) {
+            fieldForm[fieldItem.field] = formObj[fieldItem.field]
+          } else {
+            fieldForm[fieldItem.field] = this.getItemValue(fieldItem, actionData, actionType)
+          }
+        }
+      })
+
+      return {
+        fieldForm,
+        fieldRules
+      }
     }
 
   }

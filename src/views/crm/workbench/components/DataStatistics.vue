@@ -19,7 +19,7 @@
           客户汇总
         </div>
         <div class="info">
-          新增<span class="bold">{{ data.allCustomer }}</span>个客户，转成交客户<span class="bold">{{ data.dealCustomer }}</span>个
+          新增<span class="bold">{{ data.allCustomer }}</span>个客户，转成交客户<span class="bold">{{ data.dealCustomer }}</span>个，放入公海客户<span class="bold">{{ data.putInPoolNum }}</span>个，公海池领取客户<span class="bold">{{ data.receiveNum }}</span>个
         </div>
       </div>
       <div class="list-item">
@@ -35,7 +35,7 @@
           商机汇总
         </div>
         <div class="info">
-          新增<span class="bold">{{ data.allBusiness }}</span>个商机，商机总金额<span class="bold">{{ data.businessMoney | separator }}</span>元，赢单商机<span class="bold">{{ data.endBusiness }}</span>个
+          新增<span class="bold">{{ data.allBusiness }}</span>个商机，商机总金额<span class="bold">{{ data.businessMoney | separator }}</span>元，赢单商机<span class="bold">{{ data.endBusiness }}</span>个，输单商机<span class="bold">{{ data.loseBusiness }}</span>个
         </div>
       </div>
       <div class="list-item">
@@ -43,7 +43,7 @@
           合同汇总
         </div>
         <div class="info">
-          合同签订<span class="bold">{{ data.allContract }}</span>份，合同金额<span class="bold">{{ data.contractMoney | separator }}</span>元
+          签约<span class="bold">{{ data.allContract }}</span>个合同，合同金额<span class="bold">{{ data.contractMoney | separator }}</span>元，即将到期的合同<span class="bold">{{ data.expireContract }}</span>个，已到期的合同<span class="bold">{{ data.endContract }}</span>个
         </div>
       </div>
       <div class="list-item">

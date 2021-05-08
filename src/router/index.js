@@ -77,6 +77,6 @@ export const asyncRouterMap = [
   { type: 'addressBook', router: addressBookRouter },
   { type: 'project', router: pmRouter },
   { type: 'bi', router: biRouter },
-  { type: 'manage', router: adminRouter },
-  { type: 'calendar', router: calendarRouter }
+  { type: 'calendar', router: calendarRouter },
+  { type: 'manage', router: adminRouter }
 ]

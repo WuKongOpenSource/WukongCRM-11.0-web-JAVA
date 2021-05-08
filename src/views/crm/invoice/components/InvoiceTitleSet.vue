@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    v-loading="loading"
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -46,12 +46,13 @@
 <script>
 import { crmInvoiceSaveInvoiceInfoAPI, crmInvoiceUpdateInvoiceInfoAPI } from '@/api/crm/invoice'
 
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   name: 'InvoiceTitleSet', // 标记为开票
   components: {
   },
-  mixins: [],
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -63,7 +64,6 @@ export default {
   },
   data() {
     return {
-      loading: true,
       form: {
         titleType: 1
       },

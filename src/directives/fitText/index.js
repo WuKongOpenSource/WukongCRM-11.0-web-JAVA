@@ -8,7 +8,6 @@ const changeFontSize = function() {
   let size = option.fontSize
   el.style.fontSize = size + 'px'
   let scrollWidth = el.scrollWidth
-
   while (el.scrollWidth > el.clientWidth) {
     scrollWidth = el.scrollWidth
     size = size - 0.2
@@ -18,6 +17,8 @@ const changeFontSize = function() {
       break
     } else if (size <= 12) {
       el.style.overflowX = 'hidden'
+      el.style.overflowY = 'hidden'
+      el.style.textOverflow = 'ellipsis'
       break
     }
   }
@@ -25,12 +26,16 @@ const changeFontSize = function() {
 
 export default {
   name: 'FitText',
-  inserted(el, binding, vnode) {
+  bind: function(el, binding, vnode) {
     const option = binding.value || { fontSize: 14 }
     const debouncedResize = debounce(300, changeFontSize.bind(el))
     el[scope] = { el, option, debouncedResize }
 
     window.addEventListener('resize', debouncedResize)
+  },
+  inserted(el, binding, vnode) {
+    const { debouncedResize } = el[scope]
+    debouncedResize()
   },
   update(el, binding, vnode) {
     const { debouncedResize } = el[scope]

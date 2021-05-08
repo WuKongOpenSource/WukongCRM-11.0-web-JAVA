@@ -35,6 +35,7 @@
       <el-form-item label="设置角色" prop="roleList">
         <role-employee-select
           v-model="ruleForm.roleList"
+          :props="roleSelectProps"
           style="width: 100%;"
           multiple
         />
@@ -52,6 +53,7 @@
 import {
   adminRoleRelatedDeptUserAPI
 } from '@/api/admin/role'
+import { adminRoleGetRoleListAPI } from '@/api/admin/employeeDep'
 
 import RoleEmployeeSelect from './RoleEmployeeSelect'
 import WkUserDepSelect from '@/components/NewCom/WkUserDepSelect'
@@ -114,6 +116,12 @@ export default {
       }
 
       return temp
+    },
+
+    roleSelectProps() {
+      return {
+        roleRequest: adminRoleGetRoleListAPI
+      }
     }
   },
   watch: {

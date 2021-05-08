@@ -370,7 +370,7 @@ export default {
         } else {
           perviewFile = file
         }
-        this.$bus.emit('preview-image-bus', {
+        this.$wkPreviewFile.preview({
           index: 0,
           data: [perviewFile]
         })

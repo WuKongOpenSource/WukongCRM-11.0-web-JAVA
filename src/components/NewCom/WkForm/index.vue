@@ -43,7 +43,7 @@
         v-model.trim="fieldFrom[item.field]"
         :disabled="item.disabled"
         :prefix-icon="getInputIcon(item.formType)"
-        :maxlength="100"
+        :maxlength="getInputMaxlength(item.formType)"
         :placeholder="item.placeholder"
         type="text"
         @input="commonChange(item, index, $event)"/>
@@ -72,6 +72,27 @@
         :type="item.formType"
         resize="none"
         @input="commonChange(item, index, $event)" />
+      <!-- 逻辑表单单选多选 -->
+      <wk-select
+        v-else-if="item.formType === 'select' && item.hasOwnProperty('optionsData')"
+        v-model="fieldFrom[item.field]"
+        :disabled="item.disabled"
+        :clearable="item.clearable"
+        :placeholder="item.placeholder"
+        :options="item.setting"
+        :show-type="item.precisions === 1 ? 'tiled' : 'default'"
+        :other-show-input="item.hasOwnProperty('optionsData')"
+        @change="commonChange(item, index, $event)"/>
+      <wk-checkbox
+        v-else-if="item.formType === 'checkbox' && item.hasOwnProperty('optionsData')"
+        v-model="fieldFrom[item.field]"
+        :disabled="item.disabled"
+        :clearable="item.clearable"
+        :placeholder="item.placeholder"
+        :options="item.setting"
+        :show-type="item.precisions === 1 ? 'tiled' : 'default'"
+        :other-show-input="item.hasOwnProperty('optionsData')"
+        @change="commonChange(item, index, $event)"/>
       <el-select
         v-else-if="['checkbox', 'select'].includes(item.formType)"
         v-model="fieldFrom[item.field]"
@@ -169,8 +190,11 @@
         </el-radio>
       </el-radio-group>
       <el-switch
-        v-else-if="item.formType == 'radio'"
-        v-model="fieldFrom[item.field]"/>
+        v-else-if="item.formType == 'boolean_value'"
+        v-model="fieldFrom[item.field]"
+        :disabled="item.disabled"
+        active-value="1"
+        inactive-value="0"/>
       <v-distpicker
         v-if="item.formType == 'address'"
         :province="fieldFrom[item.field].province"
@@ -198,6 +222,8 @@ import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import WkDepSelect from '@/components/NewCom/WkDepSelect'
 import VDistpicker from '@/components/VDistpicker'
 import { XhFiles } from '@/components/CreateCom'
+import WkSelect from '@/components/NewCom/WkSelect'
+import WkCheckbox from '@/components/NewCom/WkCheckbox'
 
 import Mixin from './Mixin'
 
@@ -207,7 +233,9 @@ export default {
     WkUserSelect,
     WkDepSelect,
     VDistpicker,
-    XhFiles
+    XhFiles,
+    WkSelect,
+    WkCheckbox
   },
   mixins: [Mixin],
   inheritAttrs: false,

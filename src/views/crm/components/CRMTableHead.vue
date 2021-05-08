@@ -57,7 +57,7 @@
       <flexbox class="selection-items-box">
         <el-button
           v-for="(item, index) in getSelectionHandleItemsInfo()"
-          v-if="whetherTypeShowByPermision(item.type)"
+          v-show="whetherTypeShowByPermision(item.type)"
           :icon="item.icon | wkIconPre"
           :key="index"
           type="primary"
@@ -70,13 +70,15 @@
       @delete="handleDeleteField" />
 
     <transfer-handle
+      v-if="transferDialogShow"
       :crm-type="crmType"
       :selection-list="selectionList"
       :dialog-visible.sync="transferDialogShow"
       @handle="handleCallBack" />
     <teams-handle
+      v-if="teamsDialogShow"
       :crm-type="crmType"
-      :title="teamsTitle"
+      :type="teamsType"
       :selection-list="selectionList"
       :dialog-visible.sync="teamsDialogShow"
       @handle="handleCallBack" />
@@ -206,7 +208,9 @@ export default {
     // 公海权限
     poolAuth: Object,
     // 排序信息
-    sortData: Object
+    sortData: Object,
+    // 自定义操作
+    handleFun: Function
   },
   data() {
     return {
@@ -226,7 +230,7 @@ export default {
       selectionList: [],
       transferDialogShow: false,
       teamsDialogShow: false, // 团队操作提示框
-      teamsTitle: '', // 团队操作标题名
+      teamsType: '', // 团队操作类型
       allocDialogShow: false, // 公海分配操作提示框
       dealStatusShow: false, // 成交状态修改框
       putPoolShow: false // 客户放入公海
@@ -350,6 +354,12 @@ export default {
     },
     /** 操作 */
     selectionBarClick(type) {
+      // 传出selection操作
+      if (this.handleFun) {
+        this.handleFun(type)
+        return
+      }
+
       if (type == 'transfer') {
         // 转移
         this.transferDialogShow = true
@@ -418,11 +428,11 @@ export default {
           .catch(() => {})
       } else if (type == 'add_user') {
         // 团队操作
-        this.teamsTitle = '添加团队成员'
+        this.teamsType = 'add'
         this.teamsDialogShow = true
       } else if (type == 'delete_user') {
         // 团队操作
-        this.teamsTitle = '移除团队成员'
+        this.teamsType = 'delete'
         this.teamsDialogShow = true
       } else if (type == 'alloc') {
         // 公海分配操作
@@ -613,6 +623,11 @@ export default {
           name: '更改成交状态',
           type: 'deal_status',
           icon: 's-status'
+        },
+        reset_invoice_status: {
+          name: '重置开票信息',
+          type: 'reset_invoice_status',
+          icon: 'reset'
         }
       }
       if (this.crmType == 'leads') {
@@ -647,7 +662,9 @@ export default {
         return this.forSelectionHandleItems(handleInfos, [
           'transfer',
           'export',
-          'delete'
+          'delete',
+          'add_user',
+          'delete_user'
         ])
       } else if (this.crmType == 'business') {
         return this.forSelectionHandleItems(handleInfos, [
@@ -666,7 +683,13 @@ export default {
           'delete_user'
         ])
       } else if (this.crmType == 'receivables') {
-        return this.forSelectionHandleItems(handleInfos, ['transfer', 'export', 'delete'])
+        return this.forSelectionHandleItems(handleInfos, [
+          'transfer',
+          'export',
+          'delete',
+          'add_user',
+          'delete_user'
+        ])
       } else if (this.crmType == 'product') {
         return this.forSelectionHandleItems(handleInfos, [
           'transfer',
@@ -684,6 +707,12 @@ export default {
       } else if (this.crmType == 'visit') {
         return this.forSelectionHandleItems(handleInfos, [
           'delete'
+        ])
+      } else if (this.crmType == 'invoice') {
+        return this.forSelectionHandleItems(handleInfos, [
+          'delete',
+          'reset_invoice_status',
+          'transfer'
         ])
       }
     },
@@ -766,6 +795,9 @@ export default {
       } else if (type == 'deal_status') {
         // 客户状态修改
         return this.crm[this.crmType].dealStatus
+      } else if (type == 'reset_invoice_status') {
+        // 重置开票信息
+        return this.crm[this.crmType].resetInvoiceStatus && this.selectionList.length == 1
       }
 
       return true
@@ -790,6 +822,8 @@ export default {
         return '全部回款'
       } else if (this.crmType == 'product') {
         return '全部产品'
+      } else if (this.crmType === 'invoice') {
+        return '全部发票'
       } else if (this.crmType === 'visit') {
         return '全部回访'
       }

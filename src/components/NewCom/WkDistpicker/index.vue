@@ -25,22 +25,28 @@ export default {
   props: {
     hideArea: { type: Boolean, default: false },
     onlyProvince: { type: Boolean, default: false },
-    value: Array
+    value: Array,
+    props: Object
   },
 
   data() {
     return {
-      dataValue: [],
-      config: {
-        label: 'name',
-        value: 'code'
-      }
+      dataValue: []
     }
   },
 
   computed: {
     options() {
       return this.getOptions()
+    },
+
+    config() {
+      const props = this.props || {}
+      return {
+        label: 'name',
+        value: 'code',
+        ...props
+      }
     }
   },
 

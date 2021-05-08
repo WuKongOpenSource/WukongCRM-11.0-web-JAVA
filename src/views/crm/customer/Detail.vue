@@ -63,7 +63,7 @@
                 :is-seas="isSeasDetail"
                 :crm-type="crmType"
                 :contacts-id.sync="firstContactsId"
-                @on-handle="detailHeadHandle" />
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
           <transition name="slide-fade">
@@ -82,6 +82,7 @@
                   :pool-id="seasPoolId"
                   :crm-type="crmType"
                   :is-seas="isSeasDetail"
+                  :detail="detailData"
                   @add="addChieflyContacts" />
               </el-tab-pane>
             </el-tabs>
@@ -440,7 +441,7 @@ export default {
      * 顶部头 操作
      * @param {*} data
      */
-    detailHeadHandle(data) {
+    detailHeadHandleClick(data) {
       if (data.type === 'edit') {
         this.createCRMType = 'customer'
         this.createActionInfo = {
@@ -449,15 +450,8 @@ export default {
           batchId: this.detailData.batchId
         }
         this.isCreate = true
-      } else if (data.type === 'delete' || data.type === 'exit-team') {
-        this.hideView()
+        return false
       }
-
-      if (data.type === 'edit' || data.type === 'deal_status') {
-        this.getDetial()
-      }
-
-      this.$emit('handle', data)
     }
   }
 }

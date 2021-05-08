@@ -44,6 +44,22 @@
           <el-checkbox label="3">合同</el-checkbox>
         </el-checkbox-group>
       </flexbox>
+      <flexbox
+        v-if="removeType === 2"
+        class="handle-item">
+        <div class="handle-item-name">有效时间：</div>
+        <el-select v-model="validType">
+          <el-option label="不限" value=""/>
+          <el-option label="截止到" value="end"/>
+        </el-select>
+        <el-date-picker
+          v-if="validType === 'end'"
+          v-model="expiresTime"
+          value-format="yyyy-MM-dd"
+          style="margin-left: 8px;"
+          type="date"
+          placeholder="选择日期"/>
+      </flexbox>
     </div>
     <span
       slot="footer"
@@ -101,15 +117,15 @@ export default {
       usersList: [], // 变更负责人
       removeType: 1, // 移动类型
       handleType: 1, // 操作类型
-      addsTypes: [] // 添加至
+      addsTypes: [], // 添加至
+      validType: '', // 有效类型
+      expiresTime: '' // 有效时间
     }
   },
   computed: {
     // 是否展示移除操作类型
     showRemoveType() {
       if (this.crmType == 'leads' ||
-       this.crmType == 'contacts' ||
-        this.crmType == 'receivables' ||
          this.crmType == 'product' ||
          this.crmType == 'invoice') {
         return false
@@ -157,6 +173,8 @@ export default {
     handleConfirm() {
       if (this.usersList.length === 0) {
         this.$message.error('请选择变更负责人')
+      } else if (this.validType === 'end' && !this.expiresTime) {
+        this.$message.error('请选择截止日期')
       } else {
         this.loading = true
         this.getRequest()(this.getParams())
@@ -211,6 +229,9 @@ export default {
 
       if (this.showRemoveType) {
         params.transferType = this.removeType
+        if (this.removeType === 2) { // 转团队
+          params.expiresTime = this.validType === 'end' ? this.expiresTime : ''
+        }
       }
 
       if (this.removeType === 2) {

@@ -232,7 +232,7 @@ export default {
         if (canPreviewFile(item.row.name)) {
           wkPreviewFile(item.row.url, item.row.name)
         } else {
-          this.$bus.emit('preview-image-bus', {
+          this.$wkPreviewFile.preview({
             index: item.$index,
             data: this.list
           })

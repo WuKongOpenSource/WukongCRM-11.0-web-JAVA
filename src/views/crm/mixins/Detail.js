@@ -122,16 +122,25 @@ export default {
 
       if (data.type === 'edit') {
         this.isCreate = true
-      } else if (data.type === 'cancel') {
-        this.getDetial()
-      } else if (data.type === 'delete' || data.type === 'exit-team') {
+      } else if (data.type === 'delete' ||
+      data.type === 'exit-team' ||
+      data.type === 'alloc' ||
+      data.type === 'get' ||
+      data.type === 'transfer' ||
+      data.type === 'transform' ||
+      data.type === 'delete' ||
+      data.type === 'put_seas') {
         this.hideView()
-      } else if (data.type === 'state_start' || data.type === 'state_disable') {
+      } else if (data.type === 'state_start' ||
+      data.type === 'state_disable' ||
+      data.type === 'deal_status' ||
+      data.type === 'cancel' ||
+      data.type === 'examine') {
         this.getDetial()
-      }
-
-      if (data.type === 'edit') {
-        this.getDetial()
+      } else if (data.type === 'save-success') {
+        // 但字段编辑成功刷新
+        this.editSaveSuccess()
+        return
       }
 
       this.$emit('handle', data)
@@ -148,6 +157,7 @@ export default {
     editSaveSuccess() {
       this.$bus.$emit('crm-detail-update', this.crmType)
       this.$emit('handle', { type: 'save-success' })
+      this.detailData = null
       this.getDetial()
     },
 

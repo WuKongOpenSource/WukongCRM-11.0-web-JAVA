@@ -47,11 +47,12 @@ export default {
     },
 
     valueChange(val) {
+      const nodes = this.$refs.elCascader.getCheckedNodes()
       this.$emit('value-change', {
         index: this.index,
         item: this.item,
         value: val,
-        valueContent: this.$refs.elCascader.getCheckedNodes()[0].label // 参考 https://segmentfault.com/q/1010000013063478
+        valueContent: nodes.length > 0 ? nodes[0].label : '' // 参考 https://segmentfault.com/q/1010000013063478
       })
     }
   }

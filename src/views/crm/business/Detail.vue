@@ -124,7 +124,7 @@
                 :handle="activityHandle"
                 :crm-type="crmType"
                 :contacts-id.sync="firstContactsId"
-                @on-handle="detailHeadHandle" />
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
           <transition name="slide-fade">
@@ -140,7 +140,8 @@
                 <chiefly-contacts
                   :contacts-id="firstContactsId"
                   :id="id"
-                  :crm-type="crmType"/>
+                  :crm-type="crmType"
+                  :detail="detailData"/>
               </el-tab-pane>
             </el-tabs>
           </transition>

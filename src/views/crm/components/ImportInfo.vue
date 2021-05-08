@@ -2,22 +2,29 @@
   <div
     class="content">
     <div class="content-title">基本信息</div>
-    <p
+    <div
       v-for="(item , index) in showList"
       :key="index"
       class="detail-cell">
-      <span class="detail-cell__label">
+      <div class="detail-cell__label">
         {{ item.name }}
-      </span><br>
-      <span class="detail-cell__value">
+      </div>
+      <div class="detail-cell__value">
         <wk-field-view
-          v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+          :props="item"
           :form-type="item.formType"
           :value="item.value"
-        />
-        <span v-else>{{ getValueContent(item) }}</span>
-      </span>
-    </p>
+        >
+          <template slot-scope="{ data }">
+            <span v-if="data.formType === 'business_type'">{{ detail ? detail.typeName : '' }}</span>
+            <span v-else-if="data.formType === 'business_status'">{{ detail ? detail.statusName : '' }}</span>
+            <span v-else-if="data.formType === 'category'">{{ detail ? detail.categoryName : '' }}</span>
+            <span v-else-if="data.formType === 'receivables_plan'">{{ detail ? detail.planNum : '' }}</span>
+            <span v-else>{{ getCommonShowValue(data) }}</span>
+          </template>
+        </wk-field-view>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -34,7 +41,13 @@ export default {
     WkFieldView
   },
   props: {
-    list: Array
+    list: Array,
+    detail: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    }
   },
   data() {
     return {}
@@ -42,7 +55,9 @@ export default {
   computed: {
     showList() {
       return this.list.filter(item => {
-        return item.formType !== 'file'
+        return item.formType !== 'file' &&
+        item.formType !== 'detail_table' &&
+        item.formType !== 'map_address'
       })
     }
   },
@@ -51,58 +66,55 @@ export default {
 
   beforeDestroy() {},
   methods: {
-    getValueContent(item) {
-      if (item.formType === 'map_address') {
-        return item.value ? item.value.detailAddress : ''
-      } else if (
-        item.formType === 'structure' ||
-        item.formType === 'user' ||
-        item.formType === 'checkbox') {
-        if (isArray(item.value)) {
-          const field = {
-            structure: 'name',
-            user: 'realname',
-            checkbox: ''
-          }[item.formType]
-          return item.value
-            .map(item => {
-              return field ? item[field] : item
-            })
-            .join('，')
-        } else {
-          return ''
-        }
-      } else if (item.formType === 'single_user') {
-        if (isObject(item.value) && item.value.realname) {
-          return item.value.realname
-        } else {
-          return ''
-        }
-      } else if (
-        item.formType === 'customer' ||
-        item.formType === 'business' ||
-        item.formType === 'contract' ||
-        item.formType === 'contacts' ||
-        item.formType === 'category' ||
-        item.formType === 'statusName' ||
-        item.formType === 'typeName') {
-        const field = {
-          customer: 'customerName',
-          business: 'businessName',
-          contract: 'contractNum',
-          contacts: 'contactsName',
-          category: 'categoryName',
-          statusName: 'statusName',
-          typeName: 'typeName'
-        }[item.formType]
-        if (isArray(item.value)) {
-          return item.value.length > 0 ? item.value[0][field] : ''
-        } else {
-          return item.value ? item.value[field] : ''
-        }
+    /**
+     * 获取非附件类型的展示值
+     */
+    getCommonShowValue(item) {
+      if (this.isModule(item)) {
+        return this.getModuleName(item)
       } else {
-        return getFormFieldShowName(item.formType, item.value, '')
+        return getFormFieldShowName(item.formType, item.value, '', item)
       }
+    },
+
+    /**
+     * 客户等模块类型
+     */
+    isModule(item) {
+      return [
+        'customer',
+        'business',
+        'contract',
+        'contacts'].includes(item.formType)
+    },
+
+    /**
+     * 特殊格式数据获取展示名称
+     */
+    getModuleName(item) {
+      // 模块数据
+      const modulefield = {
+        customer: 'customerName',
+        business: 'businessName',
+        contract: 'contractNum',
+        contacts: 'name'
+      }[item.formType]
+
+      if (modulefield) {
+        let data = {}
+        if (isObject(item.value)) {
+          data = item.value
+        } else if (isArray(item.value) && item.value.length > 0) {
+          data = item.value[0]
+        }
+        return data[modulefield] || ''
+      }
+
+      // 常规对象数据
+      const field = {
+        category: 'categoryName'
+      }[item.formType]
+      return item.value ? item.value[field] : ''
     }
   }
 }
@@ -128,7 +140,6 @@ export default {
       color: #666;
     }
     &__value {
-      display: inline-block;
       margin-top: 5px;
       color: #333;
       line-height: 16px;

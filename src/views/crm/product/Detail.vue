@@ -43,7 +43,9 @@
                 :is="item.name"
                 :detail="detailData"
                 :id="id"
-                :crm-type="crmType">
+                :crm-type="crmType"
+                :ignore-fields="['status']"
+                @handle="detailHeadHandle">
                 <sections
                   class="b-cells"
                   title="图片信息"
@@ -80,7 +82,8 @@
                 :is="item.name"
                 :detail="detailData"
                 :id="id"
-                :crm-type="crmType" />
+                :crm-type="crmType"
+                @handle="detailHeadHandle" />
             </el-tab-pane>
           </el-tabs>
         </flexbox>
@@ -234,7 +237,7 @@ export default {
      * 预览图片
      */
     previewImage(list, index) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: index,
         data: list
       })
@@ -270,11 +273,15 @@ export default {
       .main-img {
         width: 100px;
         height: 76px;
+        object-fit: contain;
+        vertical-align: top;
       }
 
       .detial-img {
         width: 100px;
         height: 80px;
+        object-fit: contain;
+        vertical-align: top;
       }
     }
   }

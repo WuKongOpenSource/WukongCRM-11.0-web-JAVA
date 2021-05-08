@@ -1,16 +1,23 @@
 <template>
   <div ref="wkSignaturePad" class="wk-signature-pad">
-    <vue-signature-pad
-      ref="signaturePad"
-      :key="height"
-      :options="options"
+    <wk-signature-image
+      v-if="disabled"
+      :src="value"
       :height="height"
-      width="100%"
     />
-    <div class="wk-signature-pad__handle">
-      <el-button type="text" icon="wk wk-icon-reply" @click="handleClick('undo')">撤回</el-button>
-      <el-button type="text" icon="wk wk-icon-bin" @click="handleClick('clear')">清空</el-button>
-    </div>
+    <template v-else>
+      <vue-signature-pad
+        ref="signaturePad"
+        :key="height"
+        :options="options"
+        :height="height"
+        width="100%"
+      />
+      <div class="wk-signature-pad__handle">
+        <el-button type="text" icon="wk wk-icon-reply" @click="handleClick('undo')">撤回</el-button>
+        <el-button type="text" icon="wk wk-icon-bin" @click="handleClick('clear')">清空</el-button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -19,6 +26,7 @@ import { adminFileQueryOneByBatchIdAPI } from '@/api/admin/file'
 import { crmFileSingleSaveAPI } from '@/api/common'
 
 import VueSignaturePad from './VueSignaturePad'
+import WkSignatureImage from './Image'
 
 import { valueEquals } from 'element-ui/lib/utils/util'
 import { guid, getImageData } from '@/utils'
@@ -28,12 +36,14 @@ export default {
   name: 'WkSignaturePad',
 
   components: {
-    VueSignaturePad
+    VueSignaturePad,
+    WkSignatureImage
   },
 
   props: {
     value: String, // batchId 交互
-    data: String // 同步数据源
+    data: String, // 同步数据源
+    disabled: Boolean
   },
 
   data() {

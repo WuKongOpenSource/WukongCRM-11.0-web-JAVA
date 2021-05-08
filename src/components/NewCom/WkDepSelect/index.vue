@@ -162,20 +162,20 @@ export default {
         this.verifyOptions()
       },
       immediate: true
-    },
-
-    /**
-     * 更新值
-     */
-    dataValue(newValue, oldValue) {
-      if (!valueEquals(newValue, oldValue)) {
-        if (this.radio) {
-          this.$emit('input', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
-        } else {
-          this.$emit('input', this.dataValue)
-        }
-      }
     }
+
+    // /**
+    //  * 更新值
+    //  */
+    // dataValue(newValue, oldValue) {
+    //   if (!valueEquals(newValue, oldValue)) {
+    //     if (this.radio) {
+    //       this.$emit('input', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
+    //     } else {
+    //       this.$emit('input', this.dataValue)
+    //     }
+    //   }
+    // }
   },
 
   created() {
@@ -296,11 +296,13 @@ export default {
      * 删除
      */
     deleteDep(index) {
-      // 直接 splice ,dataValue watch 的老旧值相同，复制之后新旧值不相同。暂时解决
-      const dataValue = objDeepCopy(this.dataValue)
-      dataValue.splice(index, 1)
-      this.dataValue = dataValue
-      this.wkDepChange()
+      if (!this.disabled) {
+        // 直接 splice ,dataValue watch 的老旧值相同，复制之后新旧值不相同。暂时解决
+        const dataValue = objDeepCopy(this.dataValue)
+        dataValue.splice(index, 1)
+        this.dataValue = dataValue
+        this.wkDepChange()
+      }
     },
 
     /**
@@ -316,8 +318,11 @@ export default {
     wkDepChange() {
       this.$nextTick(() => {
         if (this.radio) {
-          this.dispatch('ElFormItem', 'el.form.change', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
+          const dataValue = this.dataValue && this.dataValue.length ? this.dataValue[0] : ''
+          this.$emit('input', dataValue)
+          this.dispatch('ElFormItem', 'el.form.change', dataValue)
         } else {
+          this.$emit('input', this.dataValue)
           this.dispatch('ElFormItem', 'el.form.change', this.dataValue)
         }
         this.$emit('change', this.dataValue, this.selects)

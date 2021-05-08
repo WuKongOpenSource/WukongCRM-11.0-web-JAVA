@@ -218,3 +218,59 @@ export function crmContactsStarAPI(data) {
     method: 'post'
   })
 }
+
+// 团队操作
+/**
+ * 团队成员创建
+ * @param {*} data
+ */
+export function crmContactsSettingTeamSaveAPI(data) {
+  return request({
+    url: 'crmContacts/addMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+export function crmContactsSettingTeamDeleteAPI(data) {
+  return request({
+    url: 'crmContacts/deleteMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+export function crmContactsTeamMembersAPI(data) {
+  return request({
+    url: `crmContacts/getMembers/${data.id}`,
+    method: 'post'
+  })
+}
+
+export function crmContactsUpdateMembersAPI(data) {
+  return request({
+    url: 'crmContacts/updateMembers',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}
+
+/**
+ * 退出团队
+ * @param {*} data
+ */
+export function crmContactsExitTeamAPI(data) {
+  return request({
+    url: `crmContacts/exitTeam/${data.id}`,
+    method: 'post'
+  })
+}

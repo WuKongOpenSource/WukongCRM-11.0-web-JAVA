@@ -88,10 +88,13 @@ export default {
   },
   methods: {
     setData(value, list) {
-      const valueObj = list ? list.find(item => item.name === value) || {} : {}
-      return {
+      const valueObj = list ? list.find(item => item.name === value) : null
+      return valueObj ? {
         code: valueObj.code,
         value: valueObj.name
+      } : {
+        code: '',
+        value: ''
       }
     },
 

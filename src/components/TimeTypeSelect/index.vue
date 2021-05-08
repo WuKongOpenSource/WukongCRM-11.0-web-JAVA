@@ -53,13 +53,15 @@
 </template>
 
 <script type="text/javascript">
+import { isObject } from '@/utils/types'
+
 export default {
   name: 'TimeTypeSelect',
   props: {
     defaultType: [String, Object],
     // 容器宽度，默认200px
     width: {
-      type: Number,
+      type: [String, Number],
       default: 200
     },
     options: {
@@ -114,7 +116,7 @@ export default {
     if (this.defaultType !== undefined) {
       if (typeof this.defaultType === 'string') {
         this.selectType = this.getDefaultTypeValue(this.defaultType)
-      } else {
+      } else if (isObject(this.defaultType)) {
         if (this.defaultType.label) {
           this.selectType = this.defaultType
         } else if (this.defaultType.type == 'default') {
@@ -148,7 +150,7 @@ export default {
       this.sureCustomContent = false
       this.showCustomContent = false
       this.selectType = item
-      this.$emit('change', { type: 'default', value: this.selectType.value })
+      this.$emit('change', { type: 'default', value: this.selectType.value, label: this.selectType.label })
     },
     // 选择自定义时间 确定
     customSureClick() {

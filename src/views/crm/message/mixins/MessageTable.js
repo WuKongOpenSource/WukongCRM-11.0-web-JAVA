@@ -19,8 +19,8 @@ import {
 } from '@/api/crm/message'
 
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
-import { invoiceHeaderFields } from '../../invoice/js/fields'
 import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {},
@@ -40,6 +40,8 @@ export default {
   mixins: [CheckStatusMixin],
 
   computed: {
+    ...mapGetters(['messageNum']),
+
     // 展示options下拉选择
     showOptions() {
       if (this.infoType == 'putInPoolRemind' || this.infoType == 'returnVisitRemind') {
@@ -212,6 +214,16 @@ export default {
         .then(res => {
           this.list = res.data.list
           this.total = res.data.totalRow
+          const extraData = res.data.extraData
+          this.options.forEach(item => {
+            if (item.isMenuNum) {
+              item.num = this.messageNum[this.infoType]
+            } else if (item.key) {
+              item.num = extraData ? extraData[item.key] : 0
+            } else {
+              item.num = 0
+            }
+          })
 
           this.loading = false
         })
@@ -241,7 +253,7 @@ export default {
     /** 获取字段 */
     getFieldList() {
       console.log('this.crmType', this.crmType)
-      if (this.crmType == 'receivables_plan' || this.crmType == 'invoice') {
+      if (this.crmType == 'receivables_plan') {
         let list = []
         if (this.crmType == 'receivables_plan') {
           list = [{
@@ -285,8 +297,6 @@ export default {
             name: '备注'
           }]
           this.handelFieldList(list)
-        } else if (this.crmType == 'invoice') {
-          this.fieldList = invoiceHeaderFields
         }
         // 获取好字段开始请求数据
         this.getList()
@@ -321,6 +331,11 @@ export default {
           width = element.width
         }
 
+        // 发票过滤掉开票状态
+        if (this.crmType === 'invoice' && element.fieldName === 'invoiceStatus') {
+          continue
+        }
+
         this.fieldList.push({
           prop: element.fieldName,
           label: element.name,
@@ -349,11 +364,11 @@ export default {
           3: '国税通用机打发票',
           4: '地税通用机打发票',
           5: '收据'
-        }[row[column.property]]
+        }[row[column.property]] || '--'
       }
 
       if (field) {
-        return getFormFieldShowName(field.formType, row[column.property])
+        return getFormFieldShowName(field.formType, row[column.property], '--', field)
       }
       return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     },

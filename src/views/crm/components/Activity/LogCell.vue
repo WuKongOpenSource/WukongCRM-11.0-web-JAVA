@@ -25,15 +25,16 @@
           :class="activityIcon" />
         <span class="log-mark__label">{{ getActivityTypeName(item.activityType) + '-' + getRecordLogTypeName(item.type) }}</span>
       </span>
+      <!-- 编辑下不能是外勤签到 -->
       <el-dropdown
-        v-if="canDelete && (hasDeleteAuth || hasEditAuth)"
+        v-if="canDelete && (hasDeleteAuth || (hasEditAuth && item.type != 4))"
         class="more-drop"
         trigger="click"
         @command="handleCommand">
         <i
           class="el-icon-arrow-down el-icon-more" />
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item v-if="hasEditAuth" command="edit">编辑</el-dropdown-item>
+          <el-dropdown-item v-if="hasEditAuth && item.type != 4" command="edit">编辑</el-dropdown-item>
           <el-dropdown-item v-if="hasDeleteAuth" command="delete">删除</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -223,7 +224,7 @@ export default {
   mounted() {},
   methods: {
     previewImg(list, index) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: index,
         data: list
       })

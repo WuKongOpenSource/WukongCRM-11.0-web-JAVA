@@ -1,9 +1,24 @@
 import { isArray, isObject, isEmpty } from '@/utils/types'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
+import CustomFieldsMixin from '@/mixins/CustomFields'
+import { separator } from '@/filters/vueNumeralFilter/filters'
+import { getWkDateTime } from '@/utils'
 
-export function getFormFieldShowName(formType, value, placeholder = '--') {
+/**
+ * 获取自定义字段展示值
+ * @param {*} formType
+ * @param {*} value
+ * @param {*} placeholder
+ * @param {*} item 自定义字段模型
+ * @returns 字符串
+ */
+export function getFormFieldShowName(formType, value, placeholder = '--', item) {
   if (formType === 'position') {
     return isArray(value) ? value.map(item => item.name).join() : placeholder
+  } else if (formType === 'floatnumber') {
+    return isEmpty(value) ? '' : separator(value)
+  } else if (formType === 'date') {
+    return getWkDateTime(value)
   } else if (formType === 'location') {
     return isObject(value) ? value.address : placeholder
   } else if (formType === 'date_interval') {
@@ -15,11 +30,20 @@ export function getFormFieldShowName(formType, value, placeholder = '--') {
       return value.realname || placeholder
     }
     return value || placeholder
-  } else if (formType === 'checkbox') {
-    if (isArray(value)) {
-      return value.join() || placeholder
+  } else if (formType === 'select') {
+    const newValue = CustomFieldsMixin.methods.getRealParams({ formType }, value)
+    if (isEmpty(newValue)) {
+      return placeholder
+    } else {
+      return newValue
     }
-    return value || placeholder
+  } else if (formType === 'checkbox') {
+    const newValue = CustomFieldsMixin.methods.getRealParams({ formType }, value)
+    if (isEmpty(newValue)) {
+      return placeholder
+    } else {
+      return newValue
+    }
   } else if (formType === 'structure') {
     if (isArray(value)) {
       return value.map(item => item.name).join() || placeholder

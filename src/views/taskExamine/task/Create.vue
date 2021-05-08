@@ -245,7 +245,7 @@ export default {
       const list = [{
         name: '任务名称',
         field: 'name',
-        formType: 'textarea',
+        formType: 'text',
         setting: []
       }, {
         name: '描述',

@@ -1,61 +1,30 @@
 <template>
   <div id="app">
     <router-view class="router-view" />
-    <vue-picture-viewer
-      v-if="showPreviewImg"
-      :img-data="previewImgs"
-      :select-index="previewIndex"
-      @close-viewer="showPreviewImg=false"/>
-    <xr-import
-      v-if="showFixImport"
-      :process-status="crmImportStatus"
-      @click.native="fixImportClick"/>
-    <c-r-m-import
-      :show.sync="showCRMImport"
-      :crm-type="crmType"
-      :props="crmProps"
-      :cache-show.sync="cacheShow"
-      :cache-done="cacheDone"
-      @status="crmImportChange"
-      @close="crmImportClose"/>
   </div>
 </template>
 
 <script>
-/** 常用图片预览创建组件 */
-import VuePictureViewer from '@/components/VuePictureViewer/index'
-import XrImport from '@/components/XrImport'
-import XrImportMixins from '@/components/XrImport/XrImportMixins'
-import CRMImport from '@/components/CRMImport'
 import { mapGetters } from 'vuex'
 import cache from '@/utils/cache'
 
 
 export default {
   name: 'App',
-  components: {
-    VuePictureViewer,
-    XrImport,
-    CRMImport
-  },
-  mixins: [XrImportMixins],
+  components: {},
+  mixins: [],
   data() {
-    return {
-      showPreviewImg: false,
-      previewIndex: 0,
-      previewImgs: []
-    }
+    return {}
   },
   computed: {
     ...mapGetters(['activeIndex', 'userInfo'])
   },
   watch: {
     $route(to, from) {
-      this.showPreviewImg = false // 切换页面隐藏图片预览
+      this.$wkPreviewFile.closeViewer() // 切换页面隐藏图片预览
     }
   },
   mounted() {
-    this.addBus()
     this.addDocumentVisibilityChange()
     this.setMinHeight()
   },
@@ -90,15 +59,6 @@ export default {
         }
         this.$bus.emit('document-visibility', document[state])
       }, false)
-    },
-
-    addBus() {
-      var self = this
-      this.$bus.on('preview-image-bus', function(data) {
-        self.previewIndex = data.index
-        self.previewImgs = data.data
-        self.showPreviewImg = true
-      })
     },
 
     setMinHeight() {

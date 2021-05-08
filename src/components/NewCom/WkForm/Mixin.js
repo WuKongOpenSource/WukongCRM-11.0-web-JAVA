@@ -27,6 +27,17 @@ export default {
     },
 
     /**
+     * 获取输入最大长度
+     * @param {*} formType
+     */
+    getInputMaxlength(formType) {
+      if (formType === 'website') {
+        return 800
+      }
+      return 100
+    },
+
+    /**
      * 部门事件
      */
     depOrUserChange(item, index, value, valueList) {
@@ -89,6 +100,16 @@ export default {
         return isEmpty(tips) ? '' : tips
       }
       return isEmpty(tips) ? '' : `（${tips}）`
+    },
+
+    /**
+     * 判断展示
+     */
+    getShowValue(item) {
+      if (item.hasOwnProperty('show')) {
+        return item.show
+      }
+      return true
     }
   }
 }

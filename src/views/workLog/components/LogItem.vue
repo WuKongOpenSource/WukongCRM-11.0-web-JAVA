@@ -95,6 +95,13 @@
     </div>
 
     <div class="footer">
+      <div style="flex: 1;">
+        <fav-list
+          :is-favour="data.isFavour"
+          :data="data.favourUser"
+          @fav="favourClick"
+        />
+      </div>
       <el-dropdown
         v-if="data.permission && (data.permission.isUpdate || data.permission.isDelete)"
         trigger="click"
@@ -111,6 +118,13 @@
             command="delete">删除</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
+      <el-button
+        ref="favBtn"
+        :type="data.isFavour ? 'primary' : ''"
+        style="margin-left: 10px;"
+        icon="wk wk-good"
+        class="fav-btn"
+        @click="favourClick">赞{{ `${data.favourUser.length > 0 ? `(${data.favourUser.length})` : ''}` }}</el-button>
       <el-button
         type="primary"
         icon="wk wk-message"
@@ -141,7 +155,8 @@
 // API
 import {
   journalDeleteAPI,
-  journalSetReadAPI
+  journalSetReadAPI,
+  oaLogFavourOrCancelAPI
 } from '@/api/oa/journal'
 import {
   setCommentAPI,
@@ -155,6 +170,7 @@ import ReplyComment from '@/components/ReplyComment'
 import RelatedBusinessList from '@/components/RelatedBusinessList'
 import CommentList from '@/components/CommentList'
 import ReportMenu from './ReportMenu'
+import FavList from './FavList'
 
 import { mapGetters } from 'vuex'
 import { separator } from '@/filters/vueNumeralFilter/filters'
@@ -167,7 +183,8 @@ export default {
     RelatedBusinessList,
     CommentList,
     ReplyComment,
-    ReportMenu
+    ReportMenu,
+    FavList
   },
   props: {
     data: {
@@ -445,6 +462,22 @@ export default {
      */
     checkHistoryClick() {
       this.$emit('check-history', this.data.createUser)
+    },
+
+    /**
+     * 点赞
+     */
+    favourClick() {
+      this.$refs.favBtn.$el.blur()
+      oaLogFavourOrCancelAPI({
+        isFavour: !this.data.isFavour,
+        logId: this.data.logId
+      }).then(res => {
+        const resData = res.data || {}
+        this.data.isFavour = resData.isFavour
+        this.data.favourUser = resData.favourUser
+      })
+        .catch(() => {})
     }
   }
 }
@@ -556,9 +589,9 @@ export default {
     padding: 0 15px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+
+    .fav-btn,
     .replay-btn {
-      margin-left: 10px;
       /deep/ i {
         margin-right: 5px;
         font-size: 14px;

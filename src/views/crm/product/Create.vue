@@ -9,6 +9,7 @@
         ref="crmForm"
         :model="fieldForm"
         :rules="fieldRules"
+        :validate-on-rule-change="false"
         class="wk-form"
         label-position="top">
         <wk-form-items
@@ -16,11 +17,23 @@
           :key="index"
           :field-from="fieldForm"
           :field-list="children"
+          :ignore-fields="ignoreFields"
           @change="formChange"
         >
           <template slot-scope="{ data }">
+            <el-select
+              v-if="data && data.field == 'status'"
+              v-model="fieldForm[data.field]"
+              style="width: 100%;"
+              @change="formChange(data, index, $event)">
+              <el-option
+                v-for="item in data.setting"
+                :key="item.value"
+                :label="item.name"
+                :value="item.value"/>
+            </el-select>
             <xh-prouct-cate
-              v-if="data && data.formType == 'category'"
+              v-else-if="data && data.formType == 'category'"
               :value="fieldForm[data.field]"
               @value-change="otherChange($event, data)"
             />
@@ -82,6 +95,7 @@ export default {
   data() {
     return {
       loading: false,
+      ignoreFields: ['status'],
       baseFields: [],
       fieldList: [],
       fieldForm: {},
@@ -102,13 +116,16 @@ export default {
   },
 
   watch: {
-    'action.editDetail': function(data) {
-      if (data) {
-        this.imageData = {
-          mainFile: data.mainFileList || [],
-          detailFile: data.detailFileList || []
+    'action.editDetail': {
+      handler(data) {
+        if (data) {
+          this.imageData = {
+            mainFile: data.mainFileList || [],
+            detailFile: data.detailFileList || []
+          }
         }
-      }
+      },
+      immediate: true
     }
   },
 
@@ -138,6 +155,8 @@ export default {
         .then(res => {
           const list = res.data || []
 
+          const assistIds = this.getFormAssistIds(list)
+
           const baseFields = []
           const fieldList = []
           const fieldRules = {}
@@ -146,10 +165,17 @@ export default {
             const fields = []
             children.forEach(item => {
               const temp = this.getFormItemDefaultProperty(item)
+              temp.show = !assistIds.includes(item.formAssistId)
+
+              if (this.ignoreFields.includes(temp.field)) {
+                // 防止影响普通单选的验证方式
+                delete temp.optionsData
+                delete item.optionsData
+              }
 
               const canEdit = this.getItemIsCanEdit(item, this.action.type)
               // 是否能编辑权限
-              if (canEdit) {
+              if (temp.show && canEdit) {
                 fieldRules[temp.field] = this.getRules(item)
               }
 
@@ -160,7 +186,13 @@ export default {
               this.getItemRadio(item, temp)
 
               // 获取默认值
-              fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+              if (temp.show) {
+                if (this.ignoreFields.includes(temp.field)) {
+                  fieldForm[temp.field] = this.action.type === 'update' ? temp.value : temp.defaultValue
+                } else {
+                  fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+                }
+              }
               fields.push(temp)
               baseFields.push(item)
             })
@@ -188,7 +220,7 @@ export default {
       const crmForm = this.$refs.crmForm
       crmForm.validate(valid => {
         if (valid) {
-          const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
+          const params = this.getSubmiteParams([].concat.apply([], this.fieldList), this.fieldForm)
           // 图片信息
           params.entity.mainFileIds = this.imageData.mainFile ? this.imageData.mainFile.map(item => item.fileId).join(',') : ''
           params.entity.detailFileIds = this.imageData.detailFile ? this.imageData.detailFile.map(item => item.fileId).join(',') : ''
@@ -248,7 +280,18 @@ export default {
     /**
      * change
      */
-    formChange(item, index, value, valueList) {},
+    formChange(field, index, value, valueList) {
+      if ([
+        'select',
+        'checkbox'
+      ].includes(field.formType) &&
+          field.remark === 'options_type' &&
+          field.optionsData) {
+        const { fieldForm, fieldRules } = this.getFormContentByOptionsChange(this.fieldList, this.fieldForm)
+        this.fieldForm = fieldForm
+        this.fieldRules = fieldRules
+      }
+    },
 
     /**
      * 地址change

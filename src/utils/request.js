@@ -41,6 +41,8 @@ const confirmMessage = debounce(1000, (message) => {
   }).then(() => {
     if ((window.app.$route && window.app.$route.name !== 'login') || !window.app.$route) {
       clearCacheEnterLogin()
+    } else {
+      removeAuth()
     }
   }).catch(() => {
   })

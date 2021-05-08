@@ -22,132 +22,73 @@
         label-width="100px">
         <el-form-item
           v-for="(item, index) in mainItem.list"
+          v-if="getShowValue(item)"
           :key="index"
           :prop="item.fieldName"
-          :class="{'is-block': isBlockShowField(item)}">
+          :class="[{'is-block': isBlockShowField(item)}, `is-${item.formType}`]">
           <span slot="label">
             {{ item.name }}
           </span>
           <template v-if="item.isEdit">
-            <el-input
-              v-if="item.formType === 'text' ||
-                item.formType == 'mobile' ||
-                item.formType == 'email' ||
-                item.formType == 'textarea' ||
-              item.formType == 'website'"
-              v-model="editForm[item.fieldName]"/>
-            <el-input-number
-              v-else-if="item.formType == 'number' ||
-                item.formType == 'floatnumber' ||
-              item.formType == 'percent'"
-              v-model="editForm[item.fieldName]"
-              :controls="false" />
-            <el-select
-              v-else-if="item.formType === 'select' || item.formType === 'business_status'"
-              v-model="editForm[item.fieldName]"
-              style="width: 100%;"
-              clearable>
-              <el-option
-                v-for="(item, index) in getFieldOption(item)"
-                :key="index"
-                :label="item.name"
-                :value="item.value"/>
-            </el-select>
-            <el-select
-              v-else-if="item.formType === 'checkbox'"
-              v-model="editForm[item.fieldName]"
-              multiple
-              style="width: 100%;"
-              clearable>
-              <el-option
-                v-for="(item, index) in getFieldOption(item)"
-                :key="index"
-                :label="item.name"
-                :value="item.value"/>
-            </el-select>
-            <el-date-picker
-              v-else-if="item.formType === 'date'"
-              v-model="editForm[item.fieldName]"
-              type="date"
-              clearable
-              style="width: 100%;"
-              value-format="yyyy-MM-dd"
-            />
-            <el-date-picker
-              v-else-if="item.formType === 'datetime'"
-              v-model="editForm[item.fieldName]"
-              clearable
-              style="width: 100%;"
-              type="datetime"
-              value-format="yyyy-MM-dd HH:mm:ss"
-            />
-            <xh-user-cell
-              v-else-if="item.formType === 'user' || item.formType === 'single_user'"
-              :value="editForm[item.fieldName]"
-              :radio="item.formType === 'single_user'"
-              @value-change="arrayValueChange($event, item)"
-            />
-            <xh-structure-cell
-              v-else-if="item.formType === 'structure'"
-              :value="editForm[item.fieldName]"
-              :radio="false"
-              @value-change="arrayValueChange($event, item)"
-            />
-            <crm-relative-cell
-              v-else-if="item.formType === 'contacts' ||
-                item.formType === 'customer' ||
-                item.formType === 'contract' ||
-              item.formType === 'business'"
-              :relative-type="item.formType"
-              :value="editForm[item.fieldName]"
-              @value-change="arrayValueChange($event, item)"
-            />
-            <xh-files
-              v-else-if="item.formType === 'file'"
-              :value="editForm[item.fieldName]"
-              @value-change="arrayValueChange($event, item)"
-            />
-            <xh-prouct-cate
-              v-else-if="item.formType === 'category'"
-              :value="editForm[item.fieldName]"
-              @value-change="arrayValueChange($event, item)"
-            />
-            <el-switch
-              v-else-if="item.formType == 'boolean_value'"
-              v-model="editForm[item.fieldName]"
-              active-value="1"
-              inactive-value="0"/>
-            <wk-position
-              v-else-if="item.formType == 'position'"
-              :hide-area="item.hideArea"
-              :only-province="item.onlyProvince"
-              :show-detail="item.showDetail"
-              v-model="editForm[item.fieldName]"/>
-            <wk-location
-              v-else-if="item.formType == 'location'"
-              v-model="editForm[item.fieldName]"/>
-            <wk-signature-pad
-              v-else-if="item.formType == 'handwriting_sign'"
-              v-model="editForm[item.fieldName]"/>
-            <el-date-picker
-              v-else-if="item.formType === 'date_interval'"
-              v-model="editForm[item.fieldName]"
-              :type="item.dateType || 'daterange'"
-              :value-format="item.valueFormat || 'yyyy-MM-dd'"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期" />
-            <wk-percent-input
-              v-else-if="item.formType == 'percent'"
-              v-model="editForm[item.fieldName]"
-              :controls="false" />
+            <wk-field
+              :item="item"
+              :index="index"
+              :field-from="editForm"
+              :ignore-fields="ignoreFields"
+              @change="formChange"
+            >
+              <template slot-scope="{ data, index }">
+                <el-select
+                  v-if="data.formType === 'business_status'"
+                  v-model="editForm[data.fieldName]"
+                  style="width: 100%;"
+                  clearable>
+                  <el-option
+                    v-for="(optionItem, index) in getFieldOption(data)"
+                    :key="index"
+                    :label="optionItem.name"
+                    :value="optionItem.value"/>
+                </el-select>
+                <el-select
+                  v-if="data.fieldName == 'status'"
+                  v-model="editForm[data.fieldName]"
+                  style="width: 100%;">
+                  <el-option
+                    v-for="item in data.setting"
+                    :key="item.value"
+                    :label="item.name"
+                    :value="item.value"/>
+                </el-select>
+                <crm-relative-cell
+                  v-else-if="data.formType === 'contacts' ||
+                    data.formType === 'customer' ||
+                    data.formType === 'contract' ||
+                  data.formType === 'business'"
+                  :relative-type="data.formType"
+                  :value="editForm[data.fieldName]"
+                  @value-change="arrayValueChange($event, data)"
+                />
+                <xh-prouct-cate
+                  v-else-if="data.formType === 'category'"
+                  :value="editForm[data.fieldName]"
+                  @value-change="arrayValueChange($event, data)"
+                />
+                <el-select
+                  v-if="data.fieldName == 'invoiceType'"
+                  v-model="editForm[data.fieldName]"
+                  style="width: 100%;">
+                  <el-option
+                    v-for="item in invoiceTypeOptions"
+                    :key="item.value"
+                    :label="item.name"
+                    :value="item.value"/>
+                </el-select>
+              </template>
+            </wk-field>
           </template>
           <template v-else>
-            <flexbox v-if="item.formType === 'file'" style="min-height: 40px;">
-              <file-list-view :list="item.value || []" />
-              <i v-if="getEditAuth(item)" class="wk wk-edit form-item__edit" @click="editClick(item)" />
-            </flexbox>
             <div
-              v-else-if="item.formType === 'map_address'"
+              v-if="item.formType === 'map_address'"
               :gutter="0"
               wrap="wrap">
               <div
@@ -158,7 +99,7 @@
                   <div class="b-cell-name">定位</div>
                   <div
                     class="b-cell-value"
-                    style="color: #3E84E9;cursor: pointer;"
+                    style="color: #2362FB;cursor: pointer;"
                     @click="checkMapView(item)">{{ item.value.location }}</div>
                 </flexbox>
               </div>
@@ -181,21 +122,30 @@
                 </flexbox>
               </div>
             </div>
-            <wk-desc-text
-              v-else-if="item.formType == 'desc_text'"
-              :value="item.value"/>
             <flexbox
               v-else
               :class="{'can-check':isModule(item)}"
               align="stretch"
+              style="width: 100%;"
               class="form-item__value">
               <wk-field-view
-                v-if="item.formType == 'boolean_value' || item.formType == 'handwriting_sign' || item.formType == 'website'"
+                :props="item"
                 :form-type="item.formType"
                 :value="item.value"
-              />
-              <span v-else @click="checkModuleDetail(item)">{{ getCommonShowValue(item) }}</span>
-            <i v-if="getEditAuth(item)" class="wk wk-edit form-item__edit" @click.stop="editClick(item)" /></flexbox>
+                :ignore-fields="ignoreFields"
+              >
+                <template slot-scope="{ data }">
+                  <span v-if="data.formType === 'business_type'">{{ detail ? detail.typeName : '' }}</span>
+                  <span v-else-if="data.formType === 'business_status'">{{ detail ? detail.statusName : '' }}</span>
+                  <span v-else-if="data.formType === 'category'">{{ detail ? detail.categoryName : '' }}</span>
+                  <span v-else-if="data.formType === 'receivables_plan'">{{ detail ? detail.planNum : '' }}</span>
+                  <span v-else-if="ignoreFields.includes(data.props.field) && data.props.field === 'status'">{{ getSelectShowValue(data) }}</span>
+                  <span v-else @click="checkModuleDetail(data)">{{ getCommonShowValue(data) }}</span>
+                </template>
+              </wk-field-view>
+
+              <i v-if="getEditAuth(item)" class="wk wk-edit form-item__edit" @click.stop="editClick(item, index)" />
+            </flexbox>
           </template>
         </el-form-item>
       </el-form>
@@ -216,33 +166,23 @@
 </template>
 
 <script>
-import { filedGetInformationAPI, filedUpdateTableFieldAPI, filedGetFieldAPI } from '@/api/crm/common'
+import { filedGetInformationAPI, filedUpdateTableFieldAPI } from '@/api/crm/common'
 
 import {
-  XhUserCell,
-  XhStructureCell,
-  XhFiles,
   CrmRelativeCell,
   XhProuctCate,
-  XhBusinessStatus,
-  XhReceivablesPlan
+  XhBusinessStatus
 } from '@/components/CreateCom'
-import WkPosition from '@/components/NewCom/WkPosition'
-import WkLocation from '@/components/NewCom/WkLocation'
-import WkSignaturePad from '@/components/NewCom/WkSignaturePad'
 import WkFieldView from '@/components/NewCom/WkForm/WkFieldView'
-import WkDescText from '@/components/NewCom/WkDescText'
-import WkPercentInput from '@/components/NewCom/WkPercentInput'
-
-import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import WkField from '@/components/NewCom/WkForm/WkField'
 import Sections from '../components/Sections'
 import MapView from '@/components/MapView' // 地图详情
 import FileListView from '@/components/FileListView'
-import { separator } from '@/filters/vueNumeralFilter/filters'
+
+import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import { objDeepCopy } from '@/utils'
 import { isArray, isObject, isEmpty } from '@/utils/types'
 import { mapGetters } from 'vuex'
-import { getWkDateTime } from '@/utils'
 import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
 import CustomFieldsMixin from '@/mixins/CustomFields'
 
@@ -253,19 +193,11 @@ export default {
     Sections,
     MapView,
     FileListView,
-    XhUserCell,
-    XhStructureCell,
-    XhFiles,
     CrmRelativeCell,
     XhProuctCate,
     XhBusinessStatus,
-    XhReceivablesPlan,
-    WkPosition,
-    WkLocation,
-    WkSignaturePad,
     WkFieldView,
-    WkDescText,
-    WkPercentInput,
+    WkField,
     CRMFullScreenDetail: () => import('@/components/CRMFullScreenDetail')
   },
   filters: {
@@ -291,7 +223,16 @@ export default {
       default: ''
     },
     // 固定字段的数据
-    filedList: Array
+    filedList: Array,
+    // 系统消息之前的数据
+    otherList: Array,
+    // 忽略的字段直接输出
+    ignoreFields: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    }
   },
   data() {
     return {
@@ -306,11 +247,28 @@ export default {
       fullDetailType: '',
       // 编辑
       showSaveButton: false,
-      editRules: {},
-      currentEditRules: {},
+      editRules: {}, // 全字段规则
+      currentEditRules: {}, // 当前编辑字段规则
       editForm: {},
+      allForm: {}, // 用于逻辑表单刷新
       editOptions: {},
-      editFieldData: []
+      editFieldData: [], // baseList 的引用
+      invoiceTypeOptions: [{
+        name: '增值税专用发票',
+        value: 1
+      }, {
+        name: '增值税普通发票',
+        value: 2
+      }, {
+        name: '国税通用机打发票',
+        value: 3
+      }, {
+        name: '地税通用机打发票',
+        value: 4
+      }, {
+        name: '收据',
+        value: 5
+      }]
     }
   },
   inject: ['rootTabs'],
@@ -320,7 +278,7 @@ export default {
   watch: {
     id(val) {
       if (!this.filedList) {
-        this.refreshData(true)
+        this.getBaseInfo(true)
       }
     },
 
@@ -330,7 +288,7 @@ export default {
 
     'rootTabs.currentName'(val) {
       if (val === 'CRMEditBaseInfo') {
-        this.refreshData(false)
+        this.getBaseInfo(false)
       }
     }
 
@@ -338,9 +296,6 @@ export default {
   created() {
     this.$bus.on('crm-detail-update', (data) => {
       this.getBaseInfo(false)
-      if (!this.isSeas) {
-        this.refreshData(true)
-      }
     })
   },
   beforeDestroy() {
@@ -350,26 +305,15 @@ export default {
     if (this.filedList) {
       this.list = this.filedList
     } else {
-      this.refreshData(true)
+      this.getBaseInfo(true)
     }
   },
   methods: {
-    /**
-     * 刷新页面数据
-     */
-    refreshData(loading = false) {
-      this.getBaseInfo(loading)
-      if (!this.isSeas) {
-        this.getEditFieldData()
-      }
-    },
-
     /**
      * 获取基础信息
      */
     getBaseInfo(loading) {
       this.loading = !!loading
-
       const params = {
         types: crmTypeModel[this.crmType],
         id: this.id
@@ -384,35 +328,128 @@ export default {
         .then(res => {
           const baseList = []
           const systemList = []
-          res.data.forEach(item => {
-            if (item.formType === 'floatnumber') {
-              item.value = separator(item.value)
-            } else if (item.formType === 'date') {
-              item.value = getWkDateTime(item.value)
-            }
+
+          const resData = res.data || []
+          // 编辑用信息
+          const editFieldData = []
+          const editRules = {}
+
+          resData.forEach(item => {
             if (item.sysInformation == 1) {
               systemList.push(item)
-            } else {
+            } else if (item.formType !== 'product') {
+              // 不展示产品
               baseList.push(item)
             }
           })
 
-          this.list = [
-            {
-              name: '基本信息',
-              list: baseList
-            },
-            {
-              name: '系统信息',
-              list: systemList
+          // 逻辑表单逻辑
+          const assistIds = this.getFormAssistIds([baseList])
+          baseList.forEach(item => {
+            this.getFormItemDefaultProperty(item, false)
+            item.show = !assistIds.includes(item.formAssistId)
+
+            if (this.ignoreFields.includes(item.field)) {
+              // 防止影响普通单选的验证方式 该方法必须在获取值之上
+              delete item.optionsData
             }
-          ]
+
+            const canEdit = this.getItemIsCanEdit(item, 'update')
+            // 是否能编辑权限
+            const copyItem = objDeepCopy(item)
+            if (item.show && canEdit) {
+              editRules[item.field] = this.getRules(copyItem)
+            }
+
+            // 是否可编辑
+            item.disabled = !canEdit
+
+            // 特殊字段允许多选
+            this.getItemRadio(item, item)
+
+            // 表格为了展示，提前处理为编辑数据
+            if (item.formType === 'detail_table') {
+              if (!isEmpty(item.value)) {
+                item.value = this.getItemValue(item, null, 'update')
+              }
+              this.allForm[item.field] = item.value
+            } else {
+              // copyItem 避免修改原始item.value
+              this.allForm[item.field] = this.getItemValue(copyItem, null, 'update')
+            }
+
+            editFieldData.push(item)
+          })
+
+
+
+          // 编辑逻辑赋值
+          this.editFieldData = editFieldData
+          this.editRules = editRules
+
+          if (this.otherList) {
+            this.list = [
+              {
+                name: '基本信息',
+                list: baseList
+              },
+              ...this.otherList,
+              {
+                name: '系统信息',
+                list: systemList
+              }
+            ]
+          } else {
+            this.list = [
+              {
+                name: '基本信息',
+                list: baseList
+              },
+              {
+                name: '系统信息',
+                list: systemList
+              }
+            ]
+          }
+
           this.editCancel()
           this.loading = false
         })
         .catch(() => {
           this.loading = false
         })
+    },
+
+    /**
+     * change
+     */
+    formChange(field, index, value, valueList) {
+      if ([
+        'select',
+        'checkbox'
+      ].includes(field.formType) &&
+          field.remark === 'options_type' &&
+          field.optionsData) {
+        const { fieldForm, fieldRules } = this.getFormContentByOptionsChange([this.editFieldData], { ...this.allForm, ...this.editForm }, this.editRules, null, 'update')
+
+        const editForm = {}
+        const currentEditRules = {}
+
+        this.editFieldData.forEach(item => {
+          // 重新获取当前可编辑字段的值和规则
+          if (item.show && item.isEdit) {
+            editForm[item.field] = fieldForm[item.field]
+            currentEditRules[item.field] = fieldRules[item.field]
+          }
+
+          // 不展示的字段，但处在可编辑状态，置为不能编辑
+          if (!item.show && item.isEdit) {
+            item.isEdit = false
+          }
+        })
+        this.editForm = editForm
+        this.currentEditRules = currentEditRules
+      }
     },
 
     /**
@@ -437,18 +474,7 @@ export default {
         'customer',
         'business',
         'contract',
-        'contacts',
-        'location'].includes(item.formType)
-    },
-
-    /**
-     * 特殊字段
-     */
-    isSpecialField(item) {
-      return [
-        'category',
-        'statusName',
-        'typeName'].includes(item.formType)
+        'contacts'].includes(item.formType)
     },
 
     /**
@@ -457,27 +483,42 @@ export default {
     isBlockShowField(item) {
       return [
         'map_address',
-        'file'].includes(item.formType)
+        'file',
+        'detail_table'].includes(item.formType)
     },
 
-    getShowBlock(type) {
-      return ['map_address', 'file'].includes(type)
-    },
-
+    /**
+     * 特殊格式数据获取展示名称
+     */
     getModuleName(item) {
-      const field = {
+      // 模块数据
+      const modulefield = {
         customer: 'customerName',
         business: 'businessName',
         contract: 'contractNum',
-        contacts: 'contactsName',
-        category: 'categoryName',
-        statusName: 'statusName',
-        typeName: 'typeName',
-        location: 'address'
+        contacts: 'name'
+      }[item.formType]
+
+      if (modulefield) {
+        let data = {}
+        if (isObject(item.value)) {
+          data = item.value
+        } else if (isArray(item.value) && item.value.length > 0) {
+          data = item.value[0]
+        }
+        return data[modulefield] || ''
+      }
+
+      // 常规对象数据
+      const field = {
+        category: 'categoryName'
       }[item.formType]
       return item.value ? item.value[field] : ''
     },
 
+    /**
+     * 获取下拉数据
+     */
     getFieldOption(item) {
       const editData = this.editOptions[item.fieldName]
       let setting = []
@@ -505,10 +546,15 @@ export default {
      * 获取非附件类型的展示值
      */
     getCommonShowValue(item) {
-      if (this.isModule(item) || this.isSpecialField(item)) {
+      if (this.isModule(item)) {
         return this.getModuleName(item)
       } else {
-        return getFormFieldShowName(item.formType, item.value, '')
+        const field = item.props
+        if (field.fieldName === 'invoiceType') {
+          const dataItem = this.invoiceTypeOptions.find(o => o.value == item.value)
+          return dataItem ? dataItem.name : ''
+        }
+        return getFormFieldShowName(item.formType, item.value, '', item)
       }
     },
 
@@ -517,19 +563,17 @@ export default {
      */
     checkModuleDetail(data) {
       const dataValue = data.value
-      if (this.isModule(data) && isObject(dataValue)) {
-        if (data.formType === 'location') {
-          if (!isEmpty(dataValue.address)) {
-            this.mapViewInfo = {
-              title: dataValue.address,
-              lat: dataValue.lat,
-              lng: dataValue.lng
-            }
-          }
-          this.showMapView = true
-        } else {
+      if (this.isModule(data)) {
+        let id = ''
+        if (isObject(dataValue)) {
+          id = dataValue[`${data.formType}Id`]
+        } else if (isArray(dataValue) && dataValue.length > 0) {
+          id = dataValue[0][`${data.formType}Id`]
+        }
+
+        if (id) {
           this.fullDetailType = data.formType
-          this.fullDetailId = dataValue[`${data.formType}Id`]
+          this.fullDetailId = id
           this.showFullDetail = true
         }
       }
@@ -542,13 +586,15 @@ export default {
       if (this.isSeas) {
         return false
       }
-      if (this.crmType == 'business' && ['statusName', 'typeName'].includes(item.formType)) {
+      if (this.crmType == 'business' && ['business_type', 'business_status'].includes(item.formType)) {
         return false
       } else if (this.crmType == 'contract' && ['business', 'contacts', 'customer'].includes(item.formType)) {
         return false
-      } else if (this.crmType == 'receivables' && ['contract', 'customer'].includes(item.formType)) {
+      } else if (this.crmType == 'receivables' && ['contract', 'customer', 'receivables_plan'].includes(item.formType)) {
         return false
-      } else if (this.crmType == 'visit' && ['business', 'contacts', 'customer'].includes(item.formType)) {
+      } else if (this.crmType == 'invoice' && ['contract', 'customer'].includes(item.formType)) {
+        return false
+      } else if (this.crmType == 'visit' && ['business', 'contract', 'contacts', 'customer'].includes(item.formType)) {
         return false
       } else if (item.formType === 'desc_text' || item.formType === 'handwriting_sign') {
         // 描述文字签名不允许编辑
@@ -561,48 +607,33 @@ export default {
     /**
      * 点击编辑按钮
      */
-    editClick(item) {
-      const editData = this.editFieldData.find(field => {
-        return field.fieldName == item.fieldName
-      })
-
-      if (editData) {
-        let value = isArray(editData.value) || isObject(editData.value) ? objDeepCopy(editData.value) : editData.value
-        if (item.formType === 'contacts' ||
-          item.formType === 'customer' ||
-          item.formType === 'contract' ||
-          item.formType === 'business') {
-          value = value && value[`${item.formType}Id`] ? [value] : []
-        } else if (item.formType === 'category') {
-          value = value && value.categoryId ? value.categoryId : []
-        } else if (item.formType === 'single_user') {
-          value = value && value.userId ? [value] : []
-        } else if (item.formType === 'structure' || item.formType === 'file' || item.formType === 'user') {
-          value = value || []
-        } else if (item.formType === 'number' || item.formType === 'floatnumber' || item.formType === 'percent') {
-          value = isEmpty(value) ? undefined : value
-        }
-
-        this.$set(this.editForm, item.fieldName, value)
-        this.$set(editData, 'isEdit', true)
-        this.$set(this.editOptions, item.fieldName, editData)
-        this.$set(this.currentEditRules, item.fieldName, this.editRules[item.fieldName])
+    editClick(item, index) {
+      let dataValue = objDeepCopy(this.allForm[item.fieldName])
+      // 明细表格是空时，需要填充一条空数据，展示时未处理。这里增加
+      if (item.formType === 'detail_table' && isEmpty(dataValue)) {
+        dataValue = this.getItemValue(objDeepCopy(item), null, 'update')
       }
-      this.showSaveButton = true
+      this.$set(this.editForm, item.fieldName, dataValue)
       this.$set(item, 'isEdit', true)
+      this.$set(this.editOptions, item.fieldName, item)
+      this.$set(this.currentEditRules, item.fieldName, this.editRules[item.fieldName] || [])
+      this.showSaveButton = true
     },
 
+    /**
+     * 点击取消
+     */
     editCancel() {
       if (this.$refs.editForm0[0].clearValidate) {
         this.$refs.editForm0[0].clearValidate()
       }
 
       this.$nextTick(() => {
-        this.list.forEach(bItem => {
-          bItem.list.forEach(item => {
-            item.isEdit = false
-          })
-        })
+        // this.list.forEach(bItem => {
+        //   bItem.list.forEach(item => {
+        //     item.isEdit = false
+        //   })
+        // })
         this.editFieldData.forEach(item => {
           item.isEdit = false
         })
@@ -614,6 +645,9 @@ export default {
       })
     },
 
+    /**
+     * 点击保存
+     */
     editConfirm() {
       // customerId    fieldId   fieldType  fieldName  formType  value
       // this.editCancel()
@@ -630,22 +664,19 @@ export default {
     submiteInfo() {
       // 仅第一块可编辑 ，直接取第一块的数据
       this.loading = true
-      const fields = this.list[0].list || []
       const list = []
-      for (let index = 0; index < fields.length; index++) {
-        const field = fields[index]
-        if (field.isEdit) {
-          const fieldData = this.editOptions[field.fieldName]
-          if (fieldData) {
-            list.push({
-              fieldName: fieldData.fieldName,
-              fieldType: fieldData.fieldType,
-              name: fieldData.name,
-              type: fieldData.type,
-              fieldId: fieldData.fieldId,
-              value: this.getRealValue(fieldData, this.editForm[fieldData.fieldName])
-            })
-          }
+      for (let index = 0; index < this.editFieldData.length; index++) {
+        const field = this.editFieldData[index]
+        // 获取当前编辑 和 隐藏的字段
+        if (field.formType !== 'desc_text' && (field.isEdit || !field.show)) {
+          list.push({
+            fieldName: field.fieldName,
+            fieldType: field.fieldType,
+            name: field.name,
+            type: field.type,
+            fieldId: field.fieldId,
+            value: field.show ? this.getRealParams(field, this.editForm[field.fieldName]) : null
+          })
         }
       }
 
@@ -656,55 +687,11 @@ export default {
         list: list
       }).then(res => {
         this.loading = false
+        this.$emit('handle', { type: 'save-success' }) // 刷新数据
         this.editCancel()
-
-        this.refreshData(true)
       }).catch(() => {
         this.loading = false
       })
-    },
-
-    getRealValue(element, value) {
-      if (
-        element.formType == 'customer' ||
-        element.formType == 'contacts' ||
-        element.formType == 'business' ||
-        element.formType == 'leads' ||
-        element.formType == 'contract'
-      ) {
-        if (value && value.length) {
-          return value[0][`${element.formType}Id`]
-        } else {
-          return ''
-        }
-      } else if (
-        element.formType == 'user' ||
-        element.formType == 'single_user' ||
-        element.formType == 'structure'
-      ) {
-        return value
-          .map(item => {
-            return (element.formType == 'user' || element.formType == 'single_user') ? item.userId : item.id
-          })
-          .join(',')
-      } else if (element.formType == 'file') {
-        if (value && value.length > 0) {
-          return value[0].batchId
-        }
-        return ''
-      } else if (element.formType == 'category') {
-        if (value && value.length > 0) {
-          return value[value.length - 1]
-        }
-        return ''
-      } else if (element.formType == 'checkbox') {
-        if (value && value.length > 0) {
-          return value.join(',')
-        }
-        return ''
-      }
-
-      return value
     },
 
     /**
@@ -717,39 +704,27 @@ export default {
       this.editForm[item.fieldName] = data.value || []
     },
 
-    // 获取自定义字段
-    getEditFieldData() {
-      // 获取自定义字段的更新时间
-      var params = {
-        label: crmTypeModel[this.crmType],
-        id: this.id,
-        type: 1 // 一维数组
+    /**
+     * 判断展示
+     */
+    getShowValue(item) {
+      if (item.hasOwnProperty('show')) {
+        return item.show
       }
+      return true
+    },
 
-      filedGetFieldAPI(params)
-        .then(res => {
-          const editFieldData = res.data || []
-          const editRules = {}
-          editFieldData.forEach(item => {
-            item.isEdit = false
-            let authList = []
-            if (item.autoGeneNumber == 1) {
-              const copyItem = objDeepCopy(item)
-              copyItem.isNull = 0
-              authList = this.getRules(copyItem)
-            } else {
-              authList = this.getRules(item)
-            }
-            if (authList && authList.length) {
-              editRules[item.fieldName] = authList
-            }
-          })
-
-          this.editFieldData = editFieldData
-          this.editRules = editRules
-        })
-        .catch(() => {
-        })
+    /**
+     * 获取单选值
+     */
+    getSelectShowValue(data) {
+      const field = data.props
+      const value = data.value
+      if (value !== null) {
+        const dataValue = field.setting.find(o => o.value === value)
+        return dataValue ? dataValue.name : ''
+      }
+      return ''
     }
   }
 }
@@ -818,6 +793,12 @@ export default {
         display: inline;
       }
     }
+
+    &.is-desc_text {
+      .el-form-item__content {
+        margin-left: 0 !important;
+      }
+    }
   }
 }
 
@@ -829,6 +810,10 @@ export default {
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
+  .wk-field-view {
+    width: 0;
+    flex: 1;
+  }
 }
 
 .form-item__edit {

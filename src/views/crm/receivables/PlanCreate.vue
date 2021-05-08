@@ -117,13 +117,7 @@ export default {
           const fieldRules = {}
           const fieldForm = {}
           list.forEach(item => {
-            const temp = {}
-            temp.field = item.fieldName
-            temp.formType = item.formType
-            temp.fieldId = item.fieldId
-            temp.inputTips = item.inputTips
-            temp.name = item.name
-            temp.setting = item.setting
+            const temp = this.getFormItemDefaultProperty(item)
 
             const canEdit = this.getItemIsCanEdit(item, this.action.type)
             // 是否能编辑权限
@@ -190,7 +184,7 @@ export default {
       const crmForm = this.$refs.crmForm.instance
       crmForm.validate(valid => {
         if (valid) {
-          const params = this.getSubmiteParams(this.baseFields, this.fieldForm)
+          const params = this.getSubmiteParams([].concat.apply([], this.fieldList), this.fieldForm)
           this.submiteParams(params)
         } else {
           this.loading = false

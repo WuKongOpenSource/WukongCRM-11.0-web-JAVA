@@ -30,7 +30,7 @@ export default [{
 {
   componentName: 'FieldSelect',
   formType: 'select',
-  name: '下拉框',
+  name: '单选',
   type: 3,
   icon: 'wk wk-icon-select'
 },
@@ -132,13 +132,6 @@ export default [{
   type: 8,
   icon: 'wk wk-icon-file'
 },
-// {
-//   componentName: 'FieldDetailTable',
-//   formType: 'detail_table',
-//   name: '明细表格',
-//   type: 45,
-//   icon: 'wk '
-// },
 {
   componentName: 'FieldWritingSign',
   formType: 'handwriting_sign',
@@ -152,6 +145,13 @@ export default [{
   name: '描述文字',
   type: 50,
   icon: 'wk wk-icon-des'
+},
+{
+  componentName: 'FieldDetailTable',
+  formType: 'detail_table',
+  name: '明细表格',
+  type: 45,
+  icon: 'wk wk-icon-file'
 }
 ]
 

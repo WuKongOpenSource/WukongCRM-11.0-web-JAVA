@@ -335,6 +335,20 @@ export function crmCustomerDownloadExcelAPI(data) {
 }
 
 /**
+ * 公海模板
+ * @param {*} data
+ * @returns
+ */
+export function crmCustomerPoolDownloadExcelAPI(data) {
+  return request({
+    url: 'crmCustomerPool/downloadExcel',
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}
+
+/**
  * 公海导出
  * @param {*} data
  */

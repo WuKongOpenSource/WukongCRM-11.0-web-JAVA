@@ -230,7 +230,11 @@ export function canPreviewFile(name) {
  */
 import axios from 'axios'
 export function wkPreviewFile(path, name) {
-  window.open(`${WKConfig.getLocationOrigin()}/file/preview?url=${encodeURIComponent(`${path}?fullfilename=${name || ''}&c=${axios.defaults.headers['Admin-Token']}`)}`)
+  window.open(wkPreviewFileUrl(path, name))
+}
+
+export function wkPreviewFileUrl(path, name) {
+  return `${WKConfig.getLocationOrigin()}/file/preview?url=${encodeURIComponent(`${path}${path.includes('?fullfilename=') ? '' : `?fullfilename=${name || ''}`}&c=${axios.defaults.headers['Admin-Token']}`)}`
 }
 
 export function getFileIconWithSuffix(ext) {

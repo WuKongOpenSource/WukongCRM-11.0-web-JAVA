@@ -88,13 +88,15 @@
       @handle="detailHandle"/>
     <create
       v-if="isCreate"
-      :detail="{
-        customerName: detail.customerName,
-        customerId: detail.customerId,
+      :action="{ type: 'relative', crmType: crmType, data: {
+        customer: {
+          customerName: detail.customerName,
+          customerId: detail.customerId
+        },
         contactsName: detail.contactsName,
         contactsMobile: detail.contactsMobile,
         contactsAddress: detail.contactsAddress,
-      }"
+      }}"
       @save-success="getInvoiceList"
       @close="isCreate=false"/>
     <invoice-title-set

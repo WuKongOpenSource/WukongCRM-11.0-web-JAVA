@@ -153,7 +153,7 @@ export default {
   methods: {
     // 放大图片
     imgZoom(images, k) {
-      this.$bus.emit('preview-image-bus', {
+      this.$wkPreviewFile.preview({
         index: k,
         data: images
       })

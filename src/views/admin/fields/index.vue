@@ -56,6 +56,7 @@
                 class="field-row">
                 <component
                   v-for="(field, childIndex) in childArr"
+                  ref="fieldItem"
                   :key="childIndex"
                   :is="field | typeToComponentName"
                   :field="field"
@@ -63,6 +64,7 @@
                   :point="[fatherIndex, childIndex]"
                   :active-point="selectedPoint"
                   @action="handleAction"
+                  @child-drag-add="handleChildDragAdd"
                   @click="handleSelect([fatherIndex, childIndex])" />
               </flexbox>
             </draggable>
@@ -75,9 +77,11 @@
       <setting-field
         v-if="selectedField"
         :field="selectedField"
+        :point="selectedPoint"
+        :field-arr="fieldArr"
         :can-transform="canTransform"
         :transform-data="transformData"
-        :can-unique="canUnique"
+        @child-edit="handleChildEdit"
         @update-width="handleUpdateFieldWidth" />
     </flexbox-item>
   </flexbox>
@@ -116,6 +120,7 @@ import Field from './field'
 import FieldTypeLib from './fieldTypeLib'
 import { objDeepCopy } from '@/utils/index'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import { typeToComponent } from './utils'
 
 export default {
   name: 'FieldsIndex',
@@ -139,56 +144,7 @@ export default {
   filters: {
     /** 根据type 找到组件 */
     typeToComponentName(item) {
-      if (item.type === 0) return 'FieldInput'
-      if ([
-        'text',
-        'number',
-        'floatnumber',
-        'mobile',
-        'email',
-        'date',
-        'datetime',
-        'user',
-        'structure',
-        'contacts',
-        'customer',
-        'contract',
-        'business',
-        'single_user',
-        'website'
-      ].includes(item.formType)) {
-        return 'FieldInput'
-      }
-      switch (item.formType) {
-        case 'textarea': // 多行文本
-          return 'FieldTextarea'
-        case 'select': // 选项
-          return 'FieldSelect'
-        case 'checkbox': // 多选
-          return 'FieldCheckbox'
-        case 'file': // 附件
-          return 'FieldFile'
-        case 'boolean_value': // 布尔
-          return 'FieldBoolean'
-        case 'percent': // 百分数
-          return 'FieldPercent'
-        case 'position': // 地区定位
-          return 'FieldPosition'
-        case 'location': // 定位
-          return 'FieldLocation'
-        case 'detail_table': // 明细表格
-          return 'FieldDetailTable'
-        case 'handwriting_sign': // 手写签名
-          return 'FieldWritingSign'
-        case 'date_interval': // 日期区间
-          return 'FieldDateInterval'
-        case 'desc_text': // 描述文字
-          return 'FieldDescText'
-        // case 'form':
-        //   return 'FieldTextarea'
-        default:
-          return 'FieldInput'
-      }
+      return typeToComponent(item)
     }
   },
   data() {
@@ -198,11 +154,10 @@ export default {
 
       fieldLibList: [], // 字段库
       dragLeftConfig: {
-        delay: 50,
         group: {
           pull: 'clone',
           put: false,
-          name: 'list'
+          name: 'libList'
         },
         forceFallback: true,
         sort: false
@@ -210,13 +165,19 @@ export default {
       movedField: null, // 被拖拽的字段库字段
 
       dragListConfig: {
-        delay: 50,
-        group: 'list',
+        delay: 100,
+        group: {
+          name: 'list',
+          put: ['libList'],
+          pull: true
+        },
         forceFallback: true,
         fallbackClass: 'draggingStyle'
       },
       fieldArr: [],
       rejectHandle: true, // 请求未获取前不能操作
+
+      isChildDragAdd: false, // 是否为子组件内部拖拽添加
 
       selectedPoint: [null, null],
       selectedField: null,
@@ -227,10 +188,13 @@ export default {
   computed: {
     // 能转移
     canTransform() {
-      return this.moduleType == 'crm_leads'
-    },
-    canUnique() {
-      return this.moduleType != 'oa_examine' // 办公审批不允许设置唯一
+      const rowNum = this.selectedPoint[0]
+      const columnNum = this.selectedPoint[1]
+      if (!isEmpty(rowNum) && !isEmpty(columnNum)) {
+        const currentField = this.fieldArr[rowNum][columnNum]
+        if (currentField.formType === 'detail_table') return false
+      }
+      return this.moduleType === 'crm_leads'
     },
     title() {
       return {
@@ -244,13 +208,6 @@ export default {
         crm_visit: '客户回访',
         crm_marketing: '市场活动'
       }[this.moduleType] || ''
-    }
-  },
-  watch: {
-    selectedField: {
-      handler() {
-      },
-      deep: true
     }
   },
   created() {
@@ -321,6 +278,7 @@ export default {
      * @param field {Object}
      */
     handleLibFieldClick(field) {
+      console.log('lib click')
       this.movedField = field
       this.dragLeftEnd()
     },
@@ -337,6 +295,7 @@ export default {
      * 左侧字段库拖拽结束
      */
     dragLeftEnd(evt) {
+      console.log('drag left end', evt)
       if (this.rejectHandle) return
       const newField = new Field({
         name: this.movedField.name,
@@ -344,17 +303,81 @@ export default {
       })
       newField.stylePercent = 100
       newField.operating = 255
+      if (this.$route.params.label !== 'none') {
+        newField.label = this.$route.params.label
+      }
       if (this.movedField.formType === 'desc_text') {
         newField.name = ''
       }
+      if (this.movedField.formType === 'detail_table') {
+        // 11101000
+        newField.operating = 232
+        newField.fieldExtendList = []
+        newField.defaultValue = null
+        newField.remark = `添加${newField.name}`
+      }
+      delete newField.fieldId
+
+      if (this.isChildDragAdd) {
+        // 如果是子组件内部拖拽添加
+        if ([
+          'detail_table',
+          'desc_text',
+          'handwriting_sign'
+        ].includes(newField.formType)) {
+          this.$message.error('此字段内部不能添加该类型的字段')
+          return
+        }
+        this.childDragAddEnd(newField, evt)
+        return
+      }
+
       let rowNum = null
-      if (evt && evt.newIndex) {
+      if (
+        evt &&
+        evt.pullMode === 'clone' &&
+        !isEmpty(evt.newIndex)
+      ) {
         rowNum = evt.newIndex
       } else {
         rowNum = this.selectedPoint[0] + 1
       }
       this.fieldArr.splice(rowNum, 0, [newField])
       this.handleSelect([rowNum, 0])
+    },
+
+    /**
+     * 子组件内部(明细表格)拖拽添加
+     */
+    handleChildDragAdd(point, evt) {
+      // console.log('child drag add')
+      this.selectedPoint = point
+      this.isChildDragAdd = true
+    },
+
+    /**
+     * 子组件内部(明细表格)追加表格字段
+     */
+    childDragAddEnd(newField, evt) {
+      newField.stylePercent = 50
+      // 10101011
+      newField.operating = 171
+      const findRes = FieldTypeLib.find(o => newField.formType === o.formType)
+      if (findRes) newField.type = findRes.type
+
+      // const rowNum = evt.newIndex
+      const rowNum = this.selectedPoint[0]
+      const columnNum = this.selectedPoint[1]
+      const currentField = this.fieldArr[rowNum][columnNum]
+      if (isEmpty(currentField.fieldExtendList)) {
+        currentField.fieldExtendList = []
+      }
+      newField.fieldName = this.generateFieldName(currentField.fieldExtendList)
+      currentField.fieldExtendList.push(newField)
+      console.log('currentField: ', currentField)
+      this.$set(this.fieldArr, rowNum, this.fieldArr[rowNum])
+      this.handleSelect(this.selectedPoint, newField)
+      this.isChildDragAdd = false
     },
 
     /**
@@ -401,28 +424,33 @@ export default {
       const row = this.fieldArr[point[0] - 1]
       if (!row || row.length === 4) return
       const field = this.fieldArr[point[0]][point[1]]
-
-      // 给新行追加字段
-      row.push(objDeepCopy(field))
-      let config = this.getWidth(row.length)
-      row.forEach(o => {
-        o.stylePercent = config.stylePercent
-      })
-      this.$set(this.fieldArr, point[0] - 1, row)
-
-      // 把字段从原来的行中删除
-      const oldRow = this.fieldArr[point[0]]
-      oldRow.splice(point[1], 1)
-      if (oldRow.length === 0) {
-        this.fieldArr.splice(point[0], 1)
+      const topField = row[0]
+      if (field.formType === 'detail_table' || topField.formType === 'detail_table') {
+        [this.fieldArr[point[0] - 1], this.fieldArr[point[0]]] = [this.fieldArr[point[0]], this.fieldArr[point[0] - 1]]
+        this.handleSelect([point[0] - 1, 0])
       } else {
-        config = this.getWidth(oldRow.length)
-        oldRow.forEach(o => {
+        // 给新行追加字段
+        row.push(objDeepCopy(field))
+        let config = this.getWidth(row.length)
+        row.forEach(o => {
           o.stylePercent = config.stylePercent
         })
-        this.$set(this.fieldArr, point[0], oldRow)
+        this.$set(this.fieldArr, point[0] - 1, row)
+
+        // 把字段从原来的行中删除
+        const oldRow = this.fieldArr[point[0]]
+        oldRow.splice(point[1], 1)
+        if (oldRow.length === 0) {
+          this.fieldArr.splice(point[0], 1)
+        } else {
+          config = this.getWidth(oldRow.length)
+          oldRow.forEach(o => {
+            o.stylePercent = config.stylePercent
+          })
+          this.$set(this.fieldArr, point[0], oldRow)
+        }
+        this.handleSelect([point[0] - 1, row.length - 1])
       }
-      this.handleSelect([point[0] - 1, row.length - 1])
     },
 
     /**
@@ -431,19 +459,26 @@ export default {
      */
     handleActionMoveBottom(point) {
       const field = this.fieldArr[point[0]][point[1]]
-      field.stylePercent = 100
-      // 把字段放到新行
-      this.fieldArr.splice(point[0] + 1, 0, [field])
-      // 把字段从原来的行删除
-      this.fieldArr[point[0]].splice(point[1], 1)
-      // 修改原来行的字段占比
+      const bottomField = this.fieldArr[point[0] + 1][0]
       const row = this.fieldArr[point[0]]
-      const config = this.getWidth(row.length)
-      row.forEach(o => {
-        o.stylePercent = config.stylePercent
-      })
-      this.$set(this.fieldArr, point[0], row)
-      this.handleSelect([point[0] + 1, 0])
+
+      if (field.formType === 'detail_table' || bottomField.formType === 'detail_table' || row.length === 1) {
+        [this.fieldArr[point[0] + 1], this.fieldArr[point[0]]] = [this.fieldArr[point[0]], this.fieldArr[point[0] + 1]]
+        this.handleSelect([point[0] + 1, 0])
+      } else {
+        field.stylePercent = 100
+        // 把字段放到新行
+        this.fieldArr.splice(point[0] + 1, 0, [field])
+        // 把字段从原来的行删除
+        this.fieldArr[point[0]].splice(point[1], 1)
+        // 修改原来行的字段占比
+        const config = this.getWidth(row.length)
+        row.forEach(o => {
+          o.stylePercent = config.stylePercent
+        })
+        this.$set(this.fieldArr, point[0], row)
+        this.handleSelect([point[0] + 1, 0])
+      }
     },
 
     /**
@@ -548,15 +583,14 @@ export default {
         type: 'warning'
       })
         .then(() => {
+          this.selectedPoint = [null, null]
+          this.selectedField = null
+
           this.fieldArr[point[0]].splice([point[1]], 1)
           // 如果当前行已经没有元素则删除
           if (this.fieldArr[point[0]].length === 0) {
             this.fieldArr.splice(point[0], 1)
           }
-          this.$nextTick(() => {
-            this.selectedPoint = [null, null]
-            this.selectedField = null
-          })
         })
         .catch(() => {})
     },
@@ -564,17 +598,47 @@ export default {
     /**
      * 字段列表点击选择
      * @param point {Array} 字段的坐标
+     * @param field {Object} 字段
      */
-    handleSelect(point) {
+    handleSelect(point, field = null) {
       console.log('index click: ', point)
       this.selectedPoint = point
-      this.selectedField = this.fieldArr[point[0]][point[1]]
-      // if (this.selectedPoint === index) {
-      //   // 表自定义字段的刷新`
-      //   if (index >= 0) {
-      //     this.form = this.fieldArr[index]
-      //   }
-      // }
+      this.selectedField = field || this.fieldArr[point[0]][point[1]]
+    },
+
+    /**
+     * 编辑(明细表格)内部字段
+     * @param field {Object} 为空时表明为 clickoutside
+     */
+    handleChildEdit(field = null) {
+      if (field) {
+        this.selectedField = field
+      } else {
+        this.handleSelect(this.selectedPoint)
+      }
+    },
+
+    /**
+     * 生成(明细表格)内部字段fieldName
+     * @param list {Array<Object>} 全部的内部字段，防止fieldName重复
+     */
+    generateFieldName(list) {
+      const arr = list.map(o => o.fieldName)
+      const generateStr = function(len) {
+        const lib = 'abcdefghijklmnopqrstuvwxyz'
+        let str = ''
+        for (let i = 0; i < len; i++) {
+          const index = Math.ceil(Math.random() * 25)
+          str += lib[index]
+        }
+        const res = 'field_' + str
+        if (arr.includes(res)) {
+          return generateStr(len)
+        } else {
+          return res
+        }
+      }
+      return generateStr(6)
     },
 
     /**
@@ -618,18 +682,56 @@ export default {
             this.loading = false
             return
           }
+
+          if (item.formType === 'detail_table') {
+            // 明细表格
+            if (isEmpty(item.fieldExtendList)) {
+              this.$message.error(positionStr + '明细字段不能为空')
+              this.loading = false
+              return
+            }
+            for (let j = 0; j < item.fieldExtendList.length; j++) {
+              const o = item.fieldExtendList[j]
+              delete o.companyId
+              delete o.id
+              if (isEmpty(o.defaultValue)) {
+                o.defaultValue = null
+              }
+              o.name = (o.name || '').trim()
+              if (!o.name) {
+                this.$message.error(positionStr + '明细字段，标识名不能为空')
+                this.loading = false
+                return
+              }
+              if (limitFields.includes(o.name)) {
+                this.$message.error(positionStr + '明细字段标识名与系统字段重复，请使用其他字段！')
+                this.loading = false
+                return
+              }
+            }
+            const _arr = item.fieldExtendList.map(o => o.name)
+            if (_arr.length !== Array.from(new Set(_arr)).length) {
+              this.$message.error(positionStr + '明细字段标识名重复')
+              this.loading = false
+              return
+            }
+          }
           names.push(item.name)
         } else {
+          // 描述文字
           if (!isEmpty(item.defaultValue) && item.defaultValue.length > 2000) {
             this.$message.error(positionStr + '描述文字类型字段最多设置2000字')
             this.loading = false
             return
           }
         }
-        delete item.sysConfig
         if (!item.type) {
           const findRes = FieldTypeLib.find(o => o.formType === item.formType)
           if (findRes) item.type = findRes.type
+        }
+
+        if (item.hasOwnProperty('optionsData')) {
+          delete item.optionsData
         }
       }
 
@@ -730,7 +832,6 @@ export default {
 
 .fields-index {
   &.body {
-    width: 100%;
     position: relative;
     width: 100%;
     height: calc(100% + 15px);

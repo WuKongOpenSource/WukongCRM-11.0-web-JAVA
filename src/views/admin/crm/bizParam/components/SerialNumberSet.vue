@@ -41,7 +41,12 @@
                     :value="item.value"/>
                 </el-select>
                 <template>
-                  <el-input v-if="typeItem.type == 1" v-model="typeItem.value" :maxlength="12" class="rule-input" />
+                  <el-input
+                    v-if="typeItem.type == 1"
+                    :value="typeItem.value"
+                    :maxlength="12"
+                    class="rule-input"
+                    @input="inputValue => typeItem.value = inputValue.replace(/\-+/g,'')" />
                   <template v-else-if="typeItem.type == 2">
                     <el-select v-model="typeItem.value" class="rule-select" >
                       <el-option
@@ -61,9 +66,19 @@
 
                   <template v-else-if="typeItem.type == 3">
                     <span class="rule-code-span">起始编号</span>
-                    <el-input v-model="typeItem.value" :maxlength="9" class="rule-code-input" type="number" @input="if(typeItem.value.length>9)typeItem.value=typeItem.value.slice(0,9)" />
+                    <el-input
+                      v-model="typeItem.value"
+                      :maxlength="9"
+                      class="rule-code-input"
+                      type="number"
+                      @input="if(typeItem.value.length>9)typeItem.value=typeItem.value.slice(0,9)" />
                     <span class="rule-code-span">递增数</span>
-                    <el-input v-model="typeItem.increaseNumber" :maxlength="9" class="rule-code-input" type="number" @input="if(typeItem.increaseNumber.length>9)typeItem.increaseNumber=typeItem.increaseNumber.slice(0,9)" />
+                    <el-input-number
+                      v-model="typeItem.increaseNumber"
+                      :min="0"
+                      :max="999999999"
+                      :precision="0"
+                      :controls="false" />
                     <span class="rule-code-span">重新开始编号</span>
                     <el-select v-model="typeItem.resetType" class="rule-code-input" >
                       <el-option
@@ -375,6 +390,14 @@ export default {
       &-input {
         width: 200px;
         margin-left: 15px;
+      }
+
+      .el-input-number {
+        width: 140px;
+        /deep/ .el-input__inner {
+          padding: 0 8px;
+          text-align: left;
+        }
       }
 
       &-code-input {

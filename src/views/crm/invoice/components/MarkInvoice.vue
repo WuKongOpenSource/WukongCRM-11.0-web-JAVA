@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    v-loading="loading"
+    ref="wkDialog"
     :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -40,12 +40,13 @@
 <script>
 import { crmInvoiceStatusResetAPI, crmInvoiceStatusUpdateAPI } from '@/api/crm/invoice'
 
+import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   name: 'MarkInvoice', // 标记为开票
   components: {
   },
-  mixins: [],
+  mixins: [ElDialogLoadingMixin],
   props: {
     visible: {
       type: Boolean,
@@ -60,7 +61,6 @@ export default {
   },
   data() {
     return {
-      loading: true,
       form: {
         invoiceNumber: '',
         logisticsNumber: '',
@@ -74,14 +74,17 @@ export default {
     }
   },
   watch: {
-    visible() {
-      if (this.reset) {
-        this.form = {
-          invoiceNumber: this.detail.invoiceNumber,
-          logisticsNumber: this.detail.logisticsNumber,
-          realInvoiceDate: this.detail.realInvoiceDate
+    visible: {
+      handler(val) {
+        if (val && this.reset) {
+          this.form = {
+            invoiceNumber: this.detail.invoiceNumber,
+            logisticsNumber: this.detail.logisticsNumber,
+            realInvoiceDate: this.detail.realInvoiceDate
+          }
         }
-      }
+      },
+      immediate: true
     }
   },
   mounted() {},

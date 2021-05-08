@@ -96,7 +96,7 @@ export default {
       if (canPreviewFile(this.data.name)) {
         wkPreviewFile(this.data.filePath || this.data.url, this.data.name)
       } else {
-        this.$bus.emit('preview-image-bus', {
+        this.$wkPreviewFile.preview({
           index: this.cellIndex || 0,
           data: this.list.map(function(item) {
             return {
