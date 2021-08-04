@@ -40,6 +40,10 @@ import {
   crmReceivablesExcelAllExportAPI
 } from '@/api/crm/receivables'
 import {
+  crmReceivablesPlanIndexAPI,
+  crmReceivablesPlanExcelAllExportAPI
+} from '@/api/crm/receivablesPlan'
+import {
   crmReturnVisitIndexAPI
 } from '@/api/crm/visit'
 import {
@@ -61,8 +65,24 @@ import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import Lockr from 'lockr'
 import { Loading } from 'element-ui'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
-import { downloadExcelWithResData } from '@/utils'
+import { downloadExcelWithResData, toUnderScoreCase } from '@/utils'
 import { getFormFieldShowName } from '@/components/NewCom/WkForm/utils'
+import merge from '@/utils/merge'
+import { isArray } from '@/utils/types'
+
+const DefaultFilterProps = {
+  isSelect: false, // 仅选择数据用  禁用数据刷新重置勾选
+  showScene: true,
+  showSearch: true,
+  showModuleName: true, //  左侧布局
+  selectionHandle: true, // 勾选不操作
+  radio: false, // 是否单选
+  // 搜索
+  // 请求和参数
+  request: null,
+  params: null
+}
+
 
 export default {
   components: {
@@ -73,6 +93,17 @@ export default {
     ApprovalFlowUpdateDialog,
     WkFieldView
   },
+
+  props: {
+    // 筛选配置
+    props: {
+      type: Object,
+      default: null
+    },
+    // 筛选选择的数据
+    selectedData: Array
+  },
+
   data() {
     return {
       loading: false, // 加载动画
@@ -97,7 +128,9 @@ export default {
       selectionList: [], // 勾选数据 用于全局导出
       // 已经发请求 用于缓存区分
       isRequested: false,
-      rowIndex: 0 // 行索引
+      rowIndex: 0, // 行索引
+      // 忽略勾选数据change 避免触发chang事件
+      ignoreSelectedChange: false
     }
   },
 
@@ -105,16 +138,64 @@ export default {
 
   computed: {
     ...mapGetters(['crm']),
+    config() {
+      return merge({ ...DefaultFilterProps }, this.props || {})
+    },
+
     saveAuth() {
       if (this.isSeas) {
         return false
       }
 
-      return this.crm[this.crmType].save
+      return this.crm[this.crmType] && this.crm[this.crmType].save
     }
   },
-  watch: {},
+  watch: {
+    'config.params': {
+      handler() {
+        this.refreshList()
+      }
+    },
+
+    selectedData(newVal) {
+      // 筛选默认值勾选
+      this.ignoreSelectedChange = true
+      if (newVal) {
+        let valueEquals = true
+        if (newVal.length !== this.selectionList.length) {
+          valueEquals = false
+        } else {
+          for (let i = 0; i !== newVal.length; ++i) {
+            if (newVal[i][`${this.crmType}Id`] !== this.selectionList[i][`${this.crmType}Id`]) {
+              valueEquals = false
+              break
+            }
+          }
+        }
+
+        if (!valueEquals) {
+          this.setSelections(this.selectedData)
+        }
+      }
+
+      this.$nextTick(() => {
+        this.ignoreSelectedChange = false
+      })
+    }
+  },
+  /**
+   * 增加高级筛选逻辑
+   * 增加 props
+   * showScene  控制场景是否展示
+   * showSearch 控制搜索是否展示
+   * request 自定义请求
+   * params 自定义参数
+   */
+  created() {
+
+  },
   mounted() {
+    this.updateTableHeight()
     window.onresize = () => {
       this.updateTableHeight()
     }
@@ -125,6 +206,11 @@ export default {
       this.getFieldList()
     } else if (this.crm[this.crmType].index) {
       this.loading = true
+    }
+
+    // 筛选默认值勾选
+    if (this.selectedData) {
+      this.setSelections(this.selectedData)
     }
   },
 
@@ -158,6 +244,33 @@ export default {
         params.searchList = this.filterObj
       }
 
+      // 筛选props传入参数
+      // 用于相关查询 包含Id的参数 需替换为下划线 通过类似高级筛选形式 实现
+      if (this.config.params) {
+        params = { ...params }
+        const searchList = params.searchList || []
+        for (const key in this.config.params) {
+          const keyValue = this.config.params[key]
+          console.log([keyValue])
+          if (key === 'checkStatus') {
+            searchList.push({
+              formType: 'checkStatus',
+              name: 'checkStatus',
+              type: 1,
+              values: isArray(keyValue) ? keyValue : [keyValue]
+            })
+          } else {
+            searchList.push({
+              formType: 'text',
+              name: key.includes('Id') ? toUnderScoreCase(key) : key,
+              type: 1,
+              values: isArray(keyValue) ? keyValue : [keyValue]
+            })
+          }
+        }
+        params.searchList = searchList
+      }
+
       crmIndexRequest(params)
         .then(res => {
           // 需为true 才会触发客户列表和公海列表展示之后的刷新
@@ -171,6 +284,7 @@ export default {
           } else {
             if (this.crmType === 'contract' ||
               this.crmType === 'receivables' ||
+              this.crmType === 'receivablesPlan' ||
               this.crmType === 'business') {
               // 合同/回款列表展示金额信息
               this.moneyData = res.data.extraData ? res.data.extraData.money || {} : {}
@@ -221,6 +335,8 @@ export default {
         return crmReturnVisitIndexAPI
       } else if (this.crmType === 'invoice') {
         return crmInvoiceIndexAPI
+      } else if (this.crmType === 'receivablesPlan') {
+        return crmReceivablesPlanIndexAPI
       }
     },
 
@@ -443,6 +559,22 @@ export default {
         } else {
           this.showDview = false
         }
+      } else if (this.crmType == 'receivablesPlan') {
+        if (column.property === 'customerName') {
+          this.rowID = row.customerId
+          this.rowType = 'customer'
+          this.showDview = true
+        } else if (column.property === 'contractNum') {
+          this.rowID = row.contractId
+          this.rowType = 'contract'
+          this.showDview = true
+        } else if (column.property === 'num') {
+          this.rowID = row.receivablesPlanId
+          this.rowType = 'receivablesPlan'
+          this.showDview = true
+        } else {
+          this.showDview = false
+        }
       }
 
       this.rowIndex = this.getRowIndex()
@@ -472,7 +604,7 @@ export default {
      * @param {*} data
      */
     exportInfos() {
-      var params = {
+      const params = {
         search: this.search,
         type: this.isSeas ? crmTypeModel.pool : crmTypeModel[this.crmType] // 9是公海
       }
@@ -488,6 +620,7 @@ export default {
       if (this.filterObj && this.filterObj.length > 0) {
         params.searchList = this.filterObj
       }
+
       let request
       // 公海的请求
       if (this.isSeas) {
@@ -501,7 +634,8 @@ export default {
           contract: crmContractExcelAllExportAPI,
           receivables: crmReceivablesExcelAllExportAPI,
           product: crmProductExcelAllExportAPI,
-          invoice: crmInvoiceExcelAllExportAPI
+          invoice: crmInvoiceExcelAllExportAPI,
+          receivablesPlan: crmReceivablesPlanExcelAllExportAPI
         }[this.crmType]
       }
       const loading = Loading.service({ fullscreen: true, text: '导出中...' })
@@ -522,9 +656,8 @@ export default {
     handleFilter(data) {
       this.filterObj = data
 
-      var offsetHei = document.documentElement.clientHeight
-      var removeHeight = this.filterObj.length > 0 ? 295 : 235
-      this.tableHeight = offsetHei - removeHeight
+      this.updateTableHeight()
+
       this.currentPage = 1
       this.getList()
     },
@@ -566,7 +699,10 @@ export default {
         this.getMainTable().clearSort()
         this.sortChange()
       } else {
-        this.getMainTable().clearSelection()
+        // 只有不是选择效果，有特殊操作，清空勾选
+        if (!this.config.isSelect) {
+          this.getMainTable().clearSelection()
+        }
         this.getList()
       }
     },
@@ -615,8 +751,28 @@ export default {
      * @param {*} val
      */
     handleSelectionChange(val) {
-      this.selectionList = val // 勾选的行
-      this.$refs.crmTableHead.headSelectionChange(val)
+      if (this.ignoreSelectedChange) {
+        return
+      }
+      // 单选操作
+      if (this.config.radio && val.length > 1) {
+        const mainTable = this.getMainTable()
+        const lastObj = val[val.length - 1]
+        this.ignoreSelectedChange = true
+        mainTable.clearSelection()
+        this.$nextTick(() => {
+          this.ignoreSelectedChange = false
+          mainTable.toggleRowSelection(lastObj)
+        })
+        return
+      } else {
+        this.selectionList = val
+      }
+      this.$emit('selection-change', val, this.crmType)
+
+      if (this.config.selectionHandle) {
+        this.$refs.crmTableHead.headSelectionChange(val)
+      }
     },
 
     /**
@@ -720,9 +876,46 @@ export default {
      * 更新表高
      */
     updateTableHeight() {
-      var offsetHei = document.documentElement.clientHeight
-      var removeHeight = this.filterObj.length > 0 ? 285 : 235
-      this.tableHeight = offsetHei - removeHeight
+      if (this.config && this.config.tableHeight) {
+        this.$nextTick(() => {
+          this.tableHeight = this.filterObj.length > 0 ? this.config.tableHeight - 60 : this.config.tableHeight
+        })
+      } else {
+        var offsetHei = document.documentElement.clientHeight
+        var removeHeight = this.filterObj.length > 0 ? 295 : 235
+        this.tableHeight = offsetHei - removeHeight
+      }
+    },
+
+    /**
+     * 设置selections值
+     */
+    setSelections(data) {
+      const mainTable = this.getMainTable()
+      mainTable.clearSelection()
+      this.$nextTick(() => {
+        data.forEach(item => {
+          // const idKey = `${this.crmType}Id`
+          // const listItem = this.list.find(lItem => lItem[idKey] === item[idKey])
+          // if (listItem) {
+          //   mainTable.toggleRowSelection(listItem)
+          // }
+          mainTable.toggleRowSelection(item)
+        })
+      })
+    },
+
+    /**
+     * 切换某一行的选中状态
+     */
+    toggleRowSelection(rowKey, rowId, selected) {
+      this.$nextTick(() => {
+        const removeItem = this.selectionList.find(item => item[rowKey] === rowId)
+
+        if (removeItem) {
+          this.getMainTable().toggleRowSelection(removeItem, selected)
+        }
+      })
     }
   },
 

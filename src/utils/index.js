@@ -199,29 +199,8 @@ export function getFileTypeIcon(file) {
 
 /**
  * 根据文件名字判断是否能预览
- * @param {*} name
  */
-export function canPreviewFile(name) {
-  const temps = name ? name.split('.') : []
-  var ext = ''
-  if (temps.length > 0) {
-    ext = temps[temps.length - 1]
-  } else {
-    ext = ''
-  }
-
-  if (['xlsx', 'xls'].includes(ext)) {
-    return true
-  } else if (['doc', 'docx'].includes(ext)) {
-    return true
-  } else if (ext === 'pdf') {
-    return true
-  } else if (['ppt', 'pptx'].includes(ext)) {
-    return true
-  } else if (['txt', 'text'].includes(ext)) {
-    return true
-  }
-
+export function canPreviewFile() {
   return false
 }
 
@@ -794,4 +773,49 @@ export function isWeiXin() {
   } else {
     return false
   }
+}
+
+/**
+ * 下划线转换驼峰
+ */
+export function toCamelCase(name) {
+  return name.replace(/\_(\w)/g, function(all, letter) {
+    return letter.toUpperCase()
+  })
+}
+
+/**
+ * 驼峰转换下划线
+ */
+export function toUnderScoreCase(name) {
+  return name.replace(/([A-Z])/g, '_$1').toLowerCase()
+}
+
+/**
+ * 通过.间隔字符串或者方法获取对象值
+ */
+export function getRowValueByKey(row, rowKey) {
+  if (!row) return false
+  if (typeof rowKey === 'string') {
+    if (rowKey.indexOf('.') < 0) {
+      return row[rowKey]
+    }
+    const key = rowKey.split('.')
+    let current = row
+    for (let i = 0; i < key.length; i++) {
+      current = current[key[i]]
+      if (current === undefined) {
+        return false
+      }
+    }
+    return current
+  } else if (typeof rowKey === 'function') {
+    // eslint-disable-next-line no-useless-call
+    return rowKey.call(null, row)
+  }
+}
+
+import store from '@/store'
+export function getPermissionByKey(rowKey) {
+  return getRowValueByKey(store.state.user, rowKey)
 }

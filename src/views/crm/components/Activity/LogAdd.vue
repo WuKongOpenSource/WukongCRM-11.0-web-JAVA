@@ -81,30 +81,21 @@
         class="handle-button"
         icon="wk wk-file"
         @click="barClick('file')">附件</el-button>
-      <el-popover
+      <crm-relative
         v-if="showBusiness"
-        v-model="showBusinessPopover"
-        placement="bottom"
-        width="700"
-        popper-class="no-padding-popover"
-        trigger="click">
-        <crm-relative
-          ref="crmrelative"
-          :show="showBusinessPopover"
-          :radio="false"
-          :action="businessAction"
-          :selected-data="{ 'business': business }"
-          crm-type="business"
-          @close="showBusinessPopover=false"
-          @changeCheckout="checkRelativeInfos" />
-        <el-button
-          slot="reference"
-          type="text"
-          icon="wk wk-associate"
-          class="handle-button"
-          style="margin-left: 10px;"
-          @click="barClick('business')">关联商机</el-button>
-      </el-popover>
+        :visible.sync="showBusinessPopover"
+        :radio="false"
+        :action="businessAction"
+        :selected-data="{ 'business': business }"
+        crm-type="business"
+        @close="showBusinessPopover=false"
+        @changeCheckout="checkRelativeInfos" />
+      <el-button
+        type="text"
+        icon="wk wk-associate"
+        class="handle-button"
+        style="margin-left: 10px;"
+        @click="barClick('business')">关联商机</el-button>
       <el-button
         v-debounce="sendClick"
         type="primary"
@@ -132,8 +123,6 @@
 <script>
 import { crmFileDeleteAPI, crmFileRemoveByBatchIdAPI } from '@/api/common'
 
-
-import CrmRelative from '@/components/CreateCom/CrmRelative'
 import AddImageList from '@/components/QuickAdd/AddImageList'
 import AddFileList from '@/components/QuickAdd/AddFileList'
 import AddRelateList from '@/components/QuickAdd/AddRelateList'
@@ -146,7 +135,7 @@ export default {
   /** 跟进记录 下的 添加 有添加框的都需要*/
   name: 'LogAdd',
   components: {
-    CrmRelative,
+    CrmRelative: () => import('@/components/CreateCom/CrmRelative'),
     AddImageList,
     AddFileList,
     AddRelateList,

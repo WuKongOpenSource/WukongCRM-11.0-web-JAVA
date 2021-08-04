@@ -14,47 +14,40 @@
           name="user" />
       </el-tabs>
     </div>
-    <div class="handle-bar">
-      <el-date-picker
-        v-model="dateSelect"
-        :clearable="false"
-        type="year"
-        value-format="yyyy"
-        placeholder="选择年" />
-      <el-select
-        v-model="typeSelect">
-        <el-option
-          v-for="item in [{label:'合同金额', value:1},{label:'回款金额', value:2}]"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value" />
-      </el-select>
-      <el-cascader
-        :options="deptList"
-        :show-all-levels="false"
-        :props="structuresProps"
-        v-model="structuresSelectValue"
-        placeholder="选择部门"
-        change-on-select
-        @change="structuresValueChange" />
-      <el-select
-        v-if="tabType === 'user'"
-        v-model="userSelectValue"
-        :clearable="true"
-        placeholder="选择员工">
-        <el-option
-          v-for="item in userOptions"
-          :key="item.userId"
-          :label="item.realname"
-          :value="item.userId" />
-      </el-select>
-      <el-button
-        type="primary"
-        @click.native="handleClick('search')">搜索</el-button>
+    <flexbox class="handle-bar" justify="space-between">
+      <flexbox>
+        <el-date-picker
+          v-model="dateSelect"
+          :clearable="false"
+          type="year"
+          value-format="yyyy"
+          placeholder="选择年" />
+        <el-select
+          v-model="typeSelect">
+          <el-option
+            v-for="item in [{label:'合同金额', value:1},{label:'回款金额', value:2}]"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value" />
+        </el-select>
+        <wk-dep-select
+          v-model="structuresSelectValue"
+          radio
+          @change="structuresValueChange" />
+        <wk-user-select
+          v-if="tabType === 'user'"
+          v-model="userSelectValue"
+          :props="{isList: true}"
+          :options="userOptions"
+          radio/>
+        <el-button
+          type="primary"
+          @click.native="handleClick('search')">搜索</el-button>
+      </flexbox>
 
       <div
         v-if="!isEdit"
-        style="float: right;">
+        style="flex-shrink: 0;">
         <el-button
           type="primary"
           class="xr-btn--orange"
@@ -81,7 +74,7 @@
           type="primary"
           @click.native="handleClick('cancel')">取消</el-button>
       </div>
-    </div>
+    </flexbox>
     <div class="content">
       <el-table
         id="task-set-table"
@@ -146,6 +139,10 @@ import {
   crmAchievementDelete
 } from '@/api/admin/crm'
 
+
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
+
 import moment from 'moment'
 import AddGoal from './AddGoal'
 import { exportElTable } from '@/utils'
@@ -154,7 +151,9 @@ export default {
   /** 业绩目标设置 */
   name: 'TaskSetStatistics',
   components: {
-    AddGoal
+    AddGoal,
+    WkDepSelect,
+    WkUserSelect
   },
   data() {
     return {
@@ -176,7 +175,7 @@ export default {
         value: 'id'
       },
       deptList: [], // 部门列表
-      structuresSelectValue: [],
+      structuresSelectValue: '',
       /** 用户列表 */
       userOptions: [],
       userSelectValue: '',
@@ -458,13 +457,13 @@ export default {
       depListAPI({ type: 'tree' }).then(res => {
         this.deptList = res.data
         if (res.data.length > 0) {
-          this.structuresSelectValue = [res.data[0].id]
+          this.structuresSelectValue = res.data[0].id
           this.tabTypeClick() // 获取信息
         }
       })
     },
     /** 部门更改 */
-    structuresValueChange(data) {
+    structuresValueChange() {
       if (this.tabType === 'department') {
         if (this.userSelectValue) {
           // 在部门目标设置下更新部门 清空员工下的员工列表信息
@@ -482,10 +481,8 @@ export default {
     /** 部门下员工 */
     getUserList() {
       var params = { pageType: 0 }
-      if (this.structuresSelectValue.length > 0) {
-        params.deptId = this.structuresSelectValue[
-          this.structuresSelectValue.length - 1
-        ]
+      if (this.structuresSelectValue > 0) {
+        params.deptId = this.structuresSelectValue
         userListAPI(params)
           .then(res => {
             this.userOptions = res.data.list
@@ -499,7 +496,7 @@ export default {
     /** 获取员工业绩目标列表 */
     getAhievementListForUser() {
       this.loading = true
-      var id = this.structuresSelectValue[this.structuresSelectValue.length - 1]
+      var id = this.structuresSelectValue
       crmAchievementIndex({
         year: this.dateSelect,
         type: 3, // 2部门3员工
@@ -636,12 +633,14 @@ export default {
     width: 130px;
     margin-right: 15px;
   }
-  .el-cascader {
-    width: 130px;
-    margin-right: 15px;
-  }
   .el-select {
     width: 120px;
+    margin-right: 15px;
+  }
+
+  .wk-user-select,
+  .wk-dep-select {
+    width: 150px;
     margin-right: 15px;
   }
 }

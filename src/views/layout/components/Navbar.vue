@@ -75,7 +75,7 @@
           :icon="item.icon"
           :disabled="item.disabled"
         >{{ item.label }}</el-dropdown-item>
-        <div v-if="manage && !isNewest" class="wk-update-tips">有新版本<el-badge is-dot><el-button type="primary" round @click="updateClick">更新</el-button></el-badge></div>
+        <!-- <div v-if="manage && !isNewest" class="wk-update-tips">有新版本<el-badge is-dot><el-button type="primary" round @click="updateClick">更新</el-button></el-badge></div> -->
         <div
           v-if="manage"
           class="handel-box">
@@ -92,19 +92,18 @@
       ref="navManager"
       :collapse="collapse"
       :top-module="items"
-      @change="getTopHeaderModule"
       @select="navManagerSelect" />
   </div>
 </template>
 
 <script>
 import { systemMessageUnreadCountAPI } from '@/api/common'
-import { crmCheckVersionAPI } from '@/api/admin/update'
+// import { crmCheckVersionAPI } from '@/api/admin/update'
 
 import SystemMessage from './SystemMessage'
 import NavManager from './NavManager'
 
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import { Loading } from 'element-ui'
 import { on, off } from '@/utils/dom'
 
@@ -152,10 +151,16 @@ export default {
       'manage',
       'oa',
       'project',
+      'hrm',
       'navActiveIndex',
       'collapse',
-      'headerModule'
+      'headerModule',
+      'app',
+      'hrmUserInfo'
     ]),
+    ...mapState({
+      moduleAuth: state => state.app.moduleAuth
+    }),
     moreMenu() {
       return [{
         command: 'baseInfo',
@@ -259,6 +264,16 @@ export default {
         }
       }
 
+      if (this.moduleAuth && this.moduleAuth.hrm) {
+        tempsItems.hrm = {
+          title: '人力资源',
+          type: 11,
+          module: 'hrm',
+          path: '/hrm',
+          icon: 'wk wk-employees'
+        }
+      }
+
       return tempsItems
     }
   },
@@ -267,16 +282,33 @@ export default {
       if (val == false) {
         this.changeNavIndex()
       }
+    },
+
+    headerModule: {
+      handler() {
+        if (this.headerModule) {
+          this.getTopHeaderModule()
+        } else {
+          if (!this.moduleAuth) {
+            this.$store.dispatch('QueryModules').then(() => {
+              this.$store.dispatch('WKHeaderModule')
+            }).catch(() => {})
+          } else {
+            this.$store.dispatch('WKHeaderModule')
+          }
+        }
+      },
+      immediate: true
     }
   },
   created() {
     this.getHeaderModule()
-    const _this = this
-    async function decorator() {
-      var { data } = await crmCheckVersionAPI()
-      _this.isNewest = _this.checkIsNewest(data.version, data.serverVersion)
-    }
-    decorator()
+    // const _this = this
+    // async function decorator() {
+    //   var { data } = await crmCheckVersionAPI()
+    //   _this.isNewest = _this.checkIsNewest(data.version, data.serverVersion)
+    // }
+    // decorator()
   },
 
   mounted() {
@@ -324,7 +356,7 @@ export default {
      * 根据关键词获取菜单数据
      */
     getTopHeaderModule() {
-      if (this.headerModule.length) {
+      if (this.headerModule.length > 0) {
         const allList = []
         for (let index = 0; index < this.headerModule.length; index++) {
           const key = this.headerModule[index]
@@ -379,15 +411,48 @@ export default {
     },
 
     navItemsClick(path) {
-      if (path != 'other') {
-        this.navManagerShow = false
-        this.$router.push(path)
+      if (path !== 'other') {
+        this.validateEnterData(path).then(result => {
+          if (result) {
+            this.navManagerShow = false
+            this.$router.push(path)
+          }
+        })
       } else {
         this.navManagerShow = !this.navManagerShow
       }
       this.$store.commit('SET_NAVACTIVEINDEX', path)
       this.$emit('nav-items-click', path)
     },
+
+    /**
+     * 验证页面进入信息
+     */
+    validateEnterData(type) {
+      return new Promise((resolve) => {
+        if (type.includes('hrm')) {
+          if (this.hrm) {
+            if (this.hrmUserInfo) {
+              resolve(true)
+            } else {
+              this.$store.dispatch('GetHrmUserInfo').then(() => {
+                resolve(true)
+              }).catch(() => {
+                resolve(false)
+              })
+            }
+          } else {
+            this.$router.push({
+              name: 'hrmTips'
+            })
+            resolve(false)
+          }
+        } else {
+          resolve(true)
+        }
+      })
+    },
+
     enterSystemSet() {
       this.$router.push({
         name: 'manage'
@@ -450,12 +515,12 @@ export default {
             this.$store
               .dispatch('LogOut')
               .then(() => {
-                location.reload()
                 loading.close()
+                location.reload()
               })
               .catch(() => {
-                location.reload()
                 loading.close()
+                location.reload()
               })
           })
           .catch(() => {})

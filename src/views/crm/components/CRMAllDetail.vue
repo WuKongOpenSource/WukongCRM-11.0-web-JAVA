@@ -19,6 +19,7 @@ import ProductDetail from '../product/Detail'
 import ReceivablesDetail from '../receivables/Detail'
 import VisitDetail from '../visit/Detail'
 import InvoiceDetail from '../invoice/Detail'
+import ReceivablesPlanDetail from '../receivablesPlan/Detail'
 
 export default {
   name: 'CRMAllDetail', // 详情
@@ -31,7 +32,8 @@ export default {
     ProductDetail,
     ReceivablesDetail,
     VisitDetail,
-    InvoiceDetail
+    InvoiceDetail,
+    ReceivablesPlanDetail
   },
   props: {
     crmType: String,
@@ -60,6 +62,8 @@ export default {
         return 'ProductDetail'
       } else if (this.crmType == 'receivables') {
         return 'ReceivablesDetail'
+      } else if (this.crmType == 'receivablesPlan') {
+        return 'ReceivablesPlanDetail'
       } else if (this.crmType == 'visit') {
         return 'VisitDetail'
       } else if (this.crmType == 'invoice') {

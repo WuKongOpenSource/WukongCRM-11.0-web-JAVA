@@ -2,6 +2,8 @@
   <el-dialog
     :visible.sync="visible"
     :close-on-click-modal="false"
+    modal-append-to-body
+    append-to-body
     title="高级筛选"
     width="900px"
     @close="handleCancel">
@@ -74,6 +76,7 @@
                   v-if="formItem.formType === 'checkStatus'
                     || formItem.formType === 'dealStatus'
                     || formItem.fieldName === 'invoiceStatus'
+                    || formItem.fieldName === 'receivedStatus'
                   || (formItem.formType === 'select' && getSettingValueType(formItem.setting) != 'string')"
                   v-model="formItem.value"
                   placeholder="请选择筛选条件">

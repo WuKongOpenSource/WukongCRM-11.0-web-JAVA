@@ -39,7 +39,7 @@
         :type="item.formType"
         @input="commonChange(item, index, $event)"/>
       <el-input
-        v-if="isTrimInput(item.formType)"
+        v-else-if="isTrimInput(item.formType)"
         v-model.trim="fieldFrom[item.field]"
         :disabled="item.disabled"
         :prefix-icon="getInputIcon(item.formType)"
@@ -196,7 +196,7 @@
         active-value="1"
         inactive-value="0"/>
       <v-distpicker
-        v-if="item.formType == 'address'"
+        v-else-if="item.formType == 'address'"
         :province="fieldFrom[item.field].province"
         :city="fieldFrom[item.field].city"
         :area="fieldFrom[item.field].area"
@@ -204,7 +204,7 @@
         @city="selectCity($event, item, index)"
         @area="selectArea($event, item, index)"/>
       <xh-files
-        v-if="item.formType == 'file'"
+        v-else-if="item.formType == 'file'"
         :value="fieldFrom[item.field]"
         :disabled="item.disabled"
         @value-change="oldChange($event, item, index)"

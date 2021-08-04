@@ -2,7 +2,8 @@ export default {
   methods: {
     /**
      * 根据类型获取条件
-     * @param {*} formType
+     * @param {String} formType
+     * @param {String} fieldName
      */
     getAdvancedFilterOptions(formType, fieldName) {
       // 单行文本、多行文本、网址、手机、邮箱

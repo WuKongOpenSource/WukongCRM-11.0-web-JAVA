@@ -18,12 +18,14 @@
         <slot />
       </div>
       <div class="xr-create__footer">
+        <slot name="footer-left" />
         <el-button
           v-if="showCancel"
           @click.native="close">取消</el-button>
         <slot name="footer" />
         <el-button
           v-if="showConfirm"
+          :disabled="confirmDisabled"
           type="primary"
           @click.native="debouncedSaveField(false)">{{ confirmButtonText }}</el-button>
       </div>
@@ -55,6 +57,10 @@ export default {
     showConfirm: {
       type: Boolean,
       default: true
+    },
+    confirmDisabled: {
+      type: Boolean,
+      default: false
     },
     confirmButtonText: {
       type: String,

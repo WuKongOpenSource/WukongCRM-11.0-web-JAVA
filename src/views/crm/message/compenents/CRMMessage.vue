@@ -283,7 +283,7 @@ export default {
 
     // 展示筛选
     showFilterView() {
-      if (this.crmType == 'receivables_plan') {
+      if (this.crmType == 'receivablesPlan') {
         return false
       }
       return true
@@ -439,7 +439,7 @@ export default {
         params.list = this.selectionList
           .map(item => {
             const temp = {}
-            const fieldKey = this.crmType === 'receivables_plan' ? 'planId' : `${this.crmType}Id`
+            const fieldKey = `${this.crmType}Id`
             temp.typeId = item[fieldKey]
             // 待进入公海提醒 需要的公海id
             if (this.infoType == 'putInPoolRemind') {
@@ -555,8 +555,8 @@ export default {
       } else if (this.infoType == 'remindReceivablesPlan') {
         return [
           { name: '待回款', value: '1', num: 0, isMenuNum: true },
-          { name: '已回款', value: '2', num: 0, key: 'overtime' },
-          { name: '已逾期', value: '3', num: 0 }
+          { name: '已回款', value: '2', num: 0 },
+          { name: '已逾期', value: '3', num: 0, key: 'overtime' }
         ]
       } else if (this.infoType == 'endContract') {
         return [{ name: '即将到期', value: '1', num: 0, isMenuNum: true }, { name: '已到期', value: '2', num: 0 }]

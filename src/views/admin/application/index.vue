@@ -200,6 +200,10 @@ export default {
           calendar: {
             disable: require('@/assets/img/system/app/ce_disable.png'),
             enable: require('@/assets/img/system/app/ce_enable.png')
+          },
+          hrm: {
+            disable: require('@/assets/img/system/app/hrm_disable.png'),
+            enable: require('@/assets/img/system/app/hrm_enable.png')
           }
         }
 

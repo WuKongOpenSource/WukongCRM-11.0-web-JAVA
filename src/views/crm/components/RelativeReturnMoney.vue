@@ -1,69 +1,85 @@
 <template>
   <div v-loading="loading" class="rc-cont">
-    <flexbox
-      v-if="!isSeas"
-      class="rc-head"
-      direction="row-reverse">
-      <el-button
-        class="xr-btn--orange rc-head-item"
-        icon="el-icon-plus"
-        type="primary"
-        @click="createClick('plan')">新建回款计划</el-button>
-    </flexbox>
-    <el-table
-      :data="palnList"
-      :height="tableHeight"
-      stripe
-      style="width: 100%;border: 1px solid #E6E6E6;">
-      <el-table-column
-        v-for="(item, index) in planFieldList"
-        :key="index"
-        :prop="item.prop"
-        :label="item.label"
-        show-overflow-tooltip/>
-      <el-table-column
-        label="操作"
-        fixed="right"
-        width="100">
-        <template slot-scope="scope">
-          <flexbox justify="center">
-            <el-button
-              type="text"
-              @click.native="handleFile('edit', scope)">编辑</el-button>
-            <el-button
-              type="text"
-              @click.native="handleFile('delete', scope)">删除</el-button>
-          </flexbox>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <flexbox
-      class="rc-head"
-      direction="row-reverse"
-      style="margin-top: 15px;">
-      <el-button
+    <template v-if="receivablesPlanIndex">
+      <flexbox
         v-if="!isSeas"
-        class="xr-btn--orange rc-head-item"
-        icon="el-icon-plus"
-        type="primary"
-        @click="createClick('money')">新建回款</el-button>
-    </flexbox>
-    <el-table
-      :data="list"
-      :height="tableHeight"
-      :cell-class-name="cellClassName"
-      stripe
-      style="width: 100%;border: 1px solid #E6E6E6;"
-      @row-click="handleRowClick">
-      <el-table-column
-        v-for="(item, index) in fieldList"
-        :key="index"
-        :prop="item.prop"
-        :formatter="fieldFormatter"
-        :label="item.label"
-        show-overflow-tooltip/>
-    </el-table>
+        class="rc-head"
+        direction="row-reverse">
+        <el-button
+          v-if="receivablesPlanSave"
+          class="xr-btn--orange rc-head-item"
+          icon="el-icon-plus"
+          type="primary"
+          @click="createClick('receivablesPlan')">新建回款计划</el-button>
+      </flexbox>
+      <el-table
+        :data="palnList"
+        :height="tableHeight"
+        :cell-class-name="planCellClassName"
+        stripe
+        style="width: 100%;border: 1px solid #E6E6E6;"
+        @row-click="handlePlanRowClick">
+        <el-table-column
+          v-for="(item, index) in planFieldList"
+          :key="index"
+          :prop="item.prop"
+          :label="item.label"
+          show-overflow-tooltip/>
+        <el-table-column
+          v-if="(receivablesPlanUpdate || receivablesPlanDelete || receivablesSaveAuth) && !isSeas"
+          label="操作"
+          fixed="right"
+          width="150">
+          <template slot-scope="{ row, $index }">
+            <flexbox justify="center">
+              <el-button
+                v-if="receivablesSaveAuth"
+                :disabled="!!row.receivablesId"
+                type="text"
+                @click.native="handleFile('createReceivables', row, $index )">新建回款</el-button>
+              <el-button
+                v-if="receivablesPlanUpdate"
+                type="text"
+                @click.native="handleFile('edit', row, $index )">编辑</el-button>
+              <el-button
+                v-if="receivablesPlanDelete"
+                type="text"
+                @click.native="handleFile('delete', row, $index )">删除</el-button>
+            </flexbox>
+          </template>
+        </el-table-column>
+      </el-table>
+    </template>
+
+    <template v-if="receivablesIndex">
+      <flexbox
+        class="rc-head"
+        direction="row-reverse"
+        style="margin-top: 15px;">
+        <el-button
+          v-if="!isSeas && receivablesSave"
+          class="xr-btn--orange rc-head-item"
+          icon="el-icon-plus"
+          type="primary"
+          @click="createClick('money')">新建回款</el-button>
+      </flexbox>
+      <el-table
+        :data="list"
+        :height="tableHeight"
+        :cell-class-name="cellClassName"
+        stripe
+        style="width: 100%;border: 1px solid #E6E6E6;"
+        @row-click="handleRowClick">
+        <el-table-column
+          v-for="(item, index) in fieldList"
+          :key="index"
+          :prop="item.prop"
+          :formatter="fieldFormatter"
+          :label="item.label"
+          show-overflow-tooltip/>
+      </el-table>
+    </template>
+
     <c-r-m-full-screen-detail
       :visible.sync="showFullDetail"
       :crm-type="showFullCrmType"
@@ -98,6 +114,8 @@ import {
 import { objDeepCopy, getWkDateTime } from '@/utils'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
+import { getPermissionByKey } from '@/utils'
+import moment from 'moment'
 
 export default {
   name: 'RelativeReturnMoney', // 相关回款  可能再很多地方展示 放到客户管理目录下
@@ -140,7 +158,7 @@ export default {
       showFullDetail: false,
       showFullCrmType: 'receivables',
       showFullId: '', // 查看全屏详情的 ID
-      createCrmType: 'receivables_plan', // 创建回款计划
+      createCrmType: 'receivablesPlan', // 创建回款计划
       isCreate: false, // 新建回款回款
       palnList: [],
       planFieldList: [],
@@ -150,7 +168,29 @@ export default {
 
   inject: ['rootTabs'],
 
-  computed: {},
+  computed: {
+    receivablesPlanIndex() {
+      return !!getPermissionByKey('crm.receivablesPlan.index')
+    },
+    receivablesPlanSave() {
+      return !!getPermissionByKey('crm.receivablesPlan.save')
+    },
+    receivablesPlanUpdate() {
+      return !!getPermissionByKey('crm.receivablesPlan.update')
+    },
+    receivablesPlanDelete() {
+      return !!getPermissionByKey('crm.receivablesPlan.delete')
+    },
+    receivablesIndex() {
+      return !!getPermissionByKey('crm.receivables.index')
+    },
+    receivablesSave() {
+      return !!getPermissionByKey('crm.receivables.save')
+    },
+    receivablesSaveAuth() {
+      return !!getPermissionByKey('crm.receivables.save')
+    }
+  },
 
   watch: {
     id(val) {
@@ -262,6 +302,17 @@ export default {
     },
 
     /**
+     * 当某一行被点击时会触发该事件
+     */
+    handlePlanRowClick(row, column, event) {
+      if (column.property == 'num') {
+        this.showFullId = row.receivablesPlanId
+        this.showFullCrmType = 'receivablesPlan'
+        this.showFullDetail = true
+      }
+    },
+
+    /**
      * 新建回款和回款计划
      */
     createClick(type) {
@@ -279,14 +330,14 @@ export default {
         }
         this.createCrmType = 'receivables'
         this.isCreate = true
-      } else if (type == 'plan') {
+      } else if (type == 'receivablesPlan') {
         if (this.crmType === 'contract') {
           this.createActionInfo.data['customer'] = objDeepCopy(this.detail)
           this.createActionInfo.data['contract'] = objDeepCopy(this.detail)
         } else if (this.crmType === 'customer') {
           this.createActionInfo.data['customer'] = this.detail
         }
-        this.createCrmType = 'receivables_plan'
+        this.createCrmType = 'receivablesPlan'
         this.isCreate = true
       }
     },
@@ -306,10 +357,11 @@ export default {
     /**
      * 编辑操作
      */
-    handleFile(type, item) {
+    handleFile(type, row, index) {
+      console.log(type, row, index)
       if (type == 'edit') {
-        this.createActionInfo = { type: 'update', id: item.row.planId }
-        this.createCrmType = 'receivables_plan'
+        this.createActionInfo = { type: 'update', id: row.receivablesPlanId }
+        this.createCrmType = 'receivablesPlan'
         this.isCreate = true
       } else if (type == 'delete') {
         this.$confirm('您确定要删除吗?', '提示', {
@@ -318,14 +370,35 @@ export default {
           type: 'warning'
         })
           .then(() => {
-            crmReceivablesPlanDeleteAPI([item.row.planId])
+            crmReceivablesPlanDeleteAPI([row.receivablesPlanId])
               .then(res => {
-                this.palnList.splice(item.$index, 1)
+                this.palnList.splice(index, 1)
                 this.$message.success('删除成功')
               })
               .catch(() => {})
           })
           .catch(() => {})
+      } else if (type == 'createReceivables') {
+        this.createCrmType = 'receivables'
+        this.createActionInfo = {
+          type: 'relative',
+          crmType: this.crmType,
+          data: {
+            customer: {
+              customerName: row.customerName,
+              customerId: row.customerId
+            },
+            contract: {
+              contractNum: row.contractNum,
+              contractId: row.contractId
+            },
+            receivablesPlanId: row.receivablesPlanId,
+            returnTime: moment().format('YYYY-MM-DD'),
+            money: row.money,
+            returnType: row.returnType
+          }
+        }
+        this.isCreate = true
       }
     },
 
@@ -347,6 +420,17 @@ export default {
      */
     cellClassName({ row, column, rowIndex, columnIndex }) {
       if (column.property === 'receivablesNum') {
+        return 'can-visit--underline'
+      } else {
+        return ''
+      }
+    },
+
+    /**
+     * 通过回调控制class
+     */
+    planCellClassName({ row, column, rowIndex, columnIndex }) {
+      if (column.property === 'num') {
         return 'can-visit--underline'
       } else {
         return ''

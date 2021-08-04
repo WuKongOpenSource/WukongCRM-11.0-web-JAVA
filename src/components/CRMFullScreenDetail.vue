@@ -23,6 +23,7 @@ import BusinessDetail from '@/views/crm/business/Detail'
 import ContractDetail from '@/views/crm/contract/Detail'
 import ProductDetail from '@/views/crm/product/Detail'
 import ReceivablesDetail from '@/views/crm/receivables/Detail'
+import ReceivablesPlanDetail from '@/views/crm/receivablesPlan/Detail'
 import ExamineDetail from '@/views/oa/examine/components/ExamineDetail'
 import TaskDetail from '@/views/taskExamine/task/components/TaskDetail'
 import LogDetail from '@/views/workLog/components/LogDetail'
@@ -40,6 +41,7 @@ export default {
     ContractDetail,
     ProductDetail,
     ReceivablesDetail,
+    ReceivablesPlanDetail,
     ExamineDetail,
     TaskDetail,
     LogDetail,
@@ -81,6 +83,8 @@ export default {
         return 'ProductDetail'
       } else if (this.crmType == 'receivables') {
         return 'ReceivablesDetail'
+      } else if (this.crmType == 'receivablesPlan') {
+        return 'ReceivablesPlanDetail'
       } else if (this.crmType == 'examine') {
         return 'ExamineDetail'
       } else if (this.crmType == 'task') {

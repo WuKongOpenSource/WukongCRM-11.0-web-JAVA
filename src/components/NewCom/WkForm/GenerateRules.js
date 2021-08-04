@@ -113,7 +113,7 @@ export default {
         tempList.push({
           validator: validateCRMNumber,
           item: item,
-          trigger: ['blur']
+          trigger: ['blur', 'change']
         })
       } else if (item.formType === 'floatnumber') {
         const validateCRMMoneyNumber = (rule, value, callback) => {
@@ -130,7 +130,7 @@ export default {
         tempList.push({
           validator: validateCRMMoneyNumber,
           item: item,
-          trigger: ['blur']
+          trigger: ['blur', 'change']
         })
       } else if (item.formType === 'mobile') {
         const validateCRMMobile = (rule, value, callback) => {

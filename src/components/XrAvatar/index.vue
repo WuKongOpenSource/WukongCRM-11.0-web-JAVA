@@ -39,7 +39,7 @@
 import { systemUserInfoAPI } from '@/api/common'
 import { getImageData } from '@/utils'
 import XRTheme from '@/styles/xr-theme.scss'
-import { mapGetters } from 'vuex'
+import store from '@/store'
 
 export default {
   // Avatar 头像
@@ -77,7 +77,9 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['imageCache']),
+    imageCache() {
+      return store.state.app.imageCache
+    },
     fontSize() {
       if (this.size <= 30) {
         return '12px'

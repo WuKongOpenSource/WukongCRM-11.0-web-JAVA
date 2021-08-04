@@ -11,7 +11,7 @@
     :type="item.formType"
     @input="commonChange(item, index, $event)"/>
   <el-input
-    v-else-if="isTrimInput(item.formType)"
+    v-else-if="isTrimInput(item.formType, item.disabled || disabled)"
     v-model.trim="fieldFrom[item.field]"
     :disabled="item.disabled || disabled"
     :prefix-icon="getInputIcon(item.formType)"

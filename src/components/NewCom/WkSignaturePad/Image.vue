@@ -52,19 +52,20 @@ export default {
   },
 
   watch: {
-    src(newVal, oldVal) {
-      if (newVal) {
-        this.getData()
-      } else {
-        this.url = ''
-      }
+    src: {
+      handler(val) {
+        if (val) {
+          this.getData()
+        } else {
+          this.url = ''
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
 
   created() {
-    if (this.src) {
-      this.getData()
-    }
   },
 
   mounted() {},
@@ -76,7 +77,9 @@ export default {
       adminFileQueryOneByBatchIdAPI(this.src).then(res => {
         const resData = res.data
         if (resData) {
-          const url = process.env.BASE_API + resData.url
+          const BaseAPI = process.env.BASE_API
+          const baseUrl = BaseAPI.padEnd('/') ? BaseAPI.substring(0, BaseAPI.length - 1) : BaseAPI
+          const url = baseUrl + resData.url
           if (this.url !== url) {
             this.url = url
           }

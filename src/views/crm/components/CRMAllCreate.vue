@@ -15,7 +15,7 @@ import LeadsCreate from '@/views/crm/leads/Create'
 import BusinessCreate from '@/views/crm/business/Create'
 import ContractCreate from '@/views/crm/contract/Create'
 import ReceivablesCreate from '@/views/crm/receivables/Create'
-import ReceivablesPlanCreate from '@/views/crm/receivables/PlanCreate'
+import ReceivablesPlanCreate from '@/views/crm/receivablesPlan/Create'
 import VisitCreate from '@/views/crm/visit/Create'
 import ProductCreate from '@/views/crm/product/Create'
 
@@ -53,7 +53,7 @@ export default {
         receivables: 'ReceivablesCreate',
         visit: 'VisitCreate',
         product: 'ProductCreate',
-        receivables_plan: 'ReceivablesPlanCreate'
+        receivablesPlan: 'ReceivablesPlanCreate'
       }[this.crmType]
     }
   },

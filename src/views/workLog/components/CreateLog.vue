@@ -130,18 +130,18 @@
               effect="light"
               popper-class="tooltip-change-border">
               <div slot="content">
-                <span>{{ item.realname }}</span>
+                <span>{{ item.realname || item.name }}</span>
               </div>
               <xr-avatar
-                :name="item.realname"
+                :name="item.realname || item.name"
                 :size="32"
                 :src="item.img" />
             </el-tooltip>
           </span>
           <members-dep
-            :close-dep="true"
             :content-block="false"
             :user-checked-data="sendUserList"
+            :dep-checked-data="sendDeptList"
             @popoverSubmit="sendUserChange">
             <span slot="membersDep">
               <el-tooltip
@@ -149,10 +149,10 @@
                 effect="light"
                 popper-class="tooltip-change-border">
                 <div slot="content">
-                  <span>{{ `等${sendUserList.length}人` }}</span>
+                  <span>{{ sendUserDeptNames }}</span>
                 </div>
                 <i
-                  v-show="sendUserList.length > 5"
+                  v-show="(sendUserList.length + sendDeptList.length) > 5"
                   class="el-icon-more more-user-btn" />
               </el-tooltip>
 
@@ -249,6 +249,7 @@ export default {
       showRelatePopover: false, // 关联业务信息框
       relateData: {},
       sendUserList: [], // 发送人
+      sendDeptList: [], // 发送部门
       showMore: false,
       completeInfo: {
         completeNum: 0,
@@ -269,10 +270,23 @@ export default {
     },
 
     showSendUserList() {
-      if (this.sendUserList && this.sendUserList.length > 5) {
-        return this.sendUserList.slice(0, 5)
+      const sendUserList = this.sendUserList || []
+      const sendDeptList = this.sendDeptList || []
+      return sendUserList.concat(sendDeptList).slice(0, 5)
+    },
+
+    sendUserDeptNames() {
+      const sendUserName = this.sendUserList && this.sendUserList.length > 0 ? `${this.sendUserList.length}个员工` : ''
+      const sendDeptName = this.sendDeptList && this.sendDeptList.length > 0 ? `${this.sendDeptList.length}个部门` : ''
+      const names = []
+      if (sendUserName) {
+        names.push(sendUserName)
       }
-      return this.sendUserList
+      if (sendDeptName) {
+        names.push(sendDeptName)
+      }
+
+      return `等${names.join('和')}`
     }
   },
   watch: {
@@ -316,17 +330,14 @@ export default {
       this.showLoading = true
       const relateData = {}
       for (const key in this.relateData) {
-        relateData[`${key}Ids`] = this.relateData[key].map(item => {
-          return item[`${key}Id`]
-        }).join(',')
+        relateData[`${key}Ids`] = this.relateData[key].map(item => item[`${key}Id`]).join(',')
       }
 
       const params = {
         ...this.form,
         batchId: this.batchId,
-        sendUserIds: this.sendUserList.map(item => {
-          return item.userId
-        }).join(','),
+        sendUserIds: this.sendUserList.map(item => item.userId).join(','),
+        sendDeptIds: this.sendDeptList.map(item => item.id || item.deptId).join(','),
         ...relateData,
         categoryId: this.categoryIdMap[this.activeTab]
       }
@@ -357,6 +368,7 @@ export default {
       this.imgFiles = []
       this.files = []
       this.sendUserList = []
+      this.sendDeptList = []
       this.relateData = {}
     },
 
@@ -516,8 +528,9 @@ export default {
     /**
      * 发送人选择
      */
-    sendUserChange(users) {
+    sendUserChange(users, depts) {
       this.sendUserList = users
+      this.sendDeptList = depts
     },
 
     /**

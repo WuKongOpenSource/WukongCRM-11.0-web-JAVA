@@ -14,11 +14,11 @@
         <div
           class="handle-item-name"
           style="margin-top: 8px;">适用范围：</div>
-        <xh-struc-user-cell
-          :users="users"
-          :strucs="strucs"
+        <wk-user-dep-select
+          :user-value.sync="users"
+          :dep-value.sync="strucs"
           style="width: 100%;"
-          @value-change="strcUserChange"/>
+        />
       </flexbox>
       <flexbox
         class="handle-item"
@@ -50,14 +50,14 @@
 <script>
 import { crmSettingCustomerConfigSetAPI } from '@/api/admin/crm'
 
-import { XhStrucUserCell } from '@/components/CreateCom'
+import WkUserDepSelect from '@/components/NewCom/WkUserDepSelect'
 
 import ElDialogLoadingMixin from '@/mixins/ElDialogLoading'
 
 export default {
   name: 'EditCustomerLimit',
   components: {
-    XhStrucUserCell
+    WkUserDepSelect
   },
   mixins: [ElDialogLoadingMixin],
   props: {
@@ -120,8 +120,8 @@ export default {
           this.customerDeal = data.customerDeal
           this.customerNum = data.customerNum
           this.$nextTick(() => {
-            this.users = data.userIds
-            this.strucs = data.deptIds
+            this.users = data.userIds ? data.userIds.map(item => item.userId) : []
+            this.strucs = data.deptIds ? data.deptIds.map(item => item.id) : []
           })
         }
       }
@@ -134,11 +134,6 @@ export default {
       this.$emit('update:visible', false)
     },
 
-    strcUserChange(data) {
-      this.users = data.value.users
-      this.strucs = data.value.strucs
-    },
-
     sure() {
       if (this.customerNum <= 0) {
         this.$message.error('请输入正确的客户数')
@@ -147,8 +142,12 @@ export default {
       } else {
         this.loading = true
         const params = {
-          userIds: this.users,
-          deptIds: this.strucs,
+          userIds: this.users.map(item => {
+            return { userId: item }
+          }),
+          deptIds: this.strucs.map(item => {
+            return { id: item }
+          }),
           customerNum: this.customerNum,
           type: this.types
         }

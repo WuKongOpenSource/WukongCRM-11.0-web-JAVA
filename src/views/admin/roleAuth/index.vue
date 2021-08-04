@@ -667,6 +667,13 @@ export default {
               value: this.roleActive.dataType
             })
           }
+        } else if (this.pid == 9 && this.tabType == '91') {
+          // 管理员
+          const lastItem = this.ruleMenuList[this.ruleMenuList.length - 1]
+          if (lastItem.type != 'tree') {
+            this.ruleMenuList = [this.ruleMenuList[0]]
+          }
+          this.ruleMenuIndex = 'data'
         }
 
         for (let index = 0; index < this.ruleMenuList.length; index++) {
@@ -882,7 +889,7 @@ export default {
      */
     canSetField(type) {
       if (this.pid == 10) return false
-      return ['leads', 'customer', 'contacts', 'business', 'contract', 'receivables', 'product', 'visit', 'invoice'].includes(type) &&
+      return ['leads', 'customer', 'contacts', 'business', 'contract', 'receivables', 'receivablesPlan', 'product', 'visit', 'invoice'].includes(type) &&
       this.ruleMenuIndex === 'data'
     },
 

@@ -53,19 +53,8 @@ export function filedGetTableFieldAPI(data) {
  * @param {*} data
  */
 export function filedUpdateTableFieldAPI(data) {
-  const url = {
-    1: 'crmLeads',
-    2: 'crmCustomer',
-    3: 'crmContacts',
-    4: 'crmProduct',
-    5: 'crmBusiness',
-    6: 'crmContract',
-    7: 'crmReceivables',
-    17: 'crmReturnVisit',
-    18: 'crmInvoice'
-  }[data.label]
   return request({
-    url: `${url}/updateInformation`,
+    url: `${crmTypeModel.labelToType[data.label]}/updateInformation`,
     method: 'post',
     data: data,
     headers: {

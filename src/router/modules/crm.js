@@ -111,8 +111,8 @@ export default [
       permissions: ['crm', 'receivables']
     }),
     children: [{
-      path: 'receivables', // 回款列表
-      component: () => import('@/views/crm/receivables'),
+      path: 'receivables', // 回款列表/回款计划
+      component: () => import('@/views/crm/receivables/AllIndex'),
       meta: {
         title: '回款',
         icon: 'receivables'

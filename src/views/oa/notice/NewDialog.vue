@@ -39,12 +39,10 @@
                 placeholder="请输入内容"/>
             </template>
             <template v-else-if="item.type =='plus'">
-              <xh-struc-user-cell
-                :value="null"
-                :users="formData[item.field].staff"
-                :strucs="formData[item.field].dep"
-                style="width: 100%;"
-                @value-change="strcUserChange"/>
+              <wk-user-dep-select
+                :user-value.sync="formData[item.field].staff"
+                :dep-value.sync="formData[item.field].dep"
+                style="width: 100%;"/>
             </template>
             <el-input
               v-else
@@ -65,7 +63,7 @@
 <script>
 import CreateView from '@/components/CreateView'
 
-import { XhStrucUserCell } from '@/components/CreateCom'
+import WkUserDepSelect from '@/components/NewCom/WkUserDepSelect'
 // API
 import { noticeAddOrUpateAPI } from '@/api/oa/notice'
 import { formatTimeToTimestamp } from '@/utils/index'
@@ -73,7 +71,7 @@ import { formatTimeToTimestamp } from '@/utils/index'
 export default {
   components: {
     CreateView,
-    XhStrucUserCell
+    WkUserDepSelect
   },
   props: {
     action: {
@@ -145,10 +143,11 @@ export default {
 
   created() {
     if (this.action.type == 'update') {
+      const actionData = this.action.data
       this.formData = {
-        title: this.action.data.title,
-        content: this.action.data.content,
-        dep: { staff: this.action.data.ownerUserList, dep: this.action.data.deptList }
+        title: actionData.title,
+        content: actionData.content,
+        dep: { staff: (actionData.ownerUserList || []).map(item => item.userId), dep: (actionData.deptList || []).map(item => item.id) }
       }
     }
   },
@@ -164,10 +163,8 @@ export default {
             // startTime: this.formData.startTime,
             // endTime: this.formData.endTime,
             deptIds: this.formData.dep.dep
-              .map(item => item.id)
               .join(','),
             ownerUserIds: this.formData.dep.staff
-              .map(item => item.userId)
               .join(',')
           }
 
@@ -201,17 +198,6 @@ export default {
       // } else {
       this.$emit('close')
       // }
-    },
-    // 关闭按钮
-    strcUserChange(data) {
-      this.$set(this.formData, 'dep', { staff: data.value.users, dep: data.value.strucs })
-    },
-    // 删除部门和用户
-    deleteuser(index) {
-      this.formData.dep.staff.splice(index, 1)
-    },
-    deleteDepuser(index) {
-      this.formData.dep.dep.splice(index, 1)
     }
   }
 }

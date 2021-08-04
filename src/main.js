@@ -97,6 +97,8 @@ import clickoutside from './directives/clickoutside'
 Vue.directive('clickoutside', clickoutside)
 import elClickoutside from './directives/elClickoutside'
 Vue.directive('elclickoutside', elClickoutside)
+import permission from './directives/permission'
+Vue.directive('permission', permission)
 
 import empty from './directives/empty'
 Vue.use(empty)

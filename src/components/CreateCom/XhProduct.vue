@@ -1,26 +1,17 @@
 <template>
   <div>
     <div class="handel-header">
-      <el-popover
-        v-model="showPopover"
-        placement="left-end"
-        width="700"
-        style="padding: 0 !important;"
-        trigger="click">
-        <crm-relative
-          v-if="showSelectView"
-          ref="crmrelative"
-          :radio="false"
-          :show="showPopover"
-          :selected-data="selectedData"
-          crm-type="product"
-          @close="showPopover=false"
-          @changeCheckout="selectInfos"/>
-        <el-button
-          slot="reference"
-          type="primary"
-          @click="showSelectView=true">添加产品</el-button>
-      </el-popover>
+      <crm-relative
+        v-if="viewLoaded"
+        ref="crmrelative"
+        :visible.sync="showSelectView"
+        :radio="false"
+        :selected-data="selectedData"
+        crm-type="product"
+        @changeCheckout="selectInfos"/>
+      <el-button
+        type="primary"
+        @click="addClick">添加产品</el-button>
     </div>
     <el-table
       :data="productList"
@@ -116,8 +107,8 @@ export default {
   props: {},
   data() {
     return {
-      showPopover: false, // 展示产品框
       showSelectView: false, // 内容
+      viewLoaded: false,
       productList: [],
       totalPrice: 0,
       discountRate: '',
@@ -129,7 +120,37 @@ export default {
     dataValue: function(value) {
       this.refreshProductList()
     },
-    productList() {
+    productList(newValue, oldValue) {
+      // 如果新旧值不相同，说明外层进行了修改，重置勾选
+      console.log('---ppp---', newValue, oldValue)
+      if (newValue.length !== oldValue.length) {
+        const selectIds = oldValue.map(item => item.productId)
+        const addItems = []
+        newValue.forEach(item => {
+          if (!selectIds.includes(item.productId)) {
+            addItems.push(item)
+          }
+        })
+
+        const removeItems = []
+        const newIds = newValue.map(item => item.productId)
+        oldValue.forEach(item => {
+          if (!newIds.includes(item.productId)) {
+            removeItems.push(item)
+          }
+        })
+
+        // 重置勾选
+        if (this.$refs.crmrelative) {
+          addItems.forEach(item => {
+            this.$refs.crmrelative.toggleRowSelection('productId', item.productId, true)
+          })
+          removeItems.forEach(item => {
+            this.$refs.crmrelative.toggleRowSelection('productId', item.productId, false)
+          })
+        }
+      }
+
       this.selectedData = { product: this.productList || [] }
     }
   },
@@ -145,7 +166,10 @@ export default {
       this.totalPrice = this.dataValue.totalPrice || 0
       this.discountRate = this.dataValue.discountRate || ''
     },
-    /** 选中 */
+
+    /**
+     * 选中
+     */
     selectInfos(data) {
       if (data.data) {
         const newSelects = []
@@ -163,6 +187,7 @@ export default {
         this.calculateToal()
       }
     },
+
     getShowItem(data) {
       const item = {}
       item.name = data.name
@@ -176,7 +201,10 @@ export default {
       item.productId = data.productId
       return item
     },
-    // 单价
+
+    /**
+     * 单价
+     */
     salesPriceChange(data) {
       const item = data.row
 
@@ -191,13 +219,19 @@ export default {
       this.calculateSubTotal(item)
       this.calculateToal()
     },
-    // 数量
+
+    /**
+     * 数量
+     */
     numChange(data) {
       const item = data.row
       this.calculateSubTotal(item)
       this.calculateToal()
     },
-    // 折扣
+
+    /**
+     * 折扣
+     */
     discountChange(data) {
       const item = data.row
       let salesPrice =
@@ -209,11 +243,17 @@ export default {
       this.calculateSubTotal(item)
       this.calculateToal()
     },
-    // 计算单价
+
+    /**
+     * 计算单价
+     */
     calculateSubTotal(item) {
       item.subtotal = (item.salesPrice * parseFloat(item.num || 0)).toFixed(2)
     },
-    // 计算总价
+
+    /**
+     * 计算总价
+     */
     calculateToal() {
       let totalPrice = this.getProductTotal()
       totalPrice =
@@ -221,6 +261,7 @@ export default {
       this.totalPrice = totalPrice.toFixed(2)
       this.updateValue() // 传递数据给父组件
     },
+
     /**
      * 获取产品总价(未折扣)
      */
@@ -232,10 +273,14 @@ export default {
       }
       return totalPrice
     },
-    // 总折扣
+
+    /**
+     * 总折扣
+     */
     rateChange() {
       this.calculateToal()
     },
+
     /**
      * 总价更改 折扣更改
      */
@@ -249,17 +294,36 @@ export default {
       }
       this.updateValue()
     },
-    // 删除操作
+
+    /**
+     * 删除操作
+     */
     removeItem(index) {
-      this.productList.splice(index, 1)
+      const removeItem = this.productList.splice(index, 1)
+      // 重置勾选
+      if (this.$refs.crmrelative && removeItem.length > 0) {
+        this.$refs.crmrelative.toggleRowSelection('productId', removeItem[0].productId, false)
+      }
       this.calculateToal()
     },
+
+    /**
+     * 更新值
+     */
     updateValue() {
       this.valueChange({
         product: this.productList,
         totalPrice: this.totalPrice,
         discountRate: this.discountRate
       })
+    },
+
+    /**
+     * 添加click
+     */
+    addClick() {
+      this.viewLoaded = true
+      this.showSelectView = true
     }
   }
 }
@@ -267,8 +331,8 @@ export default {
 <style lang="scss" scoped>
 .handel-header {
   overflow: hidden;
+  text-align: right;
   button {
-    float: right;
     margin-bottom: 10px;
   }
 }

@@ -10,6 +10,7 @@
       class="rc-head"
       direction="row-reverse">
       <el-button
+        v-if="contractSave"
         class="xr-btn--orange rc-head-item"
         icon="el-icon-plus"
         type="primary"
@@ -50,6 +51,7 @@ import { crmCustomerQueryContractAPI } from '@/api/crm/customer'
 import { crmBusinessQueryContractAPI } from '@/api/crm/business'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import { separator } from '@/filters/vueNumeralFilter/filters'
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeContract', // 相关联系人  可能再很多地方展示 放到客户管理目录下
@@ -94,7 +96,11 @@ export default {
     }
   },
   inject: ['rootTabs'],
-  computed: {},
+  computed: {
+    contractSave() {
+      return !!getPermissionByKey('crm.contract.save')
+    }
+  },
   watch: {
     id(val) {
       this.list = []

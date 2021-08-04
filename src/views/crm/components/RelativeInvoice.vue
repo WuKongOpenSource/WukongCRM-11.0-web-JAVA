@@ -1,51 +1,53 @@
 <template>
   <div v-loading="loading" class="rc-cont">
-    <flexbox
-      v-if="!isSeas"
-      class="rc-head"
-      direction="row-reverse">
-      <el-button
-        class="xr-btn--orange rc-head-item"
-        icon="el-icon-plus"
-        type="primary"
-        @click="createClick('title')">新建发票抬头</el-button>
-    </flexbox>
-    <el-table
-      :data="titleList"
-      :height="tableHeight"
-      stripe
-      style="width: 100%;border: 1px solid #E6E6E6;">
-      <el-table-column
-        v-for="(item, index) in titleFieldList"
-        :key="index"
-        :prop="item.prop"
-        :label="item.label"
-        :width="item.width"
-        :formatter="titleFieldFormatter"
-        show-overflow-tooltip/>
-      <el-table-column
-        label="操作"
-        width="100"
-        fixed="right">
-        <template slot-scope="scope">
-          <flexbox justify="center">
-            <el-button
-              type="text"
-              @click.native="handleTitle('edit', scope)">编辑</el-button>
-            <el-button
-              type="text"
-              @click.native="handleTitle('delete', scope)">删除</el-button>
-          </flexbox>
-        </template>
-      </el-table-column>
-    </el-table>
+    <template v-if="titleShow">
+      <flexbox
+        v-if="!isSeas"
+        class="rc-head"
+        direction="row-reverse">
+        <el-button
+          class="xr-btn--orange rc-head-item"
+          icon="el-icon-plus"
+          type="primary"
+          @click="createClick('title')">新建发票抬头</el-button>
+      </flexbox>
+      <el-table
+        :data="titleList"
+        :height="tableHeight"
+        stripe
+        style="width: 100%;border: 1px solid #E6E6E6;">
+        <el-table-column
+          v-for="(item, index) in titleFieldList"
+          :key="index"
+          :prop="item.prop"
+          :label="item.label"
+          :width="item.width"
+          :formatter="titleFieldFormatter"
+          show-overflow-tooltip/>
+        <el-table-column
+          label="操作"
+          width="100"
+          fixed="right">
+          <template slot-scope="scope">
+            <flexbox justify="center">
+              <el-button
+                type="text"
+                @click.native="handleTitle('edit', scope)">编辑</el-button>
+              <el-button
+                type="text"
+                @click.native="handleTitle('delete', scope)">删除</el-button>
+            </flexbox>
+          </template>
+        </el-table-column>
+      </el-table>
+    </template>
 
     <flexbox
       class="rc-head"
       direction="row-reverse"
       style="margin-top: 15px;">
       <el-button
-        v-if="!isSeas"
+        v-if="!isSeas && invoiceSave"
         class="xr-btn--orange rc-head-item"
         icon="el-icon-plus"
         type="primary"
@@ -53,7 +55,7 @@
     </flexbox>
     <el-table
       :data="list"
-      :height="tableHeight"
+      :height="mainTableHeight"
       :cell-class-name="cellClassName"
       stripe
       style="width: 100%;border: 1px solid #E6E6E6;"
@@ -67,7 +69,7 @@
         :width="item.width"
         show-overflow-tooltip/>
       <el-table-column
-        v-if="canUpdateStatus"
+        v-if="invoiceUpdateInvoiceStatus"
         :resizable="false"
         label="操作"
         fixed="right"
@@ -88,15 +90,7 @@
       @handle="detailHandle"/>
     <create
       v-if="isCreate"
-      :action="{ type: 'relative', crmType: crmType, data: {
-        customer: {
-          customerName: detail.customerName,
-          customerId: detail.customerId
-        },
-        contactsName: detail.contactsName,
-        contactsMobile: detail.contactsMobile,
-        contactsAddress: detail.contactsAddress,
-      }}"
+      :action="createAction"
       @save-success="getInvoiceList"
       @close="isCreate=false"/>
     <invoice-title-set
@@ -117,6 +111,7 @@ import {
   crmCustomerInvoiceAPI,
   crmCustomerInvoiceInfoAPI
 } from '@/api/crm/customer'
+import { crmContractInvoiceAPI } from '@/api/crm/contract'
 import { crmInvoiceDeleteInvoiceInfoAPI } from '@/api/crm/invoice'
 
 
@@ -126,6 +121,7 @@ import InvoiceTitleSet from '../invoice/components/InvoiceTitleSet'
 import MarkInvoice from '../invoice/components/MarkInvoice'
 import Create from '../invoice/Create'
 import { mapGetters } from 'vuex'
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeInvoice', // 相关回访
@@ -169,6 +165,7 @@ export default {
       tableHeight: '250px',
       showFullDetail: false,
       showFullId: '', // 查看全屏详情的 ID
+      createAction: null,
       isCreate: false, // 新建发票发票
       titleList: [],
       titleFieldList: [],
@@ -185,9 +182,22 @@ export default {
 
   computed: {
     ...mapGetters(['crm']),
+    // 发票title展示
+    titleShow() {
+      return this.crmType === 'customer'
+    },
+
+    // 发票列表高
+    mainTableHeight() {
+      return this.titleShow ? '250px' : '400px'
+    },
+
+    invoiceSave() {
+      return !!getPermissionByKey('crm.invoice.save')
+    },
     // 是否能操作
-    canUpdateStatus() {
-      return this.crm && this.crm.invoice && this.crm.invoice.updateInvoiceStatus
+    invoiceUpdateInvoiceStatus() {
+      return !!getPermissionByKey('crm.invoice.updateInvoiceStatus')
     }
   },
 
@@ -224,7 +234,7 @@ export default {
 
     this.fieldList = [
       { prop: 'invoiceApplyNumber', width: '120', label: '发票申请编号' },
-      { prop: 'contractNum', width: '120', label: '合同名称' },
+      { prop: 'contractNum', width: '120', label: '合同编号' },
       { prop: 'contractMoney', width: '120', label: '合同金额' },
       { prop: 'invoiceMoney', width: '120', label: '开票金额（元）' },
       { prop: 'invoiceDate', width: '120', label: '开票日期' },
@@ -243,15 +253,17 @@ export default {
      * 抬头列表
      */
     getTitleList(loading = true) {
-      this.loading = loading
-      crmCustomerInvoiceInfoAPI({ customerId: this.id, pageType: 0 })
-        .then(res => {
-          this.loading = false
-          this.titleList = res.data.list
-        })
-        .catch(() => {
-          this.loading = false
-        })
+      if (this.titleShow) {
+        this.loading = loading
+        crmCustomerInvoiceInfoAPI({ customerId: this.id, pageType: 0 })
+          .then(res => {
+            this.loading = false
+            this.titleList = res.data.list
+          })
+          .catch(() => {
+            this.loading = false
+          })
+      }
     },
 
     /**
@@ -259,10 +271,18 @@ export default {
      */
     getInvoiceList(loading = true) {
       this.loading = loading
-      crmCustomerInvoiceAPI({ customerId: this.id, pageType: 0 })
+      const request = {
+        customer: crmCustomerInvoiceAPI,
+        contract: crmContractInvoiceAPI
+      }[this.crmType]
+
+      const params = { pageType: 0 }
+      params[`${this.crmType}Id`] = this.id
+      request(params)
         .then(res => {
           this.loading = false
-          this.list = res.data.list
+          const resData = res.data || {}
+          this.list = resData.list || []
         })
         .catch(() => {
           this.loading = false
@@ -285,6 +305,25 @@ export default {
      */
     createClick(type) {
       if (type == 'invoice') {
+        if (this.crmType === 'customer') {
+          this.createAction = { type: 'relative', crmType: this.crmType, data: {
+            customer: this.detail,
+            contactsName: this.detail.contactsName,
+            contactsMobile: this.detail.contactsMobile,
+            contactsAddress: this.detail.contactsAddress
+          }}
+        } else if (this.crmType === 'contract') {
+          this.createAction = { type: 'relative', crmType: this.crmType, data: {
+            customer: {
+              customerName: this.detail.customerName,
+              customerId: this.detail.customerId
+            },
+            contract: this.detail,
+            contactsName: this.detail.contactsName,
+            contactsMobile: this.detail.contactsMobile,
+            contactsAddress: this.detail.contactsAddress
+          }}
+        }
         this.isCreate = true
       } else if (type == 'title') {
         this.titleDetail = null

@@ -82,10 +82,6 @@ import { crmReceivablesSaveAPI } from '@/api/crm/receivables'
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
 import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
-import {
-  XhReceivablesPlan,
-  CrmRelativeCell
-} from '@/components/CreateCom'
 import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
 import WkApprovalFlowApplyMixin from '@/components/Examine/mixins/WkApprovalFlowApply'
 
@@ -102,8 +98,8 @@ export default {
   components: {
     XrCreate,
     CreateSections,
-    CrmRelativeCell,
-    XhReceivablesPlan,
+    CrmRelativeCell: () => import('@/components/CreateCom/CrmRelativeCell'),
+    XhReceivablesPlan: () => import('@/components/CreateCom/XhReceivablesPlan'),
     WkApprovalFlowApply,
     WkFormItems
   },
@@ -223,7 +219,8 @@ export default {
                     contacts: { customer: true },
                     customer: { customer: true },
                     business: { customer: true },
-                    contract: { customer: true, contract: true }
+                    contract: { customer: true, contract: true },
+                    receivablesPlan: { customer: true, contract: true, receivables_plan: true }
                   }
 
                   // 在哪个类型下添加
@@ -238,25 +235,26 @@ export default {
               }
 
               // 处理关联
-              if (this.action.type == 'relative' || this.action.type == 'update') {
               // 回款计划 需要合同信息
-                if (item.formType === 'receivables_plan') {
-                  const contractItem = this.getItemRelatveInfo(list, 'contract')
-                  if (contractItem) {
-                    contractItem['moduleType'] = 'contract'
-                    temp['relation'] = contractItem
-                  }
-                // 合同 需要客户信息
-                } else if (item.formType == 'contract') {
-                  const customerItem = this.getItemRelatveInfo(list, 'customer')
-                  if (customerItem) {
-                    customerItem['moduleType'] = 'customer'
-                    customerItem['params'] = { checkStatus: 1 }
-                    temp['relation'] = customerItem
-                  }
+              if (item.formType === 'receivables_plan') {
+                const contractItem = this.getItemRelatveInfo(list, 'contract')
+                if (contractItem) {
+                  contractItem['moduleType'] = 'contract'
+                  temp['relation'] = contractItem
+                } else {
+                  temp['relation'] = {}
                 }
-              } else {
-                temp['relation'] = {}
+                // 合同 需要客户信息
+              } else if (item.formType == 'contract') {
+                const customerObj = this.getItemRelatveInfo(list, 'customer')
+                if (customerObj) {
+                  const customerItem = objDeepCopy(customerObj)
+                  customerItem['moduleType'] = 'customer'
+                  customerItem['params'] = { checkStatus: [1, 10] }
+                  temp['relation'] = customerItem
+                } else {
+                  temp['relation'] = {}
+                }
               }
 
               // 特殊字段允许多选
@@ -265,6 +263,9 @@ export default {
               // 获取默认值
               if (temp.show) {
                 fieldForm[temp.field] = this.getItemValue(item, this.action.data, this.action.type)
+                if (this.action.type == 'relative' && ['receivablesPlanId', 'returnTime', 'money', 'returnType'].includes(temp.field)) {
+                  fieldForm[temp.field] = this.action.data[temp.field]
+                }
               }
               fields.push(temp)
               baseFields.push(item)
@@ -397,9 +398,9 @@ export default {
             // 如果是合同 改变合同样式和传入客户ID
             if (data.value.length > 0) {
               fieldItem.disabled = false
-              const customerItem = data.value[0]
+              const customerItem = objDeepCopy(data.value[0])
               customerItem['moduleType'] = 'customer'
-              customerItem['params'] = { checkStatus: 1 }
+              customerItem['params'] = { checkStatus: [1, 10] }
               fieldItem['relation'] = customerItem
             } else {
               fieldItem.disabled = true

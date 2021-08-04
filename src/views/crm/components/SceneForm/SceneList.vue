@@ -65,24 +65,24 @@ export default {
         type: crmTypeModel[this.crmType]
       })
         .then(res => {
-          const defaultScenes = res.data.filter(function(item, index) {
-            return item.isDefault === 1
-          })
+          const resData = res.data || []
+          const defaultScenes = resData.filter(item => item.isDefault === 1)
 
+          let currentScene = null
           if (defaultScenes && defaultScenes.length > 0) {
-            const defaultScene = defaultScenes[0]
-            this.sceneSelectId = defaultScene.sceneId
-            this.$emit('scene', {
-              id: defaultScene.sceneId,
-              name: defaultScene.name,
-              bydata: defaultScene.bydata || ''
-            })
-          } else {
-            this.sceneSelectId = ''
-            this.$emit('scene', { id: '', name: '', bydata: '' })
+            currentScene = defaultScenes[0]
+          } else if (resData.length > 0) {
+            currentScene = resData[0]
           }
 
-          this.sceneList = res.data
+          if (currentScene) {
+            currentScene.id = currentScene.sceneId
+            currentScene.bydata = currentScene.bydata || ''
+            this.sceneSelectId = currentScene.sceneId
+            this.$emit('scene', currentScene)
+          }
+
+          this.sceneList = resData
         })
         .catch(() => {
           this.$emit('scene', { id: '', name: '', bydata: '' })

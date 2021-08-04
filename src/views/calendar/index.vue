@@ -4,21 +4,22 @@
     <div class="box-left">
       <div class="left-title" >
         <img width="20px" src="@/assets/img/system/app/ce_index.png" alt="">
-        <xh-user-cell
+        <wk-user-select
           v-if="showUser"
-          ref="xhuserCell"
-          :value="checkedUser"
-          :info-request="subUserListIndex"
+          ref="wkUserSelect"
+          :value="checkedUser && checkedUser.length > 0 ? checkedUser[0].userId : ''"
+          :request="subUserListIndex"
           :radio="true"
+          :props="{isList: true}"
           v-bind="$attrs"
           class="left-user"
-          placement="bottom-start"
-          @value-change="selectUser">
+          style="height: auto !important;"
+          @change="selectUser">
           <flexbox slot="reference" class="user-box">
-            <span class="username">{{ checkedUser[0]?checkedUser[0].realname + '的日程': '我的日程' }}</span>
-            <span :class="{ 'is-reverse' : $refs.xhuserCell && $refs.xhuserCell.showPopover }" class="el-icon-arrow-up icon"/>
+            <span class="username">{{ checkedUser.length > 0 ?checkedUser[0].realname + '的日程': '我的日程' }}</span>
+            <span :class="{ 'is-reverse' : $refs.wkUserSelect && $refs.wkUserSelect.visible }" class="el-icon-arrow-up icon"/>
           </flexbox>
-        </xh-user-cell>
+        </wk-user-select>
         <span v-else class="username">我的日历</span>
       </div>
       <el-checkbox-group v-model="checkCusList" class="left-scroll">
@@ -36,16 +37,18 @@
             <span class="main-text">系统类型</span>
             <span :class="{ 'is-reverse' : showSys }" class="el-icon-arrow-up icon"/>
           </div>
-          <template v-show="showGroup && showSys">
+          <el-collapse-transition>
+            <div v-show="showGroup && showSys">
 
-            <el-checkbox
-              v-for="item in cusCheck"
-              v-if="item.type === 1"
-              :class="item.class"
-              :label="item.typeId"
-              :key="item.typeId">{{ item.typeName }}</el-checkbox>
+              <el-checkbox
+                v-for="item in cusCheck"
+                v-if="item.type === 1"
+                :class="item.class"
+                :label="item.typeId"
+                :key="item.typeId">{{ item.typeName }}</el-checkbox>
 
-          </template>
+            </div>
+          </el-collapse-transition>
         </div>
         <div class="left-bottom">
           <div class="bottom-title" @click="showCus = !showCus">
@@ -53,14 +56,16 @@
             <span class="main-text">自定义类型</span>
             <span :class="{ 'is-reverse' : showCus }" class="el-icon-arrow-up icon"/>
           </div>
-          <template v-show="showGroup && showCus">
-            <el-checkbox
-              v-for="item in cusCheck"
-              v-if="item.type === 2"
-              :class="item.class"
-              :label="item.typeId"
-              :key="item.typeId">{{ item.typeName }}</el-checkbox>
-          </template>
+          <el-collapse-transition>
+            <div v-show="showGroup && showCus">
+              <el-checkbox
+                v-for="item in cusCheck"
+                v-if="item.type === 2"
+                :class="item.class"
+                :label="item.typeId"
+                :key="item.typeId">{{ item.typeName }}</el-checkbox>
+            </div>
+          </el-collapse-transition>
         </div>
       </el-checkbox-group>
       <div class="left-bottom-text">
@@ -141,7 +146,7 @@ import listPlugin from '@fullcalendar/list'
 import Schedule from './Schedule'
 import TodayListDetail from './components/TodayListDetail'
 import calendarColor from '@/views/admin/other/components/calendarColor.js'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import {
   canlendarQueryListAPI,
   canlendarQueryTypeListAPI,
@@ -164,7 +169,7 @@ export default {
     Schedule,
     CreateEvent,
     TodayListDetail,
-    XhUserCell,
+    WkUserSelect,
     CRMFullScreenDetail: () =>
       import('@/components/CRMFullScreenDetail')
   },
@@ -262,7 +267,7 @@ export default {
       return systemUserQueryAuthUserList
     },
     showUserPover() {
-      return this.$refs.xhuserCell && this.$refs.xhuserCell.showPopover
+      return this.$refs.wkUserSelect && this.$refs.wkUserSelect.visible
     }
   },
   watch: {
@@ -674,13 +679,11 @@ export default {
     /**
      * 选择员工
      */
-    selectUser(data) {
-      this.checkedUser = data.value
+    selectUser(_, dataArray) {
+      this.checkedUser = dataArray
       this.copyCheckCusList = []
-      if (data.value.length) {
-        this.activeTime.userId = data.value.map(item => {
-          return item.userId
-        }).join(',')
+      if (dataArray.length) {
+        this.activeTime.userId = dataArray.map(item => item.userId).join(',')
       } else {
         this.activeTime.userId = ''
         return

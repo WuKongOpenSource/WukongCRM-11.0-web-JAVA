@@ -14,11 +14,10 @@
         <div
           class="handle-item-name"
           style="margin-top: 8px;">选择员工：</div>
-        <xh-user-cell
+        <wk-user-select
           :radio="false"
-          :value="selectUsers"
-          class="handle-item-content"
-          @value-change="changeCheckout"/>
+          v-model="selectUsers"
+          class="handle-item-content"/>
       </flexbox>
     </div>
     <span
@@ -34,13 +33,13 @@
 
 <script>
 import { adminRoleRelatedUserAPI } from '@/api/admin/role'
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 
 export default {
   /** 关联员工*/
   name: 'RelateEmpoyee',
   components: {
-    XhUserCell
+    WkUserSelect
   },
   mixins: [],
   props: {
@@ -75,13 +74,6 @@ export default {
     },
 
     /**
-     * 员工选择
-     */
-    changeCheckout(data) {
-      this.selectUsers = data.value
-    },
-
-    /**
      * 点击确定
      */
     handleConfirm() {
@@ -89,7 +81,7 @@ export default {
         this.$message.error('请选择员工')
       } else {
         adminRoleRelatedUserAPI({
-          userIds: this.selectUsers.map(item => item.userId),
+          userIds: this.selectUsers,
           roleIds: [this.roleId]
         })
           .then(res => {

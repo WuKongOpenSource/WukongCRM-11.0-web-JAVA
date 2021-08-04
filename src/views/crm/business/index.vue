@@ -4,6 +4,7 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="商机管理"
       placeholder="请输入商机名称"
       main-title="新建商机"
@@ -30,6 +31,7 @@
         :height="tableHeight"
         :cell-class-name="cellClassName"
         :row-key="`${crmType}Id`"
+        :class="[{'no-all-selection': config.radio}]"
         :header-cell-class-name="headerCellClassName"
         class="n-table--border"
         use-virtual
@@ -162,6 +164,11 @@ export default {
   },
   computed: {
     moneyPageData() {
+      // 选择数据，隐藏金额信息
+      if (this.config.isSelect) {
+        return false
+      }
+
       if (!this.moneyData || JSON.stringify(this.moneyData) == '{}') {
         return null
       }

@@ -605,7 +605,7 @@ export default {
       right: 0;
       left: 0;
       background: #f5f6f9;
-      z-index: 1;
+      z-index: 2;
 
       &__body {
         position: relative;

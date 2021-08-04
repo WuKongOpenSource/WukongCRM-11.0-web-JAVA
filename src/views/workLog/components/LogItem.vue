@@ -78,14 +78,14 @@
         </div>
       </div>
 
-      <flexbox v-if="data.sendUserList && data.sendUserList.length" class="send-list">
+      <flexbox v-if="(data.sendUserList && data.sendUserList.length > 0) || (data.sendDeptList && data.sendDeptList.length > 0)" class="send-list">
         <span class="send-list__label">发送给：</span>
         <span
-          v-for="(item, index) in data.sendUserList"
+          v-for="(item, index) in (data.sendUserList || []).concat(data.sendDeptList || [])"
           :key="index"
           class="send-list__user">
           <xr-avatar
-            :name="item.realname"
+            :name="item.realname || item.name"
             :id="item.userId"
             :size="32"
             :src="item.img"
@@ -129,7 +129,7 @@
         type="primary"
         icon="wk wk-message"
         class="replay-btn"
-        @click="replayClick">{{ '回复' + (replyTotal > 0 ? `(${replyTotal})` : '') }}</el-button>
+        @click="replayClick">{{ '评论' + (replyTotal > 0 ? `(${replyTotal})` : '') }}</el-button>
     </div>
     <div
       v-if="showReply"

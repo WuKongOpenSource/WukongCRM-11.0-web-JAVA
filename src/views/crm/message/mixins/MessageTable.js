@@ -157,7 +157,7 @@ export default {
         } else {
           this.showDview = false
         }
-      } else if (this.crmType === 'receivables_plan') {
+      } else if (this.crmType === 'receivablesPlan') {
         if (column.property === 'customerName') {
           this.rowID = row.customerId
           this.rowType = 'customer'
@@ -252,57 +252,6 @@ export default {
 
     /** 获取字段 */
     getFieldList() {
-      console.log('this.crmType', this.crmType)
-      if (this.crmType == 'receivables_plan') {
-        let list = []
-        if (this.crmType == 'receivables_plan') {
-          list = [{
-            fieldName: 'num',
-            formType: 'text',
-            name: '期数'
-          },
-          {
-            fieldName: 'customerName',
-            formType: 'customerName',
-            name: '客户名称'
-          },
-          {
-            fieldName: 'contractNum',
-            formType: 'contractNum',
-            name: '合同编号'
-          },
-          {
-            fieldName: 'money',
-            formType: 'text',
-            name: '计划回款金额'
-          },
-          {
-            fieldName: 'returnDate',
-            formType: 'text',
-            name: '计划回款日期'
-          },
-          {
-            fieldName: 'returnType',
-            formType: 'text',
-            name: '计划回款方式'
-          },
-          {
-            fieldName: 'remind',
-            formType: 'text',
-            name: '提前几日提醒'
-          },
-          {
-            fieldName: 'remark',
-            formType: 'text',
-            name: '备注'
-          }]
-          this.handelFieldList(list)
-        }
-        // 获取好字段开始请求数据
-        this.getList()
-        return
-      }
-
       filedGetTableFieldAPI({
         label: crmTypeModel[this.crmType]
       })

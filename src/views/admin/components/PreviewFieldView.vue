@@ -18,34 +18,14 @@
             direction="column"
             align="stretch">
             <div class="crm-create-body">
-              <el-form
-                ref="crmForm"
+              <wk-form
+                ref="dataForm"
                 :model="crmForm"
+                :rules="dataRules"
+                :field-from="crmForm"
+                :field-list="crmFields"
                 label-position="top"
-                class="crm-create-box">
-                <el-form-item
-                  v-for="(item, index) in crmForm.crmFields"
-                  :key="item.key"
-                  :prop="'crmFields.' + index + '.value'"
-                  :class="{ 'crm-create-block-item': item.showblock, 'crm-create-item': !item.showblock }"
-                  :style="{'padding-left': getPaddingLeft(item, index), 'padding-right': getPaddingRight(item, index)}">
-                  <div
-                    slot="label"
-                    style="display: inline-block;">
-                    <div class="form-label">
-                      {{ item.data.name }}
-                      <span style="color:#999;">
-                        {{ item.data.inputTips ? '（'+item.data.inputTips+'）':'' }}
-                      </span>
-                    </div>
-                  </div>
-                  <!-- -->
-                  <component
-                    :is="item.data.formType | typeToComponentName"
-                    :radio="false"
-                    :disabled="item.disabled"/>
-                </el-form-item>
-              </el-form>
+              />
             </div>
           </flexbox>
         </create-sections>
@@ -62,96 +42,16 @@ import {
 import CreateView from '@/components/CreateView'
 import CreateSections from '@/components/CreateSections'
 
-import {
-  XhInput,
-  XhTextarea,
-  XhSelect,
-  XhMultipleSelect,
-  XhDate,
-  XhDateTime,
-  XhUserCell,
-  XhStructureCell,
-  XhFiles,
-  CrmRelativeCell,
-  XhProuctCate,
-  XhProduct,
-  XhBusinessStatus,
-  XhCustomerAddress,
-  XhReceivablesPlan // 回款计划期数
-} from '@/components/CreateCom'
+import WkForm from '@/components/NewCom/WkForm'
 
 export default {
   name: 'PreviewFieldView', // 所有新建效果的view
   components: {
     CreateView,
     CreateSections,
-    XhInput,
-    XhTextarea,
-    XhSelect,
-    XhMultipleSelect,
-    XhDate,
-    XhDateTime,
-    XhUserCell,
-    XhStructureCell,
-    XhFiles,
-    CrmRelativeCell,
-    XhProuctCate,
-    XhProduct,
-    XhBusinessStatus,
-    XhCustomerAddress,
-    XhReceivablesPlan
+    WkForm
   },
-  filters: {
-    /** 根据type 找到组件 */
-    typeToComponentName(formType) {
-      if (
-        formType == 'text' ||
-        formType == 'number' ||
-        formType == 'floatnumber' ||
-        formType == 'mobile' ||
-        formType == 'email'
-      ) {
-        return 'XhInput'
-      } else if (formType == 'textarea') {
-        return 'XhTextarea'
-      } else if (formType == 'select' || formType == 'business_status') {
-        return 'XhSelect'
-      } else if (formType == 'checkbox') {
-        return 'XhMultipleSelect'
-      } else if (formType == 'date') {
-        return 'XhDate'
-      } else if (formType == 'datetime') {
-        return 'XhDateTime'
-      } else if (formType == 'user') {
-        return 'XhUserCell'
-      } else if (formType == 'structure') {
-        return 'XhStructureCell'
-      } else if (
-        formType == 'file' ||
-        formType == 'pic') {
-        return 'XhFiles'
-      } else if (
-        formType == 'contacts' ||
-        formType == 'customer' ||
-        formType == 'contract' ||
-        formType == 'business'
-      ) {
-        return 'CrmRelativeCell'
-      } else if (formType == 'category') {
-        // 产品类别
-        return 'XhProuctCate'
-      } else if (formType == 'business_type') {
-        // 商机类别
-        return 'XhBusinessStatus'
-      } else if (formType == 'product') {
-        return 'XhProduct'
-      } else if (formType == 'map_address') {
-        return 'XhCustomerAddress'
-      } else if (formType == 'receivables_plan') {
-        return 'XhReceivablesPlan'
-      }
-    }
-  },
+  filters: {},
   props: {
     // 类型
     types: {
@@ -173,17 +73,16 @@ export default {
       title: '预览',
       loading: false,
       // 自定义字段信息表单
-      crmForm: {
-        crmFields: []
-      }
+      crmForm: {},
+      crmFields: [],
+      dataRules: {}
     }
   },
   computed: {},
   watch: {
     types: function(value) {
-      this.crmForm = {
-        crmFields: []
-      }
+      this.crmForm = {}
+      this.crmFields = []
       this.getField()
     }
   },
@@ -223,35 +122,26 @@ export default {
     },
     // 根据自定义字段获取自定义字段规则
     getcrmRulesAndModel(list) {
+      const dataRules = {}
+      const crmFields = []
       for (let index = 0; index < list.length; index++) {
         const item = list[index]
-        var params = {}
-        params['value'] = item.value
-        params['key'] = item.fieldName
-        params['data'] = item
-        params['disabled'] = true // 是否可交互
         if (item.isHidden != 1) {
-          this.crmForm.crmFields.push(params)
+          item['disabled'] = true // 是否可交互
+          item.field = item.fieldName
+          if (item.isNull === 1) {
+            dataRules[item.fieldName] = { required: true,
+              message: '',
+              trigger: 'change' }
+          }
+          crmFields.push(item)
         }
       }
+      this.dataRules = dataRules
+      this.crmFields = crmFields
     },
     hidenView() {
       this.$emit('hiden-view')
-    },
-    // 获取左边padding
-    getPaddingLeft(item, index) {
-      if (item.showblock && item.showblock == true) {
-        return '0'
-      }
-      return index % 2 == 0 ? '0' : '40px'
-    },
-    // 获取左边padding
-    getPaddingRight(item, index) {
-      if (item.showblock && item.showblock == true) {
-        return '0'
-      }
-
-      return index % 2 == 0 ? '40px' : '0'
     }
   }
 }
@@ -291,55 +181,5 @@ export default {
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
-}
-
-/** 将其改变为flex布局 */
-.crm-create-box {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0 10px;
-}
-
-.crm-create-item {
-  flex: 0 0 50%;
-  flex-shrink: 0;
-  // overflow: hidden;
-  padding-bottom: 10px;
-}
-
-// 占用一整行
-.crm-create-block-item {
-  flex: 0 0 100%;
-  flex-shrink: 0;
-  padding-bottom: 10px;
-}
-
-.el-form-item /deep/ .el-form-item__label {
-  line-height: normal;
-  font-size: 13px;
-  color: #333333;
-  position: relative;
-  padding-left: 8px;
-  padding-bottom: 0;
-}
-
-.el-form /deep/ .el-form-item {
-  margin-bottom: 0px;
-}
-
-.el-form /deep/ .el-form-item.is-required .el-form-item__label:before {
-  content: '*';
-  color: #f56c6c;
-  margin-right: 4px;
-  position: absolute;
-  left: 0;
-  top: 5px;
-}
-
-.form-label {
-  margin: 5px 0;
-  font-size: 13px;
-  word-wrap: break-word;
-  word-break: break-all;
 }
 </style>

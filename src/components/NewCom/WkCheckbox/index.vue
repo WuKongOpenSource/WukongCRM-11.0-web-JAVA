@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { isObject, isEmpty } from '@/utils/types'
+import { isObject, isEmpty, isArray } from '@/utils/types'
 import { valueEquals } from 'element-ui/lib/utils/util'
 import Emitter from 'element-ui/lib/mixins/emitter'
 
@@ -118,18 +118,19 @@ export default {
         }
       } else {
         if (this.otherShowInput) {
-          const otherItem = this.value.filter((name) => !this.options.includes(name))
+          const value = isArray(this.value) ? this.value : []
+          const otherItem = value.filter((name) => !this.options.includes(name))
           if (otherItem.length > 0) {
-            const newValue = this.value.filter((name) => !otherItem.includes(name))
+            const newValue = value.filter((name) => !otherItem.includes(name))
             newValue.push('其他')
             this.dataValue = {
               select: newValue,
               otherValue: otherItem[otherItem.length - 1]
             }
           } else {
-            if (!valueEquals(this.value, this.dataValue.select)) {
+            if (!valueEquals(value, this.dataValue.select)) {
               this.dataValue = {
-                select: this.value,
+                select: value,
                 otherValue: ''
               }
             }

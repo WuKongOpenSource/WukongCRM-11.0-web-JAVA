@@ -15,12 +15,11 @@
         <div
           class="handle-item-name"
           style="margin-top: 8px;">选择团队成员：</div>
-        <xh-user-cell
+        <wk-user-select
           :radio="false"
-          :value="usersList"
+          v-model="usersList"
           class="handle-item-content"
-          placeholder="点击选择（多选）"
-          @value-change="userChage"/>
+          placeholder="点击选择（多选）"/>
         <div
           v-if="!isCreate"
           class="tips">此操作不可移除数据负责人</div>
@@ -87,7 +86,7 @@
 </template>
 
 <script>
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import {
   crmCustomerSettingTeamSaveAPI,
   crmCustomerSettingTeamDeleteAPI
@@ -113,7 +112,7 @@ export default {
   /** 客户管理 的 勾选后的 团队成员 操作 移除操作不可移除客户负责人*/
   name: 'TeamsHandle',
   components: {
-    XhUserCell
+    WkUserSelect
   },
   mixins: [],
   props: {
@@ -209,10 +208,6 @@ export default {
       this.visible = false
       this.$emit('update:dialogVisible', false)
     },
-    /** 负责人更改 */
-    userChage(data) {
-      this.usersList = data.value
-    },
     handleConfirm() {
       // 移除操作不可移除客户负责人
       if (!this.members && this.usersList.length === 0) {
@@ -222,7 +217,7 @@ export default {
       } else {
         const params = {
           ids: this.selectionList.map(item => item[this.crmType + 'Id']),
-          memberIds: this.usersList.map(item => item.userId)
+          memberIds: this.usersList
         }
 
         // 如果有传入成员，替换选择成员

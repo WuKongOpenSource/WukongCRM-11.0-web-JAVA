@@ -3,21 +3,14 @@
     :style="{'margin-left': marginLeft}"
     class="related-business">
     <!-- 新建- 相关信息 -->
-    <el-popover
-      v-if="showAdd"
-      v-model="showPopover"
-      placement="right-end"
-      width="800"
-      popper-class="no-padding-popover"
-      trigger="click">
+    <template v-if="showAdd">
       <crm-relative
         v-if="showRelative"
         ref="crmrelative"
-        :show="showPopover"
+        :visible.sync="showRelative"
         :radio="false"
         :selected-data="relatedListData"
         :show-types="showTypes"
-        @close="crmrelativeClose"
         @changeCheckout="checkInfos"/>
       <span
         v-if="showCRMPermission" slot="reference"
@@ -25,7 +18,7 @@
         <i class="wk wk-l-plus" />
         <span class="label">关联业务</span>
       </span>
-    </el-popover>
+    </template>
     <div
       v-for="(items, key) in relatedListData"
       :key="key"
@@ -45,7 +38,6 @@
 
 <script>
 // 相关信息 - 弹出框
-import CrmRelative from '@/components/CreateCom/CrmRelative'
 import RelatedBusinessCell from '@/views/oa/components/RelatedBusinessCell'
 
 import { mapGetters } from 'vuex'
@@ -53,7 +45,8 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'RelatedBusiness',
   components: {
-    CrmRelative,
+    CrmRelative: () =>
+      import('@/components/CreateCom/CrmRelative'),
     RelatedBusinessCell
   },
   props: {
@@ -86,13 +79,6 @@ export default {
   data() {
     return {
       showTypes: ['customer', 'contacts', 'business', 'contract'],
-      showPopover: false,
-      relevanceAll: {
-        customerIds: [],
-        contractIds: [],
-        contactsIds: [],
-        businessIds: []
-      },
       // 相关信息信息
       relatedListData: {},
       showRelative: false
@@ -114,17 +100,14 @@ export default {
     this.relatedListData = this.allData
   },
   methods: {
-    crmrelativeClose() {
-      this.showPopover = false
-    },
     checkInfos(val) {
-      this.showPopover = false
       this.relatedListData = val.data
+      const relevanceAll = {}
       for (const key in val.data) {
         const list = val.data[key]
-        this.relevanceAll[key + 'Ids'] = list.map(item => item[key + 'Id'])
+        relevanceAll[key + 'Ids'] = list.map(item => item[key + 'Id'])
       }
-      this.$emit('checkInfos', this.relevanceAll, val.data)
+      this.$emit('checkInfos', relevanceAll, val.data)
     },
     // 任务页面取消关联
     delRelevance(field, index, item) {

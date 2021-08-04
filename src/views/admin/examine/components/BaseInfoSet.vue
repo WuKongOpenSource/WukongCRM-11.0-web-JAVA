@@ -88,7 +88,6 @@ export default {
      * 用户部门选择
      */
     userDepSelectChange(list, item, index) {
-      console.log(item, index)
       const userList = list[2]
       const deptList = list[3]
       this.$emit('change', item, index, {

@@ -9,6 +9,7 @@
       class="rc-head"
       direction="row-reverse">
       <el-button
+        v-if="!isSeas && visitSave"
         class="xr-btn--orange rc-head-item"
         icon="el-icon-plus"
         type="primary"
@@ -45,7 +46,6 @@
 </template>
 
 <script type="text/javascript">
-import CRMAllCreate from './CRMAllCreate'
 import {
   crmCustomerQueryVisitAPI
 } from '@/api/crm/customer'
@@ -55,6 +55,10 @@ import {
 import {
   filedGetTableFieldAPI
 } from '@/api/crm/common'
+
+import CRMAllCreate from './CRMAllCreate'
+
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeVisit', // 相关回访
@@ -77,6 +81,11 @@ export default {
       default: () => {
         return {}
       }
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -99,7 +108,11 @@ export default {
     }
   },
   inject: ['rootTabs'],
-  computed: {},
+  computed: {
+    visitSave() {
+      return !!getPermissionByKey('crm.visit.save')
+    }
+  },
   watch: {
     id: function(val) {
       this.list = []

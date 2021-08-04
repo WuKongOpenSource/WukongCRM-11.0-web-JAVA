@@ -27,19 +27,19 @@ export default [
       }
     }]
   },
-  {
-    ...layout({
-      permissions: ['manage']
-    }),
-    children: [{
-      path: 'update', // 升级
-      component: () => import('@/views/admin/update'),
-      meta: {
-        title: '在线升级',
-        icon: 'data-import'
-      }
-    }]
-  },
+  // {
+  //   ...layout({
+  //     permissions: ['manage']
+  //   }),
+  //   children: [{
+  //     path: 'update', // 升级
+  //     component: () => import('@/views/admin/update'),
+  //     meta: {
+  //       title: '在线升级',
+  //       icon: 'data-import'
+  //     }
+  //   }]
+  // },
   {
     ...layout({
       permissions: ['manage', 'configSet', 'read']
@@ -201,7 +201,7 @@ export default [
       meta: {
         activeMenu: '/manage/customer/custom-field',
         requiresAuth: true,
-        permissionList: [['manage', 'crm', 'field'], ['manage', 'crm', 'activityForm']]
+        permissionList: [['manage', 'crm', 'field'], ['manage', 'crm', 'activityForm'], ['manage', 'hrm', 'field']]
       }
     }, {
       name: 'handlefield',
@@ -212,6 +212,94 @@ export default [
         activeMenu: '/manage/customer/custom-field',
         requiresAuth: true,
         permissionList: [['manage', 'crm', 'field'], ['manage', 'crm', 'activityForm']]
+      }
+    }]
+  },
+  {
+    ...layout({
+      permissions: ['manage', 'hrm'],
+      title: '人力资源管理',
+      icon: 'employees'
+    }, '/manage/hrm'),
+    alwaysShow: true,
+    children: [{
+      path: 'custom-field',
+      component: () => import('@/views/admin/hrm/customField'),
+      meta: {
+        title: '自定义字段设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'field']
+      }
+    }, {
+      name: 'hrmCustomField',
+      path: 'customField/:type/:label/:id',
+      component: () => import('@/views/admin/fields'),
+      hidden: true,
+      meta: {
+        activeMenu: '/manage/hrm/custom-field',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'field']
+      }
+    }, {
+      path: 'salary/rules',
+      name: 'salaryRules',
+      component: () => import('@/views/admin/hrm/salary/Rules'),
+      meta: {
+        title: '薪资设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'salary']
+      }
+    }, {
+      path: 'salary/compute',
+      name: 'salaryCompute',
+      component: () => import('@/views/admin/hrm/salary/Compute'),
+      meta: {
+        title: '计薪设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'salary']
+      }
+    }, {
+      path: 'salary/options',
+      name: 'salaryOptions',
+      component: () => import('@/views/admin/hrm/salary/Options'),
+      meta: {
+        title: '工资表设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'salary']
+      }
+    }, {
+      name: 'insuranceSchemeSet',
+      path: 'insurance-scheme',
+      component: () => import('@/views/admin/hrm/insuranceScheme'),
+      meta: {
+        title: '社保方案管理',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'insurance']
+      }
+    }, {
+      path: 'achievement',
+      component: () => import('@/views/admin/hrm/achievement'),
+      meta: {
+        title: '考核模板设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'appraisal']
+      }
+    }, {
+      path: 'biz-param',
+      component: () => import('@/views/admin/hrm/bizParam'),
+      meta: {
+        title: '业务参数设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'params']
+      }
+    }, {
+      name: 'employeeManageSet',
+      path: 'employee-manage',
+      component: () => import('@/views/admin/hrm/employeeManage'),
+      meta: {
+        title: '员工管理设置',
+        requiresAuth: true,
+        permissions: ['manage', 'hrm', 'archives']
       }
     }]
   },

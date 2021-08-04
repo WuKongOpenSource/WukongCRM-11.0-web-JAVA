@@ -9,6 +9,7 @@
       label="员工与部门管理"
       @search="headerSearch">
       <el-button
+        v-if="userSaveAuth"
         slot="ft"
         class="xr-btn--orange"
         type="primary"
@@ -107,11 +108,22 @@
               :true-label="1"
               :false-label="0"
               @change="refreshUserList">包含子部门</el-checkbox>
-            <el-button
-              v-if="userSaveAuth"
-              type="text"
-              icon="el-icon-circle-plus"
-              @click="addEmployee">添加员工</el-button>
+            <template v-if="userSaveAuth">
+              <el-dropdown v-if="hasHrmAuth" @command="createEmployeeClick">
+                <el-button
+                  type="text"
+                  icon="el-icon-circle-plus">添加</el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item command="create">新建员工</el-dropdown-item>
+                  <el-dropdown-item command="selectHrm">从人力资源选择员工</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+              <el-button
+                v-else
+                type="text"
+                icon="el-icon-circle-plus"
+                @click="addEmployee">添加员工</el-button>
+            </template>
             <el-button
               v-if="strucSaveAuth && currentMenuData && currentMenuData.id"
               type="text"
@@ -426,14 +438,26 @@
           <template v-if="item.type == 'select'">
             <el-select
               v-model="formInline[item.field]"
-              filterable
-              @change="addUserSelectChange(item)">
+              filterable>
               <el-option
-                v-for="optionItem in optionsList[item.field].list"
+                v-for="optionItem in optionsList[item.field]"
                 :key="optionItem.id"
                 :label="optionItem.name"
                 :value="optionItem.id" />
             </el-select>
+          </template>
+          <template v-else-if="item.type == 'user'">
+            <wk-user-select
+              v-model="formInline[item.field]"
+              radio
+            />
+          </template>
+          <template v-else-if="item.type == 'structure'">
+            <wk-dep-select
+              v-model="formInline[item.field]"
+              radio
+              @change="depChange"
+            />
           </template>
           <template v-else-if="item.type == 'selectCheckout'">
             <el-select
@@ -476,6 +500,15 @@
       :show="bulkImportShow"
       @close="bulkImportShow=false"
       @success="refreshUserList" />
+    <!-- 选择添加人资员工 -->
+    <hrm-employee-add-dialog
+      v-if="hrmAddDialogShow"
+      :visible.sync="hrmAddDialogShow"
+      :rules="dialogRules"
+      :options-list="optionsList"
+      :groups-list="groupsList"
+      @change="refreshUserList"
+    />
     <!-- 角色编辑 -->
     <edit-role-dialog
       v-if="editRoleDialogShow"
@@ -519,9 +552,11 @@ import EmployeeDetail from './components/EmployeeDetail'
 import XrHeader from '@/components/XrHeader'
 import Reminder from '@/components/Reminder'
 import SlideVerify from '@/components/SlideVerify'
+import HrmEmployeeAddDialog from './components/HrmEmployeeAddDialog'
 import EditRoleDialog from './components/EditRoleDialog'
 import EditDepDialog from './components/EditDepDialog'
 import WkUserSelect from '@/components/NewCom/WkUserSelect'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
 
 import { chinaMobileRegex, objDeepCopy } from '@/utils'
 
@@ -534,9 +569,11 @@ export default {
     XrHeader,
     Reminder,
     SlideVerify,
+    HrmEmployeeAddDialog,
     EditRoleDialog,
     EditDepDialog,
-    WkUserSelect
+    WkUserSelect,
+    WkDepSelect
   },
   data() {
     return {
@@ -645,22 +682,11 @@ export default {
       // 编辑部门时id
       treeEditId: '',
       optionsList: {
-        deptId: {
-          field: 'deptId',
-          list: []
-        },
-        parentId: {
-          field: 'parentId',
-          list: [{ id: 0, name: '请选择' }]
-        },
-        sex: {
-          field: 'sex',
-          list: [
-            { id: 0, name: '请选择' },
-            { id: 1, name: '男' },
-            { id: 2, name: '女' }
-          ]
-        }
+        sex: [
+          { id: 0, name: '请选择' },
+          { id: 1, name: '男' },
+          { id: 2, name: '女' }
+        ]
       },
       groupsList: [],
       // 重置密码
@@ -726,6 +752,8 @@ export default {
       codeTimer: null,
       // 批量导入
       bulkImportShow: false,
+      // 人力资源选择
+      hrmAddDialogShow: false,
       // 角色操作
       editRoleType: '',
       editRoleDialogShow: false,
@@ -734,7 +762,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['manage']),
+    ...mapGetters(['manage', 'hrm']),
+    // 有人资权限
+    hasHrmAuth() {
+      return this.hrm
+    },
     // 员工创建权限
     userSaveAuth() {
       return this.manage && this.manage.users && this.manage.users.userSave
@@ -865,9 +897,9 @@ export default {
           { field: 'realname', value: '姓名' },
           { field: 'sex', value: '性别', type: 'select' },
           { field: 'email', value: '邮箱' },
-          { field: 'deptId', value: '部门', type: 'select' },
+          { field: 'deptId', value: '部门', type: 'structure' },
           { field: 'post', value: '岗位' },
-          { field: 'parentId', value: '直属上级', type: 'select' },
+          { field: 'parentId', value: '直属上级', type: 'user' },
           { field: 'roleId', value: '角色', type: 'selectCheckout' }
         ]
       } else {
@@ -880,9 +912,9 @@ export default {
           { field: 'realname', value: '姓名' },
           { field: 'sex', value: '性别', type: 'select' },
           { field: 'email', value: '邮箱' },
-          { field: 'deptId', value: '部门', type: 'select' },
+          { field: 'deptId', value: '部门', type: 'structure' },
           { field: 'post', value: '岗位' },
-          { field: 'parentId', value: '直属上级', type: 'select' },
+          { field: 'parentId', value: '直属上级', type: 'user' },
           { field: 'roleId', value: '角色', type: 'selectCheckout' }
         ]
       }
@@ -1065,13 +1097,21 @@ export default {
     /**
      * 编辑员工单选change
      */
-    addUserSelectChange(item) {
-      if (item.field === 'deptId') {
-        const options = this.optionsList.deptId.list || []
-        const deptObj = options.find(o => o.id === this.formInline.deptId)
-        if (deptObj) {
-          this.$set(this.formInline, 'parentId', deptObj.ownerUserId)
-        }
+    depChange(_, data) {
+      const obj = data && data.length > 0 ? data[0] : null
+      this.$set(this.formInline, 'parentId', obj ? obj.ownerUserId : '')
+    },
+
+    /**
+     * 选择或者新建员工
+     */
+    createEmployeeClick(command) {
+      if (command === 'create') {
+        this.addEmployee()
+      } else if (command === 'selectHrm') {
+        // 先获取个下拉数据
+        this.getHandleEmployeeRelateData()
+        this.hrmAddDialogShow = true
       }
     },
 
@@ -1079,8 +1119,6 @@ export default {
      * 新建或编辑员工 需要获取的信息
      */
     getHandleEmployeeRelateData() {
-      this.getSelectUserList() // 直属上级列表
-      this.getDepList()
       this.getRoleList()
     },
 
@@ -1112,17 +1150,6 @@ export default {
       detail['userId'] = this.dialogData.userId
       this.formInline = detail
       this.employeeCreateDialog = true
-    },
-
-    /**
-     * 新建编辑员工的  部门信息
-     */
-    getDepList() {
-      depListAPI()
-        .then(response => {
-          this.optionsList['deptId'].list = response.data
-        })
-        .catch(() => {})
     },
 
     /**
@@ -1245,7 +1272,6 @@ export default {
           ownerUserId: this.depOwnerUserId
         }).then(
           res => {
-            this.getDepList() // 增加了新部门 刷新数据
             this.getDepTreeList()
             this.depCreateClose()
           }
@@ -1291,7 +1317,6 @@ export default {
                 this.employeeCreateDialog = false
                 this.refreshUserList()
                 this.getUserCount()
-                this.getSelectUserList()
                 this.loading = false
               })
               .catch(() => {
@@ -1309,7 +1334,6 @@ export default {
                 this.employeeCreateDialog = false
                 this.$message.success('编辑成功')
                 this.getUserList()
-                this.getSelectUserList()
                 this.loading = false
               })
               .catch(() => {
@@ -1593,27 +1617,6 @@ export default {
       this.selectionList = val // 勾选的行
     },
 
-    /** 获取选择直属上级列表 */
-    getSelectUserList() {
-      this.loading = true
-      userListAPI({ pageType: 0 })
-        .then(res => {
-          this.optionsList['parentId'].list = [{
-            id: '',
-            name: '请选择'
-          }]
-          for (const i of res.data.list) {
-            this.optionsList['parentId'].list.push({
-              id: i.userId,
-              name: i.realname
-            })
-          }
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
-    },
     // 获取状态颜色 0 禁用 1 启用 2未激活
     getStatusColor(status) {
       if (status == 0) {
@@ -1859,6 +1862,35 @@ export default {
     padding-right: 15px;
   }
 }
+.new-dialog-form {
+  .el-select {
+    display: block;
+  }
+  .wk-dep-select,
+  .wk-user-select {
+    width: 100%;
+  }
+}
+.new-dialog-form
+  /deep/
+  .el-form-item
+  .el-form-item__content
+  .el-select-group__wrap:not(:last-of-type)::after {
+  display: none;
+}
+.new-dialog-form /deep/ .el-form-item .el-form-item__content .el-select-group {
+  padding-left: 10px;
+}
+.new-dialog-form
+  /deep/
+  .el-form-item
+  .el-form-item__content
+  .el-select-group__title {
+  border-bottom: 1px solid #e4e7ed;
+  padding: 0 0 7px;
+  margin: 0 20px 5px;
+}
+
 .nav-dialog-div {
   margin-bottom: 20px;
   label {
@@ -1997,9 +2029,6 @@ export default {
   width: 280px;
   position: relative;
 }
-.new-dialog-form /deep/ .el-select {
-  display: block;
-}
 
 /** 分页布局 */
 .p-contianer {
@@ -2056,25 +2085,6 @@ export default {
   .el-button + .el-button {
     margin-left: 15px;
   }
-}
-.new-dialog-form
-  /deep/
-  .el-form-item
-  .el-form-item__content
-  .el-select-group__wrap:not(:last-of-type)::after {
-  display: none;
-}
-.new-dialog-form /deep/ .el-form-item .el-form-item__content .el-select-group {
-  padding-left: 10px;
-}
-.new-dialog-form
-  /deep/
-  .el-form-item
-  .el-form-item__content
-  .el-select-group__title {
-  border-bottom: 1px solid #e4e7ed;
-  padding: 0 0 7px;
-  margin: 0 20px 5px;
 }
 
 .status-des {

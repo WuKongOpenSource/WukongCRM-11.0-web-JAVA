@@ -3,6 +3,8 @@ import {
   logoutAPI
 } from '@/api/login'
 import {
+  userListAPI,
+  depListAPI,
   adminIndexAuthListAPI
 } from '@/api/common'
 import {
@@ -21,17 +23,21 @@ import {
   request
 } from '@/utils'
 import Lockr from 'lockr'
+import { debounce } from 'throttle-debounce'
 
 const user = {
   state: {
     userInfo: null, // 用户信息
     // 权限信息
     allAuth: null, // 总权限信息 默认空 调整动态路由
+    userList: [], // 管理后台员工和部门
+    deptList: [],
     crm: {}, // 客户管理
     bi: {}, // 商业智能
     manage: {}, // 管理后台
     oa: {}, // 办公
-    project: {} // 项目管理
+    project: {}, // 项目管理
+    hrm: {} // 人力资源
   },
 
   mutations: {
@@ -57,10 +63,19 @@ const user = {
     SET_PROJECT: (state, project) => {
       state.project = project
     },
+    SET_HRM: (state, hrm) => {
+      state.hrm = hrm
+    },
     SET_AUTH: (state, data) => {
       const token = data.adminToken
       Lockr.set('Admin-Token', token)
       addAuth(token)
+    },
+    SET_USERLIST: (state, data) => {
+      state.userList = data
+    },
+    SET_DEPTLIST: (state, data) => {
+      state.deptList = data
     }
   },
 
@@ -86,7 +101,8 @@ const user = {
 
     // 获取权限
     getAuth({
-      commit
+      commit,
+      dispatch
     }) {
       return new Promise((resolve, reject) => {
         adminIndexAuthListAPI().then((response) => {
@@ -99,6 +115,15 @@ const user = {
           commit('SET_MANAGE', data.manage)
           commit('SET_OA', data.oa)
           commit('SET_PROJECT', data.project)
+          commit('SET_HRM', data.hrm)
+
+          // 获取 管理后台 员工和部门信息
+          dispatch('GetUserList')
+          dispatch('GetDeptList')
+          if (data.hrm) {
+            dispatch('GetHrmUserList')
+            dispatch('GetHrmDeptList')
+          }
 
           resolve(data)
         }).catch(error => {
@@ -138,6 +163,44 @@ const user = {
         }).catch(error => {
           removeAuth()
           resetRouter()
+          reject(error)
+        })
+      })
+    },
+
+    debounceGetUserList: debounce(3000, ({ dispatch }) => {
+      dispatch('GetUserList')
+    }),
+
+    // 管理后台员工列表
+    GetUserList({
+      commit
+    }) {
+      return new Promise((resolve, reject) => {
+        userListAPI({
+          pageType: 0
+        }).then(res => {
+          commit('SET_USERLIST', res.data.list || [])
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    debounceGetDeptList: debounce(3000, ({ dispatch }) => {
+      dispatch('GetDeptList')
+    }),
+
+    // 管理后台部门列表
+    GetDeptList({
+      commit
+    }) {
+      return new Promise((resolve, reject) => {
+        depListAPI({ type: 'tree' }).then(res => {
+          commit('SET_DEPTLIST', res.data || [])
+          resolve()
+        }).catch(error => {
           reject(error)
         })
       })

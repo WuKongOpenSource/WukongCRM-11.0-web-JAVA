@@ -54,13 +54,16 @@
           <create-log v-if="showAdd" ref="createLog" class="add-card card" @update="addLogSuccess" @completeSelect="completeSelect" />
 
           <flexbox class="filter-control card">
-            <xh-user-cell
+            <wk-user-dep-select
               v-if="showUserSelect"
-              :radio="false"
-              :value="userSelects"
-              class="xh-user-cell"
-              placeholder="选择人员"
-              @value-change="userChange" />
+              :user-value.sync="filterForm.createUserId"
+              :dep-value.sync="filterForm.deptIds"
+              :props="{
+                showSureBtn: true
+              }"
+              placeholder="选择人员或部门"
+              @change="userDepChange"
+            />
             <time-type-select
               :width="190"
               :options="timeOptions"
@@ -68,7 +71,8 @@
               @change="timeTypeChange" />
             <el-select
               v-model="filterForm.categoryId"
-              placeholder="类型">
+              placeholder="类型"
+              @change="refreshList">
               <el-option
                 v-for="(item, index) in options"
                 :key="index"
@@ -163,9 +167,9 @@ import ReportMenu from './components/ReportMenu'
 import LogItem from './components/LogItem'
 import CreateLog from './components/CreateLog'
 import LogComDetail from './components/LogComDetail' // 日志完成 情况详情
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserDepSelect from '@/components/NewCom/WkUserDepSelect'
 import CRMAllDetail from '@/views/crm/components/CRMAllDetail'
-import NewDialog from '@/views/oa/journal/NewDialog'
+import NewDialog from './components/NewDialog'
 import TimeTypeSelect from '@/components/TimeTypeSelect'
 import ReportList from '@/views/crm/workbench/components/ReportList'
 
@@ -181,7 +185,7 @@ export default {
     LogItem,
     CreateLog,
     LogComDetail,
-    XhUserCell,
+    WkUserDepSelect,
     CRMAllDetail,
     NewDialog,
     TimeTypeSelect,
@@ -251,9 +255,9 @@ export default {
 
       filterForm: {
         categoryId: 0,
-        createUserId: ''
+        createUserId: [],
+        deptIds: []
       },
-      userSelects: [],
 
       timeOptions: [
         { label: '今天', value: 'today' },
@@ -341,12 +345,6 @@ export default {
     }
   },
   watch: {
-    filterForm: {
-      handler() {
-        this.refreshList()
-      },
-      deep: true
-    }
   },
   created() {
     this.logType = this.$route.params.type
@@ -363,9 +361,9 @@ export default {
     }
     this.filterForm = {
       categoryId: 0,
-      createUserId: ''
+      createUserId: [],
+      deptIds: []
     }
-    this.userSelects = []
 
     this.timeSelect = {
       type: 'default',
@@ -457,6 +455,15 @@ export default {
     },
 
     /**
+     * 员工部门筛选change
+     */
+    userDepChange(userIds, deptIds) {
+      this.filterForm.createUserId = userIds
+      this.filterForm.deptIds = deptIds
+      this.refreshList()
+    },
+
+    /**
      * 刷新列表
      */
     refreshList() {
@@ -497,7 +504,9 @@ export default {
     getBaseParams() {
       const params = {
         search: this.search,
-        ...this.filterForm
+        categoryId: this.filterForm.categoryId,
+        createUserId: this.filterForm.createUserId.join(','),
+        deptIds: this.filterForm.deptIds
       }
 
       if (this.timeSelect.type) {
@@ -558,13 +567,15 @@ export default {
      * @param index {number}
      */
     handleEdit(index, data) {
+      if (data.sendDeptList) {
+        data.sendDeptList.forEach(item => {
+          item.deptId = item.id
+        })
+      }
       this.formData = data
       this.imgFileList = data.img
       // 附件
       this.accessoryFileList = data.file
-      // 员工部门赋值
-      // this.formData.depData = data.sendDeptList ? data.sendDeptList : []
-      // this.formData.sentWhoList = data.sendUserList ? data.sendUserList : []
       this.showNewDialog = true
     },
 
@@ -575,8 +586,8 @@ export default {
       this.newLoading = true
       // 获取部门
       const dep = []
-      if (this.formData.depData) {
-        for (const j of this.formData.depData) {
+      if (this.formData.sendDeptList) {
+        for (const j of this.formData.sendDeptList) {
           dep.push(j.id)
         }
       }
@@ -624,29 +635,15 @@ export default {
     },
 
     /**
-     * 筛选条件人员选择
-     */
-    userChange(data) {
-      this.userSelects = data.value || []
-      if (data.value.length > 0) {
-        this.filterForm.createUserId = data.value.map(item => {
-          return item.userId
-        }).join(',')
-      } else {
-        this.filterForm.createUserId = ''
-      }
-    },
-
-    /**
      * 查看某人历史
      */
     checkUserHistory(user) {
-      this.userSelects = user ? [user] : []
       if (user) {
-        this.filterForm.createUserId = user.userId
+        this.filterForm.createUserId = [user.userId]
       } else {
-        this.filterForm.createUserId = ''
+        this.filterForm.createUserId = []
       }
+      this.refreshList()
     },
 
     /**

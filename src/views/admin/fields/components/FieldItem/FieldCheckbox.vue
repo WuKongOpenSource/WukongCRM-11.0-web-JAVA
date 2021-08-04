@@ -14,7 +14,7 @@
       <el-checkbox
         v-for="(item, index) in field.setting"
         :key="index"
-        :label="item"
+        :label="itemIsObject(item) ? item.label || item.name : item"
         class="checkbox" />
     </el-checkbox-group>
 
@@ -28,8 +28,8 @@
         <el-option
           v-for="(item, index) in field.setting"
           :key="index"
-          :label="item"
-          :value="item" />
+          :label="itemIsObject(item) ? item.label || item.name : item"
+          :value="itemIsObject(item) ? item.value : item" />
       </el-select>
       <div class="mask" />
     </div>

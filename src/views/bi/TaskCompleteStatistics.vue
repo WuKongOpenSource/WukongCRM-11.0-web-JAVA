@@ -32,16 +32,16 @@
           :label="item.label"
           :value="item.value"/>
       </el-select>
-      <xh-structure-cell
+      <wk-dep-select
         v-if="dataSelect == 1"
+        v-model="deptSelectValue"
         radio
-        class="xh-structure-cell"
-        @value-change="structureChange" />
-      <xh-user-cell
+        class="wk-dep-select" />
+      <wk-user-select
         v-else
+        v-model="userSelectValue"
         radio
-        class="xh-user-cell"
-        @value-change="userChange" />
+        class="wk-user-select" />
       <!-- <el-select
         v-model="structuresSelectValue"
         placeholder="选择部门"
@@ -113,8 +113,8 @@
 import { adminStructuresSubIndexAPI, userListAPI } from '@/api/common'
 import { biAchievementStatisticsAPI, biAchievementStatisticsExportAPI } from '@/api/bi/bi'
 
-import XhStructureCell from '@/components/CreateCom/XhStructureCell'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 
 import moment from 'moment'
 import BaseMixin from './mixins/Base'
@@ -127,8 +127,8 @@ export default {
   /** 业绩目标完成情况 */
   name: 'TaskCompleteStatistics',
   components: {
-    XhStructureCell,
-    XhUserCell
+    WkDepSelect,
+    WkUserSelect
   },
   mixins: [BaseMixin, SortMixin],
   data() {
@@ -157,8 +157,8 @@ export default {
       // 部门员工
       dataSelect: 1,
       // 部门员工选择值
-      deptSelectValue: [],
-      userSelectValue: [],
+      deptSelectValue: '',
+      userSelectValue: '',
 
       list: [],
       fieldList: [
@@ -180,9 +180,9 @@ export default {
       }
       params.isUser = this.dataSelect == 1 ? 0 : 1 // isUser  0 部门 1 员工
       if (this.dataSelect == 1) {
-        params.deptId = this.deptSelectValue.length > 0 ? this.deptSelectValue[0].id : ''
+        params.deptId = this.deptSelectValue
       } else {
-        params.userId = this.userSelectValue.length > 0 ? this.userSelectValue[0].userId : ''
+        params.userId = this.userSelectValue
       }
 
       return params
@@ -232,20 +232,6 @@ export default {
       if (this.axisChart) {
         this.axisChart.resize()
       }
-    },
-
-    /**
-     * 部门选择
-     */
-    structureChange(data) {
-      this.deptSelectValue = data.value || []
-    },
-
-    /**
-     * 员工选择
-     */
-    userChange(data) {
-      this.userSelectValue = data.value || []
     },
 
     /**
@@ -586,8 +572,9 @@ export default {
     margin-right: 15px;
   }
 
-  .xh-user-cell,
-  .xh-structure-cell {
+  .wk-user-select,
+  .wk-dep-select {
+    text-align: left;
     width: 120px;
     margin-right: 15px;
   }

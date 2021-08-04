@@ -9,7 +9,7 @@
         :maxlength="2000"
         show-word-limit
         type="textarea"
-        placeholder="请输入回复内容"
+        placeholder="请输入评论内容"
         @blur="blurFun" />
       <div class="btn-group">
         <el-popover
@@ -26,7 +26,7 @@
         <div class="btn-box">
           <el-button
             type="primary"
-            @click="commentSubmit">回复</el-button>
+            @click="commentSubmit">评论</el-button>
           <el-button @click="closeComment">取消</el-button>
         </div>
       </div>
@@ -36,14 +36,14 @@
       v-else
       class="no-focus"
       @click="toggleFocus()">
-      请输入回复内容
+      请输入评论内容
     </div>
   </div>
 </template>
 
 <script>
 /**
- * 回复输入框
+ * 评论输入框
  * event:      close 关闭输入框
  *             reply 确认输入  参数： {String} 输入框值
  *             toggle 状态切换
@@ -59,9 +59,9 @@ export default {
   },
   data() {
     return {
-      commentLoading: false, // 回复loading
-      blurIndex: 0, // 回复表情插入位置
-      commentsTextarea: '', // 回复内容
+      commentLoading: false, // 评论loading
+      blurIndex: 0, // 评论表情插入位置
+      commentsTextarea: '', // 评论内容
       showEmoji: false, // emoji选择标志
       showNoFocus: false
     }
@@ -85,17 +85,17 @@ export default {
       }
     },
     /**
-     * 提交评论回复
+     * 提交评论评论
      */
     commentSubmit() {
       if (!this.commentsTextarea) {
-        this.$message.error('回复内容不能为空')
+        this.$message.error('评论内容不能为空')
         return
       }
       this.$emit('reply', xss(this.commentsTextarea))
     },
     /**
-     * 关闭评论回复框
+     * 关闭评论评论框
      */
     closeComment() {
       this.showEmoji = false

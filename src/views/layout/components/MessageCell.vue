@@ -107,13 +107,22 @@ export default {
           icon: 'wk wk-invoice',
           color: '#6995FF',
           type: 'invoice'
+        },
+        hrm: {
+          icon: 'wk wk-employees',
+          color: '#6995FF',
+          type: 'hrm'
         }
       }
 
-      // 1 任务 2 日志 3 oa审批 4公告 5 日程 6 客户管理
+      // 1 任务 2 日志 3 oa审批 4公告 5 日程 6 客户管理 8 人资
       let key = ''
-      if (this.data.label && this.data.label <= 5) {
-        key = ['task', 'log', 'examine', 'announcement', 'schedule'][this.data.label - 1]
+      if (this.data.label && (this.data.label <= 5 || [8].includes(this.data.label))) {
+        if (this.data.label <= 5) {
+          key = ['task', 'log', 'examine', 'announcement', 'schedule'][this.data.label - 1]
+        } else if (this.data.label === 8) {
+          key = 'hrm'
+        }
       } else {
         if ([1, 2, 3].includes(this.data.type)) {
           key = 'task'
@@ -150,7 +159,7 @@ export default {
         1: `${this.data.realname}将`,
         2: `${this.data.realname}邀请您参与`,
         3: `${this.data.realname}将`,
-        4: `${this.data.realname}回复了您的`,
+        4: `${this.data.realname}评论了您的`,
         5: `${this.data.realname}将日志`,
         6: `${this.data.realname}拒绝您的`,
         7: `${this.data.realname}已经审核通过您的`,

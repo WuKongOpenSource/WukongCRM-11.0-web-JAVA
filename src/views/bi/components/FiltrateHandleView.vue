@@ -30,20 +30,19 @@
           :label="item.label"
           :value="item.value"/>
       </el-select>
-      <xh-structure-cell
+      <wk-dep-select
         v-if="dataSelect == 1"
+        v-model="structuresSelectValue"
         radio
         placeholder="选择部门（默认为本部门及下属部门）"
-        class="xh-structure-cell"
-        @value-change="structureChange" />
+        class="wk-dep-select" />
 
-      <xh-user-cell
+      <wk-user-select
         v-if="dataSelect == 2 && showUserSelect"
+        v-model="userSelectValue"
         radio
-        class="xh-user-cell"
-        placeholder="选择员工（默认为本人及下属）
-"
-        @value-change="userChange" />
+        class="wk-user-select"
+        placeholder="选择员工（默认为本人及下属）" />
 
       <!-- <el-select
       v-model="structuresSelectValue"
@@ -115,8 +114,8 @@ import {
 import { crmBusinessStatusListAPI } from '@/api/crm/business'
 import { productCategoryIndexAPI } from '@/api/admin/crm'
 
-import XhStructureCell from '@/components/CreateCom/XhStructureCell'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import TimeTypeSelect from '@/components/TimeTypeSelect'
 
 import moment from 'moment'
@@ -125,8 +124,8 @@ export default {
   name: 'FiltrateHandleView', // 筛选条件
   components: {
     TimeTypeSelect,
-    XhStructureCell,
-    XhUserCell
+    WkDepSelect,
+    WkUserSelect
   },
   props: {
     // 模块类型  暂无意义 可不传
@@ -196,10 +195,10 @@ export default {
       // },
       dataSelect: 1, // 1 是部门 2 是员工
       // deptList: [], // 部门列表
-      structuresSelectValue: [],
+      structuresSelectValue: '',
       /** 用户列表 */
       // userOptions: [],
-      userSelectValue: [],
+      userSelectValue: '',
 
 
 
@@ -247,19 +246,6 @@ export default {
 
   beforeDestroy() {},
   methods: {
-    /**
-     * 部门选择
-     */
-    structureChange(data) {
-      this.structuresSelectValue = data.value || []
-    },
-
-    /**
-     * 员工选择
-     */
-    userChange(data) {
-      this.userSelectValue = data.value || []
-    },
 
     // 选择更改
     customSelectChange() {
@@ -321,10 +307,10 @@ export default {
       const params = {}
       if (this.showUserStrucSelect) {
         if (this.dataSelect == 1) {
-          params.deptId = this.structuresSelectValue.length > 0 ? this.structuresSelectValue[0].id : ''
+          params.deptId = this.structuresSelectValue
         }
       } else {
-        params.deptId = this.structuresSelectValue.length > 0 ? this.structuresSelectValue[0].id : ''
+        params.deptId = this.structuresSelectValue
       }
 
       if (this.showUserStrucSelect) {
@@ -334,7 +320,7 @@ export default {
       // 展示员工，返回员工参数
       if (this.showUserSelect) {
         if (this.dataSelect == 2) {
-          params.userId = this.userSelectValue.length > 0 ? this.userSelectValue[0].userId : ''
+          params.userId = this.userSelectValue
         }
       }
 
@@ -406,8 +392,9 @@ export default {
     margin-right: 15px;
   }
 
-  .xh-user-cell,
-  .xh-structure-cell {
+  .wk-user-select,
+  .wk-dep-select {
+    text-align: left;
     width: 235px;
     margin-right: 15px;
   }

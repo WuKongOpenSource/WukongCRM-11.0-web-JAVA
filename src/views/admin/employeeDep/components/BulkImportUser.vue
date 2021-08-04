@@ -89,7 +89,7 @@
 
 <script>
 import {
-  userImportTemplateURL,
+  userImportTemplateAPI,
   userExcelImportAPI,
   userErrorExcelDownAPI
 } from '@/api/admin/employeeDep'
@@ -235,7 +235,11 @@ export default {
      * 下载模板操作
      */
     download() {
-      window.open(userImportTemplateURL)
+      userImportTemplateAPI()
+        .then(res => {
+          downloadExcelWithResData(res)
+        })
+        .catch(() => {})
     },
 
     /**

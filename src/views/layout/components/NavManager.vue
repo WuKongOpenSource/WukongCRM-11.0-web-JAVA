@@ -62,7 +62,7 @@
 <script>
 import { configSetHeaderModelSortAPI } from '@/api/config'
 
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import { getMaxIndex } from '@/utils/index'
 import Draggable from 'vuedraggable'
 
@@ -93,9 +93,12 @@ export default {
       'manage',
       'oa',
       'project',
+      'hrm',
       'headerModule'
     ]),
-
+    ...mapState({
+      moduleAuth: state => state.app.moduleAuth
+    }),
     containerLeft() {
       if (this.collapse) {
         return '79px'
@@ -186,6 +189,18 @@ export default {
           fontSize: '20px'
         }
       }
+
+      if (this.moduleAuth && this.moduleAuth.hrm) {
+        tempsItems.hrm = {
+          title: '人力资源',
+          type: 11,
+          module: 'hrm',
+          path: '/hrm',
+          icon: 'wk wk-employees',
+          fontSize: '18px'
+        }
+      }
+
       return tempsItems
     }
   },

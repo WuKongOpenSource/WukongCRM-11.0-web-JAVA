@@ -63,8 +63,6 @@ import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
 import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 import {
-  XhBusinessStatus,
-  XhProduct,
   CrmRelativeCell
 } from '@/components/CreateCom'
 
@@ -80,8 +78,8 @@ export default {
     XrCreate,
     CreateSections,
     CrmRelativeCell,
-    XhBusinessStatus,
-    XhProduct,
+    XhBusinessStatus: () => import('@/components/CreateCom/XhBusinessStatus'),
+    XhProduct: () => import('@/components/CreateCom/XhProduct'),
     WkFormItems
   },
 

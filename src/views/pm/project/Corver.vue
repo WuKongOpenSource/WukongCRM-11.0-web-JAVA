@@ -8,7 +8,7 @@
       show-search
       ft-top="0"
       @search="searchClick">
-      <div slot="ft">
+      <div v-if="permissonProject" slot="ft">
         <el-button
           type="primary"
           icon="el-icon-plus"

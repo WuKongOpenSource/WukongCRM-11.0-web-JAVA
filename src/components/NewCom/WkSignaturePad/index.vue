@@ -22,14 +22,15 @@
 </template>
 
 <script>
-import { adminFileQueryOneByBatchIdAPI } from '@/api/admin/file'
+import { adminFileQueryOneByBatchIdAPI, adminFileDeleteByBatchIdAPI } from '@/api/admin/file'
 import { crmFileSingleSaveAPI } from '@/api/common'
 
 import VueSignaturePad from './VueSignaturePad'
 import WkSignatureImage from './Image'
 
 import { valueEquals } from 'element-ui/lib/utils/util'
-import { guid, getImageData } from '@/utils'
+import { getImageData } from '@/utils'
+import Emitter from 'element-ui/lib/mixins/emitter'
 
 export default {
   // 签名
@@ -39,6 +40,8 @@ export default {
     VueSignaturePad,
     WkSignatureImage
   },
+
+  mixins: [Emitter],
 
   props: {
     value: String, // batchId 交互
@@ -74,9 +77,10 @@ export default {
   mounted() {
     if (this.value) {
       this.getData()
-    } else {
-      this.$emit('input', guid())
     }
+    // else {
+    //   this.$emit('input', guid())
+    // }
 
     this.height = `${parseInt(this.$refs.wkSignaturePad.clientWidth / 2.6)}px`
   },
@@ -127,16 +131,42 @@ export default {
       crmFileSingleSaveAPI({
         file: blob,
         batchId: this.value
-      }).then(({ res }) => {
+      }).then(res => {
+        const { batchId } = res.data || {}
+        if (batchId && this.value !== batchId) {
+          this.$emit('input', batchId)
+          this.dispatch('ElFormItem', 'el.form.change', batchId)
+        }
       }).catch(() => {})
     },
 
     handleClick(type) {
       if (type === 'clear') {
         this.$refs.signaturePad.clearSignature()
+        if (this.value) {
+          this.deleteByBatchId(this.value)
+        }
+        this.$emit('input', '')
       } else if (type === 'undo') {
         this.$refs.signaturePad.undoSignature()
+        this.$nextTick(() => {
+          const { isEmpty } = this.$refs.signaturePad.saveSignature()
+          if (isEmpty) {
+            if (this.value) {
+              this.deleteByBatchId(this.value)
+            }
+            this.$emit('input', '')
+          }
+          this.onEnd()
+        })
       }
+    },
+
+    /**
+     * 删除附件
+     */
+    deleteByBatchId(batchId) {
+      adminFileDeleteByBatchIdAPI({ batchId }).then(res => {}).catch(() => {})
     }
   }
 }

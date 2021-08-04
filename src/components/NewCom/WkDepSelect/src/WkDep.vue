@@ -1,24 +1,23 @@
-<!--
- * @Description: 悟空软件
- * @Author: 悟空
- * @Date: 2020-05-20 09:58:31
- * @LastEditTime: 2020-07-02 16:37:47
- * @LastEditors: yang
--->
 <template>
-  <div class="xh-stru">
-    <div v-if="headerShow" class="xh-stru__hd">
+  <div class="xh-user">
+    <div v-if="headerShow" class="xh-user__hd">
       部门
     </div>
-    <div class="xh-stru__bd">
-      <el-input
+    <div class="xh-user__bd">
+      <el-autocomplete
         v-model="searchInput"
-        placeholder="搜索部门名称"
-        size="small"
-        prefix-icon="el-icon-search"
-        class="search-input"/>
+        :disabled="disabled"
+        :popper-append-to-body="false"
+        :fetch-suggestions="searchListUser"
+        placeholder="请输入内容"
+        @select="searchSelect"
+      >
+        <template slot-scope="{ item }">
+          <span>{{ item[config.label] }}</span>
+          <!-- <span style="color: #999;">{{ `(${ item.deptName || ''}${item.deptName ? '-' : ''}${item.post || '无'})` }}</span> -->
+        </template>
+      </el-autocomplete>
       <div
-        v-loading="loading"
         class="search-list">
         <el-breadcrumb
           style="padding: 5px 0;"
@@ -31,64 +30,85 @@
               @click="breadcrumbBtn(item, index)">{{ item.label }}</a>
           </el-breadcrumb-item>
         </el-breadcrumb>
-        <flexbox
-          v-for="(item, index) in showDataList"
-          :key="index"
-          class="stru-list">
+
+        <div v-if="currentBreadcrumbItem" class="xh-user__list">
           <el-checkbox
-            v-model="item.isCheck"
-            :disabled="item.disabled"
-            class="stru-check"
-            @change="checkChange(item, index)"/>
-          <div
-            class="stru-name"
-            @click="enterChildren(item)">{{ item[props.label] }}</div>
-          <div
-            v-if="item.children"
-            class="el-icon-arrow-right stru-enter"/>
-        </flexbox>
+            v-if="!radio"
+            v-model="allChecked"
+            :disabled="disabled"
+            style="line-height: 30px;"
+            @change="handleCheckAllChange">全选</el-checkbox>
+          <wk-dep-checkbox
+            ref="depCheckbox"
+            :radio="radio"
+            :data="currentBreadcrumbItem.deptList"
+            :props="props"
+            :disabled="disabled"
+            :value="value"
+            @input="$emit('input', $event)"
+            @change="checkboxChange"
+            @all-select="userAllSelect"
+            @next="nextDebounceClick"
+          />
+        </div>
+
       </div>
     </div>
-    <div class="xh-stru__ft">
-      <span class="select-info">已选择<span class="select-info--num">{{ value.length }}</span>项</span>
+    <div class="xh-user__ft">
+      <span class="select-info">已选择<span class="select-info--num">{{ value ? value.length : 0 }}</span>项</span>
       <el-button type="text" @click="clearAll">清空</el-button>
     </div>
   </div>
 </template>
 <script type="text/javascript">
+import {
+  hrmDeptQueryTreeListAPI
+} from '@/api/hrm/dept'
+import { depListAPI } from '@/api/common'
+
+import WkDepCheckbox from '../../WkUserSelect/src/WkDepCheckbox'
+
 import PinyinMatch from 'pinyin-match'
-import { valueEquals } from 'element-ui/lib/utils/util'
-import { objDeepCopy } from '@/utils'
+import merge from '@/utils/merge'
+import { debounce } from 'throttle-debounce'
+
+const DefaultWkDep = {
+  value: 'deptId',
+  label: 'name',
+  // 搜索
+  // 请求和参数
+  request: null,
+  params: null,
+  // 默认的搜索人资和管理端人员请求
+  dataType: 'manage' // 部门的 value label 一致，用 dataType 区分 manage hrm
+}
+
 
 export default {
   name: 'WkDep', // 新建 dep
-  components: {},
+  components: {
+    WkDepCheckbox
+  },
+  inheritAttrs: false,
   props: {
+    radio: Boolean,
     headerShow: {
       type: Boolean,
       default: true
     },
+    // isHide 可不显示 但数据源里包含
     options: Array,
-    value: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
+    value: Array,
+    // type: {
+    //   type: String,
+    //   default: 'user' // user  dep  用户和部门
+    // },
     // 取值字段
     props: {
       type: Object,
       default: () => {
-        return {
-          value: 'id',
-          label: 'name'
-        }
+        return {}
       }
-    },
-    // 多选框 只能选一个
-    radio: {
-      type: Boolean,
-      default: false
     },
     disabled: {
       type: Boolean,
@@ -97,189 +117,170 @@ export default {
   },
   data() {
     return {
-      dataValue: [],
-      breadcrumbList: [], // 面包屑数据
-      dataList: [], // 展示数据
-      loading: false, // 加载动画
-      searchInput: ''
+      searchInput: '',
+      searchUserList: [],
+
+      // 面包头
+      breadcrumbList: [],
+
+      // 当前面包屑
+      currentBreadcrumbItem: null,
+      // 全选
+      allChecked: false
     }
   },
   computed: {
-    showDataList() {
-      return this.dataList.filter(item => {
-        return PinyinMatch.match(item[this.props.label], this.searchInput)
-      })
+    config() {
+      return merge({ ...DefaultWkDep }, this.props || {})
     }
   },
   watch: {
-    value: {
-      handler() {
-        if (!valueEquals(this.value, this.dataValue)) {
-          this.dataValue = objDeepCopy(this.value)
-          this.handelCheck(this.dataList)
-        }
-      },
-      immediate: true
+    breadcrumbList() {
+      this.currentBreadcrumbItem = this.breadcrumbList[this.breadcrumbList.length - 1]
     },
 
     options: {
       handler() {
-        this.initInfo()
+        if (this.options) {
+          this.getDepUserList(0, this.options)
+        } else {
+          this.requestDepList()
+        }
       },
       immediate: true
     }
   },
-  mounted() {},
+  created() {
+    this.nextDebounceClick = debounce(300, this.nextClick)
+  },
   methods: {
-    initInfo() {
-      this.dataList = this.options
-      this.breadcrumbList = [{ label: '全部', data: this.options }]
-
-      // options获取默认执行一次
-      this.dataValue = objDeepCopy(this.value)
-      this.handelCheck(this.dataList)
+    /**
+     * 列效果进行搜索
+     */
+    searchListUser(queryString, cb) {
+      const deptList = this.currentBreadcrumbItem.deptList
+      if (deptList && deptList.length > 0) {
+        const currentList = deptList
+        if (queryString) {
+          cb(currentList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString)))
+        } else {
+          cb(currentList)
+        }
+      }
     },
 
     /**
-     * 面包屑点击事件
+     * 搜索选择
+     */
+    searchSelect(item) {
+      this.$refs.depCheckbox.searchSelect(item)
+    },
+
+    /**
+     * 勾选
+     */
+    checkboxChange(val) {
+      if (this.radio) {
+        this.$emit('input', val.length > 0 ? [val[val.length - 1]] : [])
+
+        // 单选直接关闭窗口
+        this.$emit('close')
+      } else {
+        this.$emit('input', val)
+      }
+
+      this.$nextTick(() => {
+        this.$emit('change', val)
+      })
+    },
+
+    /**
+     * 全部勾选
+     */
+    handleCheckAllChange(val) {
+      if (this.$refs.depCheckbox) {
+        this.$refs.depCheckbox.handleCheckAllChange(val)
+      }
+    },
+
+    /**
+     * 用户全选
+     */
+    userAllSelect(allChecked) {
+      if (this.allChecked != allChecked) {
+        this.allChecked = allChecked
+      }
+    },
+
+    /**
+     * 清空全部
+     */
+    clearAll() {
+      this.$emit('input', [])
+    },
+
+    /**
+     * 获取部门员工数据
+     */
+    getDepUserList(deptId, data) {
+      if (deptId == 0) {
+        this.breadcrumbList = [{ label: '全部', deptList: data, employeeList: [] }]
+      } else {
+        this.breadcrumbList.push({ label: data.name, deptList: data.children, employeeList: [] })
+      }
+    },
+
+    /**
+     * 请求部门数据
+     */
+    requestDepList() {
+      this.loading = true
+      const request = this.config.dataType === 'hrm' ? hrmDeptQueryTreeListAPI : (this.config.request || depListAPI)
+      request(this.config.params || {
+        type: 'tree'
+      }).then(res => {
+        this.getDepUserList(0, res.data || [])
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
+      })
+    },
+
+    /**
+     * 下一级
+     */
+    nextClick(item) {
+      if (!this.radio) {
+        this.allChecked = false
+      }
+      this.getDepUserList(item.deptId, item)
+    },
+
+
+    /**
+     * 面包屑点击
      */
     breadcrumbBtn(item, index) {
       if (index + 1 <= this.breadcrumbList.length - 1) {
         this.breadcrumbList.splice(index + 1, this.breadcrumbList.length - 1)
       }
-      this.dataList = []
-      this.dataList = this.handelCheck(item.data)
-    },
-
-    /**
-     * 点击checkbox选中
-     */
-    checkChange(item, aindex) {
-      // 单选逻辑
-      if (this.radio) {
-        if (item.isCheck && this.dataValue.length) {
-          this.dataList.forEach(cItem => {
-            if (cItem[this.props.value] !== item[this.props.value]) {
-              cItem.isCheck = false
-            }
-          })
-        }
-        this.dataValue = item.isCheck ? [item[this.props.value]] : []
-      } else {
-        var removeIndex = -1
-        for (let index = 0; index < this.dataValue.length; index++) {
-          const element = this.dataValue[index]
-          if (item[this.props.value] == element) {
-            removeIndex = index
-            break
-          }
-        }
-        if (removeIndex == -1 && item.isCheck) {
-          this.dataValue.push(item[this.props.value])
-        } else if (removeIndex != -1) {
-          this.dataValue.splice(removeIndex, 1)
-        }
-      }
-
-      this.$emit('change', this.dataValue)
-      this.$emit('input', this.dataValue)
-    },
-
-    /**
-     * 数据重新刷新时 循环标记展示数组
-     */
-    handelCheck(list) {
-      list.forEach(item => {
-        const isCheck = this.valueHasItem(item)
-        if (isCheck !== item.isCheck) {
-          item.isCheck = isCheck
-        }
-      })
-      return list
-    },
-    valueHasItem(item) {
-      if (this.dataValue.length == 0) {
-        return false
-      }
-      var hasItem = false
-      for (let index = 0; index < this.dataValue.length; index++) {
-        const element = this.dataValue[index]
-        if (item[this.props.value] == element) {
-          hasItem = true
-          break
-        }
-      }
-      return hasItem
-    },
-
-
-    /**
-     * 点击进入子数组
-     */
-    enterChildren(item) {
-      // 保证单选环境下 没有选中 才可进入children
-      if (item.children) {
-        this.dataList = []
-        this.dataList = this.handelCheck(this.addIsCheckProp(item.children))
-        this.breadcrumbList.push({ label: item[this.props.label], data: this.dataList })
-      }
-    },
-
-    /**
-     * 给默认数据加isCheck属性
-     */
-    addIsCheckProp(list) {
-      if (list.length > 0) {
-        var item = list[0]
-        if (item.hasOwnProperty('isCheck')) {
-          return list
-        } else {
-          return list.map(function(item, index, array) {
-            item.disabled = false
-            item.isCheck = false
-            item.show = true
-            return item
-          })
-        }
-      }
-      return list
-    },
-
-    clearAll() {
-      this.dataValue = []
-      this.dataList = this.dataList.map(item => {
-        item.isCheck = false
-        return item
-      })
-      this.$emit('input', this.dataValue)
     }
   }
 }
 </script>
 <style lang="scss" scoped>
+/* 选择员工 */
+
 .search-list {
-  padding: 5px;
+  padding: 5px 0;
   height: 248px;
   overflow: auto;
 }
-.stru-list {
-  padding: 5px;
-  font-size: 13px;
-  .stru-check {
-    margin-right: 8px;
-  }
-  .stru-name {
-    flex: 1;
-  }
-  .stru-enter {
-    margin-right: 8px;
-  }
-}
 
-// 框子
-.xh-stru {
+.xh-user {
   color: #333;
-  font-size: 12px;
+  font-size: 13px;
+
   &__hd {
     padding: 0 15px;
     height: 40px;
@@ -299,6 +300,12 @@ export default {
       font-size: 12px;
     }
   }
+
+  &__list {
+    height: calc(100% - 24px);
+    overflow-y: auto;
+    padding-left: 5px;
+  }
 }
 
 // 选择信息
@@ -312,13 +319,23 @@ export default {
 }
 
 // check样式
+.el-checkbox-group {
+  overflow-x: hidden;
+}
+
 .el-checkbox {
   /deep/ .el-checkbox__label {
     color: #333;
   }
 }
 
-.search-input {
+.all-check {
+  display: inline-block;
+  padding: 5px 0;
+}
+
+.el-autocomplete {
+  width: 100%;
   /deep/ .el-input__inner {
     background-color: #F4F4F4;
     border: none;

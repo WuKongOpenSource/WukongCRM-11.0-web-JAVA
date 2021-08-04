@@ -10,10 +10,10 @@
     <div class="handle-box">
       <flexbox class="handle-item">
         <div class="handle-item-name">变更负责人为：</div>
-        <xh-user-cell
-          :value="usersList"
-          class="handle-item-content"
-          @value-change="userChage"/>
+        <wk-user-select
+          v-model="ownerUserId"
+          radio
+          class="handle-item-content"/>
       </flexbox>
       <flexbox
         v-if="showRemoveType"
@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { crmCustomerTransferAPI } from '@/api/crm/customer'
 import { crmContactsTransferAPI } from '@/api/crm/contacts'
 import { crmBusinessTransferAPI } from '@/api/crm/business'
@@ -87,7 +87,7 @@ export default {
   /** 客户管理 的 勾选后的 转移 操作*/
   name: 'TransferHandle',
   components: {
-    XhUserCell
+    WkUserSelect
   },
   mixins: [],
   props: {
@@ -114,7 +114,7 @@ export default {
       loading: false, // 加载动画
       visible: false,
 
-      usersList: [], // 变更负责人
+      ownerUserId: '', // 变更负责人
       removeType: 1, // 移动类型
       handleType: 1, // 操作类型
       addsTypes: [], // 添加至
@@ -153,7 +153,7 @@ export default {
      * 重置信息
      */
     resetData() {
-      this.usersList = []
+      this.ownerUserId = ''
       this.removeType = 1 // 移动类型
       this.handleType = 1 // 操作类型
       this.addsTypes = [] // 添加至
@@ -166,12 +166,9 @@ export default {
       this.visible = false
       this.$emit('update:dialogVisible', false)
     },
-    /** 负责人更改 */
-    userChage(data) {
-      this.usersList = data.value
-    },
+
     handleConfirm() {
-      if (this.usersList.length === 0) {
+      if (!this.ownerUserId) {
         this.$message.error('请选择变更负责人')
       } else if (this.validType === 'end' && !this.expiresTime) {
         this.$message.error('请选择截止日期')
@@ -222,9 +219,8 @@ export default {
       }
     },
     getParams() {
-      var ownerUserId = this.usersList[0].userId
       var params = {
-        ownerUserId: ownerUserId
+        ownerUserId: this.ownerUserId
       }
 
       if (this.showRemoveType) {

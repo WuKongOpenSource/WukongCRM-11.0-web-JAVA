@@ -1,9 +1,9 @@
 <template>
   <div class="c-container">
-    <flexbox v-if="!$slots.icon" class="title"><img
+    <flexbox v-if="!$slots.icon && showTitle" class="title"><img
       :src="titleIcon"
       class="title-icon">{{ title }}</flexbox>
-    <slot v-else name="icon" />
+    <slot name="icon" />
     <el-input
       v-if="showSearch"
       :placeholder="placeholder"
@@ -23,6 +23,7 @@
         icon="el-icon-plus"
         type="primary"
         @click="createClick">{{ mainTitle }}</el-button>
+      <slot name="ft" />
       <el-button
         v-if="showDupCheck"
         class="dup-check-btn"
@@ -64,6 +65,10 @@ export default {
     DuplicateCheck
   },
   props: {
+    showTitle: {
+      type: Boolean,
+      default: true
+    },
     title: {
       type: String,
       default: ''
@@ -86,6 +91,9 @@ export default {
       type: Boolean,
       default: false
     },
+    poolId: [String, Number],
+    // 公海权限
+    poolAuth: Object,
     showSearch: {
       type: Boolean,
       default: true
@@ -97,8 +105,6 @@ export default {
   data() {
     return {
       inputContent: '',
-      /** 更多操作 */
-      moreTypes: [],
       // 创建的相关信息
       createActionInfo: { type: 'save' },
       createCRMType: '',
@@ -123,17 +129,30 @@ export default {
 
     showDupCheck() {
       return ['leads', 'customer', 'contacts'].includes(this.crmType) && !this.isSeas
+    },
+
+    // 更多操作
+    moreTypes() {
+      const moreTypes = []
+      let importAuth = this.crm[this.crmType] && this.crm[this.crmType].excelimport
+      if (this.isSeas && this.poolId) {
+        importAuth = this.poolAuth && this.poolAuth.excelexport
+      }
+      if (importAuth) {
+        moreTypes.push({ type: 'enter', name: '导入', icon: 'import' })
+      }
+
+      let exportAuth = this.crm[this.crmType] && this.crm[this.crmType].excelexport
+      if (this.isSeas && this.poolId) {
+        exportAuth = this.poolAuth && this.poolAuth.excelexport
+      }
+      if (exportAuth) {
+        moreTypes.push({ type: 'out', name: '导出', icon: 'export' })
+      }
+      return moreTypes
     }
   },
   mounted() {
-    // 线索和客户判断更多操作
-    if (this.crm[this.crmType] && this.crm[this.crmType].excelimport) {
-      this.moreTypes.push({ type: 'enter', name: '导入', icon: 'import' })
-    }
-    if (this.crm[this.crmType] && this.crm[this.crmType].excelexport) {
-      this.moreTypes.push({ type: 'out', name: '导出', icon: 'export' })
-    }
-
     // 监听导入
     this.$bus.on('import-crm-done-bus', (type) => {
       if (this.crmType == type) {

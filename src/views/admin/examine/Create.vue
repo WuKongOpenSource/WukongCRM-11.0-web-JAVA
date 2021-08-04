@@ -337,7 +337,6 @@ export default {
               params.examineId = this.examineId
             }
 
-            console.log(params)
             this.submiteRequest(params)
           }
         }

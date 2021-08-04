@@ -63,6 +63,8 @@ export default {
         return '#2362FB'
       } else if (status == 8) {
         return '#bfbfbf'
+      } else if (status == 10) {
+        return '#20b559'
       }
     },
 
@@ -87,6 +89,8 @@ export default {
         return '创建'
       } else if (status == 8) {
         return '已作废'
+      } else if (status == 10) {
+        return '正常'
       }
       return ''
     },
@@ -111,32 +115,10 @@ export default {
         return 'wk wk-l-plus'
       } else if (status == 8) {
         return 'wk wk-invalid'
+      } else if (status == 10) {
+        return 'wk wk-success'
       }
       return ''
-    },
-
-    /**
-     * 审核图标
-     */
-    getXhStatusList() {
-      return [
-        {
-          label: '待审核',
-          value: 0
-        }, {
-          label: '通过',
-          value: 1
-        }, {
-          label: '拒绝',
-          value: 2
-        }, {
-          label: '审核中',
-          value: 3
-        }, {
-          label: '撤回',
-          value: 4
-        }
-      ]
     },
 
     /**
@@ -152,6 +134,8 @@ export default {
       } else if (status == 4) {
         return require('@/assets/img/check_revoke.png')
       } else if (status == 6) {
+        return require('@/assets/img/check_create.png')
+      } else if (status == 10) {
         return require('@/assets/img/check_create.png')
       }
       return ''

@@ -4,12 +4,29 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="回款管理"
       placeholder="请输入客户名称/回款编号"
       main-title="新建回款"
       @on-handle="listHeadHandle"
       @on-search="crmSearch"
-      @on-export="exportInfos"/>
+      @on-export="exportInfos">
+      <el-menu
+        slot="icon"
+        ref="elMenu"
+        :default-active="crmType"
+        mode="horizontal"
+        active-text-color="#2362FB"
+        @select="menuSelect" >
+        <el-menu-item
+          v-for="(item, index) in menuItems"
+          :key="index"
+          :index="item.path">
+          <img :src="item.icon">
+          <span>{{ item.title }}</span>
+        </el-menu-item>
+      </el-menu>
+    </c-r-m-list-head>
     <div
       v-empty="!crm.receivables.index"
       xs-empty-icon="nopermission"
@@ -31,6 +48,7 @@
         :cell-class-name="cellClassName"
         :header-cell-class-name="headerCellClassName"
         :row-key="`${crmType}Id`"
+        :class="[{'no-all-selection': config.radio}]"
         class="n-table--border"
         use-virtual
         stripe
@@ -156,6 +174,11 @@ export default {
   },
   computed: {
     moneyPageData() {
+      // 选择数据，隐藏金额信息
+      if (this.config.isSelect) {
+        return false
+      }
+
       if (!this.moneyData || JSON.stringify(this.moneyData) == '{}') {
         return null
       }
@@ -175,10 +198,40 @@ export default {
           receivablesMoney: money.toFixed(2)
         }
       }
+    },
+    menuItems() {
+      const temp = []
+      if (this.crm && this.crm.receivables) {
+        temp.push({
+          title: '回款',
+          path: 'receivables',
+          icon: require('@/assets/img/crm/receivables.png')
+        })
+      }
+
+      if (this.crm && this.crm.receivablesPlan) {
+        temp.push({
+          title: '回款计划',
+          path: 'receivablesPlan',
+          icon: require('@/assets/img/crm/receivablesPlan_not.png')
+        })
+      }
+
+      return temp
     }
   },
   mounted() {},
+  deactivated() {
+    this.$refs.elMenu.activeIndex = this.crmType
+  },
   methods: {
+    /**
+     * 左侧菜单选择
+     */
+    menuSelect(key, keyPath) {
+      this.$emit('menu-select', key, keyPath)
+    },
+
     /**
      * 通过回调控制class
      */

@@ -116,7 +116,8 @@ export default {
           customer: 14,
           contacts: 16,
           leads: 18,
-          product: 20
+          product: 20,
+          hrm: 50
         }[this.crmType] || this.props.moduleType
       })
         .then(res => {

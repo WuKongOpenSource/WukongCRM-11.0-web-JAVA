@@ -38,6 +38,7 @@
       </template>
     </el-table-column>
     <el-table-column
+      v-if="!disabled"
       :resizable="false"
       fixed="right"
       label="操作"

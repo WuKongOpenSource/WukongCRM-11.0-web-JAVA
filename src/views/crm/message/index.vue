@@ -151,7 +151,7 @@ export default {
         },
         {
           name: '待回款提醒',
-          crmType: 'receivables_plan',
+          crmType: 'receivablesPlan',
           color: '#27BA4A',
           iconClass: 'wk wk-bell',
           infoType: 'remindReceivablesPlan',

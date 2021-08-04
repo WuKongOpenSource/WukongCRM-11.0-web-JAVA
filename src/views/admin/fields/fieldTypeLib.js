@@ -152,12 +152,12 @@ export default [{
   name: '明细表格',
   type: 45,
   icon: 'wk wk-icon-file'
-}
-]
-
-export const picField = {
-  componentName: 'FieldInput',
+},
+{
+  componentName: 'FieldFile',
   formType: 'pic',
   name: '图片',
-  icon: 'wk '
+  type: 29,
+  icon: 'wk wk-icon-status'
 }
+]

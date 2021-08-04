@@ -13,8 +13,8 @@
       <el-radio
         v-for="(item, index) in field.setting"
         :key="index"
-        :label="item">
-        {{ item }}
+        :label="itemIsObject(item) ? item.label || item.name : item">
+        {{ itemIsObject(item) ? item.label || item.name : item }}
       </el-radio>
     </el-radio-group>
 

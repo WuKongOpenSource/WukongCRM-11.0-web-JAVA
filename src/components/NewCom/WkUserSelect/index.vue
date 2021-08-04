@@ -2,30 +2,32 @@
   <div
     v-elclickoutside="handleClose"
     ref="reference"
-    :class="[disabled ? 'is_disabled' : 'is_valid', { 'is_focus': visible }]"
-    :style="{ height: `${height}px` }"
+    :class="[disabled ? 'is_disabled' : 'is_valid', { 'is_focus': visible }, { 'is-default': !$slots.reference }]"
+    :style="{ height: `${isNaN(height) ? height || 'auto' : `${height}px` }` }"
     wrap="wrap"
     class="wk-user-select xh-form-border"
     @click="containerClick">
-
-    <div ref="tags" class="el-select__tags">
-      <span
-        v-for="(item, index) in showSelects"
-        :key="index"
-        :class="{'is-hide': item.isHide}"
-        class="user-item text-one-line">{{ item[props.label] }}
-        <i
-          v-if="!item.disabled"
-          class="delete-icon el-icon-close"
-          @click.stop="deleteuser(item, index)" />
-      </span>
-    </div>
-    <i v-if="selects.length > max && max > 0" class="el-icon-more" />
-    <i
-      :class="['el-icon-arrow-up', { 'is-reverse' : visible}]"/>
-    <div
-      v-if="selects.length == 0"
-      class="user-placeholder text-one-line">{{ placeholder }}</div>
+    <slot name="reference" />
+    <template v-if="!$slots.reference">
+      <div ref="tags" class="el-select__tags">
+        <span
+          v-for="(item, index) in showSelects"
+          :key="index"
+          :class="{'is-hide': item.isHide}"
+          class="user-item text-one-line">{{ item[config.label] }}
+          <i
+            v-if="!item.disabled"
+            class="delete-icon el-icon-close"
+            @click.stop="deleteuser(item, index)" />
+        </span>
+      </div>
+      <i v-if="selects.length > max && max > 0" class="el-icon-more" />
+      <i
+        :class="['el-icon-arrow-up', { 'is-reverse' : visible}]"/>
+      <div
+        v-if="selects.length == 0"
+        class="user-placeholder text-one-line">{{ placeholder }}</div>
+    </template>
 
     <transition
       name="el-zoom-in-top"
@@ -40,12 +42,12 @@
           tag="div">
           <wk-user
             v-loading="loading"
+            v-if="initView"
             v-model="dataValue"
             :disabled="disabled"
             :options="optionsList"
-            :props="props"
+            :props="config"
             :radio="radio"
-            :max="limit"
             @change="wkUserChange"
             @close="visible = false" />
         </el-scrollbar>
@@ -55,8 +57,6 @@
 </template>
 
 <script>
-import { userListAPI } from '@/api/common'
-
 import WkSelectDropdown from './src/SelectDropdown.vue'
 import WkUser from './src/WkUser.vue'
 
@@ -64,6 +64,19 @@ import Emitter from 'element-ui/lib/mixins/emitter'
 import { valueEquals } from 'element-ui/lib/utils/util'
 import { objDeepCopy } from '@/utils'
 import { isEmpty } from '@/utils/types'
+import merge from '@/utils/merge'
+import store from '@/store'
+import { mapGetters } from 'vuex'
+
+const DefaultWkUserSelect = {
+  value: 'userId',
+  label: 'realname',
+  dataType: '', // 部门的 value label 一致，用 dataType 区分
+  // 主列表请求和参数 会和 props 内的合并（如果有值的情况下）
+  request: null,
+  params: null,
+  isList: false // 默认是树形接口，如果是列需设置为true
+}
 
 export default {
   name: 'WkUserSelect',
@@ -87,13 +100,10 @@ export default {
       type: Object,
       default: () => {
         return {
-          value: 'userId',
-          label: 'realname'
+
         }
       }
     },
-    // 选择限制
-    limit: Number,
     placeholder: {
       type: String,
       default() {
@@ -125,11 +135,28 @@ export default {
       loading: false,
       height: 34,
 
-      optionsList: []
+      initView: false
     }
   },
 
   computed: {
+    ...mapGetters(['userList', 'hrmUserList']),
+    optionsList() {
+      if (this.options) {
+        return this.options
+      }
+
+      // 如果是一维数组，而且数据源根据请求获取，不传入 options
+      if (this.config.isList && this.config.request) {
+        return null
+      }
+
+      if (this.config.dataType === 'manage') {
+        return this.userList
+      } else if (this.config.dataType === 'hrm') {
+        return this.hrmUserList
+      }
+    },
     // 实际展示的数据
     showSelects() {
       if (this.max && this.max > 0 && this.selects && this.selects.length > this.max) {
@@ -140,11 +167,35 @@ export default {
 
     // 选择的数据
     selects() {
-      if (!this.optionsList.length) {
-        return []
+      let optionsList = []
+      if (this.config.dataType === 'manage') {
+        optionsList = this.userList
+      } else if (this.config.dataType === 'hrm') {
+        optionsList = this.hrmUserList
       }
 
-      return this.optionsList.filter(item => this.dataValue.includes(item[this.props.value]))
+      return optionsList.filter(item => this.dataValue.includes(item[this.config.value]))
+    },
+
+    // 合并 props
+    config() {
+      const props = merge({ ...DefaultWkUserSelect }, this.props || {})
+      if (this.request) {
+        props.request = this.request
+      }
+
+      if (isEmpty(props.dataType)) {
+        if (props.value === 'userId') {
+          props.dataType = 'manage'
+        } else if (props.value === 'employeeId') {
+          props.dataType = 'hrm'
+        }
+      }
+
+      if (this.params) {
+        props.params = this.params
+      }
+      return props
     }
   },
 
@@ -158,13 +209,13 @@ export default {
       this.$emit('visible-change', val)
     },
 
-    value() {
+    value(newVal, oldVal) {
       this.verifyValue()
     },
 
-    options: {
+    props: {
       handler() {
-        this.verifyOptions()
+        this.requestUserList()
       },
       immediate: true
     },
@@ -229,8 +280,8 @@ export default {
         if (!valueEquals(this.value, this.dataValue)) {
           if (this.value && this.value.length) {
             const firstItem = this.value[0]
-            if (firstItem[this.props.value]) {
-              this.dataValue = this.value.map(item => item[this.props.value])
+            if (firstItem[this.config.value]) {
+              this.dataValue = this.value.map(item => item[this.config.value])
             } else {
               this.dataValue = objDeepCopy(this.value)
             }
@@ -242,42 +293,15 @@ export default {
     },
 
     /**
-     * 处理options
-     */
-    verifyOptions() {
-      if (!this.options) {
-        this.requestUserList()
-      } else {
-        this.optionsList = this.options
-      }
-    },
-
-    /**
      * 获取请求
      */
     requestUserList() {
-      this.loading = true
-      let request = userListAPI
-      let params = { pageType: 0 }
-      if (this.request) {
-        params = {}
-        request = this.request
-      } else if (this.props.request) {
-        request = this.props.request
+      if (this.config.dataType === 'manage') {
+        // 以缓存中的全部数据为id转对象的源
+        store.dispatch('debounceGetUserList')
+      } else if (this.config.dataType === 'hrm') {
+        store.dispatch('debounceGetHrmUserList')
       }
-
-      if (this.params) {
-        params = { ...params, ...this.params }
-      }
-
-      request(params)
-        .then(res => {
-          this.optionsList = res.data.hasOwnProperty('list') ? (res.data.list || []) : (res.data || [])
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
 
     handleClose() {
@@ -299,7 +323,7 @@ export default {
       if (!item.disabled && !this.disabled) {
         for (let index = 0; index < this.dataValue.length; index++) {
           const id = this.dataValue[index]
-          if (id == item[this.props.value]) {
+          if (id == item[this.config.value]) {
             this.dataValue.splice(index, 1)
             // this.$emit('change', this.dataValue, this.selects)
             this.wkUserChange()
@@ -322,7 +346,7 @@ export default {
     wkUserChange() {
       this.$nextTick(() => {
         if (this.radio) {
-          this.dispatch('ElFormItem', 'el.form.change', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
+          this.dispatch('ElFormItem', 'el.form.change', this.dataValue && this.dataValue.length > 0 ? this.dataValue[0] : '')
         } else {
           this.dispatch('ElFormItem', 'el.form.change', this.dataValue)
         }
@@ -332,6 +356,7 @@ export default {
 
     containerClick() {
       if (!this.disabled) {
+        this.initView = true
         this.visible = !this.visible
       }
     }
@@ -340,17 +365,20 @@ export default {
 </script>
 <style lang="scss" scoped>
 .wk-user-select {
-  height: 34px;
-  // display: inline-block;
-  position: relative;
-  border-radius: $xr-border-radius-base;
-  font-size: 13px;
-  background-color: white;
-  border: 1px solid #e6e6e6;
-  color: #333333;
-  width: 180px;
-  padding: 0 20px 0 5px;
   cursor: pointer;
+
+  &.is-default {
+    height: 34px;
+    // display: inline-block;
+    position: relative;
+    border-radius: $xr-border-radius-base;
+    font-size: 13px;
+    background-color: white;
+    border: 1px solid #e6e6e6;
+    color: #333333;
+    width: 180px;
+    padding: 0 20px 0 5px;
+  }
 
   .user-item {
     padding: 5px 15px 5px 5px;

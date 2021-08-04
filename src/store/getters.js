@@ -1,5 +1,18 @@
 const getters = {
   userInfo: state => state.user.userInfo,
+  hrmUserInfo: state => state.hrm.hrmUserInfo,
+  hrmUserType: state => { // 1 管理员 2 上级
+    if (state.user.hrmUserInfo && state.user.hrmUserInfo.role) {
+      const role = state.user.hrmUserInfo.role
+      if (role.label == 91) {
+        return 1
+      } else if (role.label == 92) {
+        return 2
+      }
+    }
+    return null
+  },
+  hrmShowType: state => state.hrm.hrmShowType,
   lang: state => state.app.lang,
   app: state => state.app,
   logo: state => {
@@ -18,6 +31,11 @@ const getters = {
   activeIndex: state => state.app.sidebar.activeIndex,
   navActiveIndex: state => state.app.navbar.activeIndex,
   headerModule: state => state.app.headerModule,
+  userList: state => state.user.userList,
+  deptList: state => state.user.deptList,
+  hrmUserList: state => state.hrm.hrmUserList,
+  hrmDeptList: state => state.hrm.hrmDeptList,
+
   // 权限
   allAuth: state => state.user.allAuth,
   crm: state => state.user.crm,
@@ -25,6 +43,7 @@ const getters = {
   manage: state => state.user.manage,
   oa: state => state.user.oa,
   project: state => state.user.project,
+  hrm: state => state.user.hrm,
 
   // 路由
   addRouters: state => state.permission.addRouters,
@@ -35,6 +54,7 @@ const getters = {
   projectRouters: state => state.permission.projectRouters,
   biRouters: state => state.permission.biRouters,
   manageRouters: state => state.permission.manageRouters,
+  hrmRouters: state => state.permission.hrmRouters,
 
   // 客户管理信息
   messageNum: state => state.crm.messageNum,

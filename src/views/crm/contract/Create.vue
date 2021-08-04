@@ -81,7 +81,6 @@ import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
 import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
 import {
-  XhProduct,
   CrmRelativeCell
 } from '@/components/CreateCom'
 import WkApprovalFlowApply from '@/components/Examine/WkApprovalFlowApply'
@@ -100,7 +99,7 @@ export default {
     XrCreate,
     CreateSections,
     CrmRelativeCell,
-    XhProduct,
+    XhProduct: () => import('@/components/CreateCom/XhProduct'),
     WkFormItems,
     WkApprovalFlowApply
   },
@@ -236,14 +235,15 @@ export default {
               // 处理关联
               if ((this.action.type == 'relative' || this.action.type == 'update') && (item.formType == 'business' || item.formType == 'contacts' || item.formType == 'contract'
               )) {
-                const customerItem = this.getItemRelatveInfo(list, 'customer')
-                if (customerItem) {
+                const customerObj = this.getItemRelatveInfo(list, 'customer')
+                if (customerObj) {
+                  const customerItem = objDeepCopy(customerObj)
                   if (item.formType == 'business' || item.formType == 'contacts') {
                     customerItem['moduleType'] = 'customer'
                     temp['relation'] = customerItem
                   } else if (item.formType == 'contract') {
                     customerItem['moduleType'] = 'customer'
-                    customerItem['params'] = { checkStatus: 1 }
+                    customerItem['params'] = { checkStatus: [1, 10] }
                     temp['relation'] = customerItem
                   }
                 }

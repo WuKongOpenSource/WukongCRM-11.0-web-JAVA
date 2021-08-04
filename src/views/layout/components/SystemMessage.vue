@@ -175,7 +175,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['oa', 'crm', 'project']),
+    ...mapGetters(['oa', 'crm', 'project', 'hrm']),
     permissionSave() {
       return this.oa && this.oa.announcement && this.oa.announcement.save
     },
@@ -256,6 +256,14 @@ export default {
           name: '日程',
           label: 5,
           countKey: 'eventCount'
+        })
+      }
+
+      if (this.hrm) {
+        menuList.push({
+          name: '人力资源',
+          label: 8,
+          countKey: 'hrmCount'
         })
       }
 
@@ -392,6 +400,71 @@ export default {
           this.todayDetailData = JSON.parse(data.content)
         }
         this.showTodayDetail = true
+      } else if (type === 'hrm') {
+        this.hiddenView()
+        if (data.type === 83) {
+          this.$router.push({ name: 'myArchives' })
+        } else if (data.type === 80) {
+          this.$router.push({ name: 'mySalarySlip' })
+        } else if (data.type === 84 || data.type === 85 || data.type === 86) {
+          this.$router.push({ name: 'hrmSalary' })
+        } else if (data.type === 87 || data.type === 92) {
+          this.$router.push({
+            name: 'myPerformance',
+            query: {
+              tabType: 'my',
+              subTabType: '0' // 待填写
+            }
+          })
+        } else if (data.type === 91) {
+          this.$router.push({
+            name: 'myPerformance',
+            query: {
+              tabType: 'my',
+              subTabType: '1', // 已填写
+              id
+            }
+          })
+        } else if (data.type === 88) {
+          this.$router.push({
+            name: 'myPerformance',
+            query: {
+              tabType: 'target'
+            }
+          })
+        } else if (data.type === 89 || data.type === 93) {
+          this.$router.push({
+            name: 'myPerformance',
+            query: {
+              tabType: 'evaluato',
+              subTabType: '0' // 待评定
+            }
+          })
+        } else if (data.type === 90) {
+          this.$router.push({
+            name: 'myPerformance',
+            query: {
+              tabType: 'result'
+            }
+          })
+        } else if (data.type === 94 || data.type === 95 || data.type === 96) {
+          this.$router.push({
+            name: 'hrmPerformance',
+            query: {
+              tabType: {
+                94: '1',
+                95: '2',
+                96: '3'
+              }[data.type]
+            }
+          })
+        } else if (data.type === 97) {
+          this.$router.push('/hrm')
+        } else if (data.type === 98) {
+          this.$router.push({
+            name: 'myInsuranceScheme'
+          })
+        }
       } else {
         this.relationID = id
         this.relationCrmType = type

@@ -39,64 +39,57 @@
       @before-enter="handleMenuEnter"
       @after-leave="doDestroy">
       <wk-select-dropdown
+        v-loading="loading"
         v-show="visible && !disabled"
         ref="popper"
         :append-to-body="popperAppendToBody">
-        <el-scrollbar
-          ref="scrollbar"
-          tag="div">
-          <el-tabs v-model="tabType">
-            <el-tab-pane label="员工" name="user">
-              <wk-user
-                v-loading="loading"
-                v-model="userDataValue"
-                :header-show="false"
-                :disabled="disabled"
-                :options="userOptionsList"
-                :props="userPropsValue"
-                :radio="radio"
-                @change="wkUserChange"
-                @close="visible = false" />
-            </el-tab-pane>
-            <el-tab-pane label="部门" name="dep">
-              <wk-dep
-                v-loading="loading"
-                v-model="depDataValue"
-                :header-show="false"
-                :options="depOptionsList"
-                :props="depPropsValue"
-                :radio="radio"
-                :disabled="disabled"
-                @change="wkDepChange"
-                @close="visible = false" />
-            </el-tab-pane>
-          </el-tabs>
-
-        </el-scrollbar>
+        <wk-user-dep
+          ref="userDep"
+          :radio="radio"
+          :user-props="userPropsValue"
+          :user-value="userDataValue"
+          :props="props"
+          :dep-props="depPropsValue"
+          :dep-value="depDataValue"
+          :disabled="disabled"
+          @userChange="userChange"
+          @depChange="depChange"
+          @close="visible = false"
+        />
       </wk-select-dropdown>
     </transition>
   </div>
 </template>
 
 <script>
-import { depListAPI } from '@/api/common'
-import { userListAPI } from '@/api/common'
-
 import WkSelectDropdown from '../WkDepSelect/src/SelectDropdown.vue'
-import WkDep from '../WkDepSelect/src/WkDep.vue'
-import WkUser from '../WkUserSelect/src/WkUser.vue'
+import WkUserDep from './src/WkUserDep.vue'
 
 import Emitter from 'element-ui/lib/mixins/emitter'
 import { valueEquals } from 'element-ui/lib/utils/util'
 import { objDeepCopy } from '@/utils'
+import { debounce } from 'throttle-debounce'
+import merge from '@/utils/merge'
+import { mapGetters } from 'vuex'
+
+// 同 WkUserDep.vue 中的 DefaultWkUserDep
+const DefaultWkUserDep = {
+  // 树结构请求和参数
+  request: null,
+  params: null,
+  // 默认的搜索人资和管理端人员请求
+  // isHrm: false, // 替换为 dataType 默认 manage 其余 hrm
+  dataType: 'manage', // 默认管理端
+  // userOptions: null, // 固定数据，后可以放入 props options
+  isList: false // 默认是树形接口，如果是列需设置为true
+}
 
 export default {
   name: 'WkUserDepSelect',
 
   components: {
     WkSelectDropdown,
-    WkDep,
-    WkUser
+    WkUserDep
   },
 
   mixins: [Emitter],
@@ -108,6 +101,14 @@ export default {
       type: Number,
       default: 2
     },
+    props: {
+      type: Object,
+      default: () => {
+        return {
+        }
+      }
+    },
+
     depProps: {
       type: Object,
       default: () => {
@@ -157,24 +158,12 @@ export default {
       tabType: 'user',
       depDataValue: [], // 校准传入值
       userDataValue: [],
-      depPropsValue: {
-        value: 'id',
-        label: 'name',
-        request: null,
-        params: null },
-      userPropsValue: {
-        value: 'userId',
-        label: 'realname',
-        request: null,
-        params: null },
-      loading: false,
-
-      depOptionsList: [],
-      userOptionsList: []
+      loading: false
     }
   },
 
   computed: {
+    ...mapGetters(['userList', 'deptList', 'hrmUserList', 'hrmDeptList']),
     // 实际展示的数据
     showUserSelects() {
       if (this.userSelects && this.userSelects.length > this.max) {
@@ -195,6 +184,23 @@ export default {
       return []
     },
 
+    userOptionsList() {
+      if (this.config.dataType === 'manage') {
+        return this.userList
+      } else if (this.config.dataType === 'hrm') {
+        return this.hrmUserList
+      }
+    },
+
+    depOptionsList() {
+      if (this.config.dataType === 'manage') {
+        // 以缓存中的全部数据为id转对象的源
+        return this.deptList
+      } else if (this.config.dataType === 'hrm') {
+        return this.hrmDeptList
+      }
+    },
+
     // 选择的数据
     depSelects() {
       if (!this.depOptionsList.length) {
@@ -211,6 +217,43 @@ export default {
       }
 
       return this.userOptionsList.filter(item => this.userDataValue.includes(item[this.userPropsValue.value]))
+    },
+
+    config() {
+      return merge({ ...DefaultWkUserDep }, this.props || {})
+    },
+
+    depPropsValue() {
+      const defaultValue = {
+        value: 'deptId',
+        label: 'name'
+      }
+      if (this.config.dataType === 'hrm') {
+        defaultValue.value = 'deptId'
+        defaultValue.label = 'name'
+      }
+      if (this.depProps) {
+        return { ...defaultValue, ...this.depProps }
+      } else {
+        return defaultValue
+      }
+    },
+
+
+    userPropsValue() {
+      const defaultValue = {
+        value: 'userId',
+        label: 'realname'
+      }
+      if (this.config.dataType === 'hrm') {
+        defaultValue.value = 'employeeId'
+        defaultValue.label = 'employeeName'
+      }
+      if (this.userProps) {
+        return { ...defaultValue, ...this.userProps }
+      } else {
+        return defaultValue
+      }
     }
   },
 
@@ -226,15 +269,6 @@ export default {
 
     depValue() {
       this.depVerifyValue()
-    },
-
-    depOptions: {
-      handler() {
-        if (this.depOptions) {
-          this.depOptionsList = this.depOptions
-        }
-      },
-      immediate: true
     },
 
     /**
@@ -254,63 +288,36 @@ export default {
       this.userVerifyValue()
     },
 
-    userOptions: {
-      handler() {
-        if (this.userOptions) {
-          this.userOptionsList = this.userOptions
-        }
-      },
-      immediate: true
-    },
-
     /**
      * 更新值
      */
-    userDataValue() {
-      if (this.radio) {
-        this.$emit('update:userValue', this.userDataValue && this.userDataValue.length ? this.userDataValue[0] : '')
-      } else {
-        this.$emit('update:userValue', this.userDataValue)
+    userDataValue(newVal, oldVal) {
+      if (!valueEquals(newVal, oldVal)) {
+        if (this.radio) {
+          this.$emit('update:userValue', this.userDataValue && this.userDataValue.length ? this.userDataValue[0] : '')
+        } else {
+          this.$emit('update:userValue', this.userDataValue)
+        }
       }
     },
 
     depProps: {
-      handler(val) {
-        const defaultValue = {
-          value: 'id',
-          label: 'name',
-          request: null,
-          params: null
-        }
-        if (val) {
-          this.depPropsValue = { ...defaultValue, ...val }
-        } else {
-          this.depPropsValue = defaultValue
-        }
-
-        this.depVerifyOptions()
+      handler() {
+        this.requestDepList()
       },
       immediate: true
     },
 
     userProps: {
-      handler(val) {
-        const defaultValue = {
-          value: 'userId',
-          label: 'realname',
-          request: null,
-          params: null
-        }
-        if (val) {
-          this.userPropsValue = { ...defaultValue, ...val }
-        } else {
-          this.userPropsValue = defaultValue
-        }
-
-        this.userVerifyOptions()
+      handler() {
+        this.requestUserList()
       },
       immediate: true
     }
+  },
+
+  created() {
+    this.debounceUserDeptChange = debounce(300, this.userDeptChange)
   },
 
   mounted() {
@@ -379,39 +386,14 @@ export default {
     },
 
     /**
-     * 处理options
-     */
-    depVerifyOptions() {
-      if (!this.depOptions) {
-        this.requestDepList()
-      } else {
-        this.depOptionsList = this.depOptions
-      }
-    },
-
-    /**
      * 获取请求
      */
     requestDepList() {
-      this.loading = true
-      let request = depListAPI
-      if (this.depPropsValue.request) {
-        request = this.depPropsValue.request
+      if (this.config.dataType === 'manage') {
+        this.$store.dispatch('debounceGetDeptList')
+      } else if (this.config.dataType === 'hrm') {
+        this.$store.dispatch('debounceGetHrmDeptList')
       }
-
-      let params = { type: 'tree' }
-      if (this.depPropsValue.params) {
-        params = this.depPropsValue.params
-      }
-
-      request(params)
-        .then(res => {
-          this.depOptionsList = res.data || []
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
 
     handleClose() {
@@ -456,7 +438,7 @@ export default {
         } else {
           this.dispatch('ElFormItem', 'el.form.change', this.depDataValue)
         }
-        this.$emit('change', this.userDataValue, this.depDataValue, this.userSelects, this.depSelects, 'dep')
+        this.debounceUserDeptChange('dep')
       })
     },
 
@@ -506,40 +488,32 @@ export default {
     },
 
     /**
-     * 处理options
-     */
-    userVerifyOptions() {
-      if (!this.userOptions) {
-        this.requestUserList()
-      } else {
-        this.userOptionsList = this.userOptions
-      }
-    },
-
-    /**
      * 获取请求
      */
     requestUserList() {
-      this.loading = true
-      let request = userListAPI
-      let params = { pageType: 0 }
-      if (this.userPropsValue.request) {
-        request = this.userPropsValue.request
+      if (this.config.dataType === 'manage') {
+        // 以缓存中的全部数据为id转对象的源
+        // this.userOptionsList = this.userList
+        // this.loading = !this.userList || this.userList.length === 0
+        // this.$store.dispatch('GetUserList').then(res => {
+        //   this.userOptionsList = this.userList
+        //   this.loading = false
+        // }).then(() => {
+        //   this.loading = false
+        // })
+        this.$store.dispatch('debounceGetUserList')
+      } else if (this.config.dataType === 'hrm') {
+        // 以缓存中的全部数据为id转对象的源
+        // this.userOptionsList = this.hrmUserList
+        // this.loading = !this.hrmUserList || this.hrmUserList.length === 0
+        // this.$store.dispatch('GetHrmUserList').then(res => {
+        //   this.userOptionsList = this.hrmUserList
+        //   this.loading = false
+        // }).then(() => {
+        //   this.loading = false
+        // })
+        this.$store.dispatch('debounceGetHrmUserList')
       }
-
-
-      if (this.userPropsValue.params) {
-        params = this.userPropsValue.params
-      }
-
-      request(params)
-        .then(res => {
-          this.userOptionsList = res.data.hasOwnProperty('list') ? (res.data.list || []) : (res.data || [])
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
 
     /**
@@ -563,8 +537,8 @@ export default {
         } else {
           this.dispatch('ElFormItem', 'el.form.change', this.userDataValue)
         }
+        this.debounceUserDeptChange('user')
       })
-      this.$emit('change', this.userDataValue, this.depDataValue, this.userSelects, this.depSelects, 'user')
     },
 
     /**
@@ -581,6 +555,26 @@ export default {
         strName += '、'
       }
       return strName + userName
+    },
+
+    /**
+     * change 事件
+     */
+    userChange(val) {
+      this.userDataValue = val
+      this.wkUserChange()
+    },
+
+    /**
+     * change 事件
+     */
+    depChange(val) {
+      this.depDataValue = val
+      this.wkDepChange()
+    },
+
+    userDeptChange(type) {
+      this.$emit('change', this.userDataValue, this.depDataValue, this.userSelects, this.depSelects, type)
     }
   }
 }
@@ -692,6 +686,10 @@ export default {
 
   .el-tabs__nav-wrap::after {
     height: 1px;
+  }
+
+  .el-tabs__header {
+    margin: 0;
   }
 }
 </style>

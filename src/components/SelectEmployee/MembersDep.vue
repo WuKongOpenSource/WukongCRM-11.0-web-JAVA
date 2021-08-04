@@ -13,8 +13,6 @@
         @select="popoverSubmit"
       />
       <div class="popover-footer">
-        <slot v-if="activeTabName === 'user'" name="user-footer" />
-        <slot v-else name="dep-footer" />
         <el-button @click="popoverVisible = false">取 消</el-button>
         <el-button
           v-if="!isRadio"
@@ -35,6 +33,7 @@
 import EmployeeDepartment from './main'
 
 export default {
+  name: 'MembersDep',
   components: {
     EmployeeDepartment
   },
@@ -64,12 +63,12 @@ export default {
       return this.isRadio ? '300' : '600'
     },
 
-    activeTabName() {
-      return this.$refs.employeeDepartment ? this.$refs.employeeDepartment.activeTabName : ''
-    },
-
     isRadio() {
       return this.$attrs.radio || false
+    },
+
+    employeeDepartment() {
+      return this.$refs.employeeDepartment
     }
   },
   watch: {
@@ -87,12 +86,8 @@ export default {
       this.popoverVisible = false
       this.$emit(
         'popoverSubmit',
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'user'
-        }),
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'dep'
-        })
+        this.employeeDepartment.userObjArray,
+        this.employeeDepartment.depObjArray
       )
     },
 

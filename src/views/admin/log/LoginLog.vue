@@ -13,10 +13,10 @@
           range-separator="-"
           start-placeholder="开始时间"
           end-placeholder="结束时间"/>
-        <xh-user-cell
+        <wk-user-select
           :radio="false"
-          placeholder="选择人员"
-          @value-change="userChange" />
+          v-model="userList"
+          placeholder="选择人员" />
         <el-button
           type="primary"
           @click="refreshList">查询</el-button>
@@ -63,7 +63,7 @@ import {
 } from '@/api/admin/log'
 
 import XrHeader from '@/components/XrHeader'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { Loading } from 'element-ui'
 
 import { downloadExcelWithResData } from '@/utils'
@@ -73,7 +73,7 @@ export default {
   name: 'LoginLog',
   components: {
     XrHeader,
-    XhUserCell
+    WkUserSelect
   },
   mixins: [],
   data() {
@@ -143,10 +143,6 @@ export default {
     this.getList()
   },
   methods: {
-    userChange(data) {
-      this.userList = data.value || []
-    },
-
     refreshList() {
       this.currentPage = 1
       this.getList()
@@ -160,7 +156,7 @@ export default {
         limit: this.pageSize
       }
       if (this.userList && this.userList.length) {
-        params.userIds = this.userList.map(item => item.userId)
+        params.userIds = this.userList
       }
 
       if (this.dateTime && this.dateTime.length) {
@@ -254,8 +250,7 @@ export default {
     margin: 0 20px;
   }
 
-  /deep/ .user-container {
-    width: 200px;
+  .wk-user-select {
     margin-right: 20px;
   }
 }

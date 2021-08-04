@@ -165,6 +165,7 @@ import {
 import TeamsHandle from './SelectionHandle/TeamsHandle' // 操作团队成员
 
 import { mapGetters } from 'vuex'
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeTeam', // 团队成员  可能再很多地方展示 放到客户管理目录下
@@ -225,7 +226,7 @@ export default {
   computed: {
     ...mapGetters(['crm']),
     teamEditAuth() {
-      return this.crm[this.crmType].teamsave
+      return !!getPermissionByKey(`crm.${this.crmType}.teamsave`)
     }
   },
   watch: {

@@ -18,6 +18,7 @@
         :fields="fields"
         :fields-form="fieldsForm"
         :fields-rules="fieldsRules"
+        :validate-on-rule-change="false"
         @change="formChange"
       >
         <template slot-scope="{ data }">
@@ -220,7 +221,7 @@ export default {
         radio: false,
         tipType: 'tooltip',
         inputTips: '<div>1、可以在"配置流程"设置当审批人为空，审批<br>自动转交给审批流管理员；当管理员也请假/离<br>职，审批将转交给超级管理员。</div><div>2、可指定多个管理员，审批方式为或签。</div>',
-        value: this.detail ? this.detail.managerList : 1
+        value: this.detail ? this.detail.managerList : []
       })
 
       field.push({
@@ -252,7 +253,6 @@ export default {
           fieldForm[item.field] = item.value
         }
       })
-
       this.fields = objDeepCopy(list)
       this.fieldsForm = fieldForm
       this.fieldsRules = fieldRules
@@ -262,7 +262,6 @@ export default {
      * change
      */
     formChange(item, index, value) {
-      console.log(item, index, value)
       if (item.formType === 'userDep') {
         this.rangeObj = value
       }
@@ -296,7 +295,6 @@ export default {
               params.examineId = this.examineId
             }
 
-            console.log(params)
             this.submiteRequest(params)
           }
         }

@@ -4,6 +4,9 @@ import {
 import {
   crmSettingConfigDataAPI
 } from '@/api/admin/crm'
+import {
+  adminConfigsetIndexAPI
+} from '@/api/admin/application'
 import { configHeaderModelSortAPI } from '@/api/config'
 import Lockr from 'lockr'
 
@@ -24,7 +27,9 @@ const app = {
     CRMConfig: {},
     // 图片缓存
     imageCache: {},
-    headerModule: null // 置顶模块
+    headerModule: null, // 置顶模块
+    // 模块权限
+    moduleAuth: null
   },
 
   mutations: {
@@ -55,6 +60,12 @@ const app = {
     },
     SET_IMAGECACHE: (state, value) => {
       state.imageCache = value
+    },
+    SET_MODULEAUTH: (state, value) => {
+      state.moduleAuth = value
+    },
+    SET_HEADERMODULE: (state, value) => {
+      state.headerModule = value
     }
   },
 
@@ -100,8 +111,28 @@ const app = {
     }) {
       return new Promise((resolve, reject) => {
         configHeaderModelSortAPI().then(response => {
-          state.headerModule = response.data || []
+          commit('SET_HEADERMODULE', response.data || [])
           resolve(response)
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    // 查询模块权限
+    QueryModules({
+      commit,
+      state
+    }) {
+      return new Promise((resolve, reject) => {
+        adminConfigsetIndexAPI().then(res => {
+          const resData = res.data || []
+          const auth = {}
+          resData.forEach(item => {
+            auth[item.module] = item.status === 1
+          })
+          commit('SET_MODULEAUTH', auth)
+          resolve(res)
         }).catch(error => {
           reject(error)
         })

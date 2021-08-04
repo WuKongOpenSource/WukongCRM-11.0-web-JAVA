@@ -44,6 +44,25 @@ export default {
         } else {
           return {}
         }
+      } else if (item.formType == 'address') {
+        // 地址
+        if (type == 'update') {
+          if (item.value) {
+            if (typeof item.value === 'string') {
+              const citys = item.value.split(',')
+              return {
+                province: citys[0] || '',
+                city: citys[1] || '',
+                area: citys[2] || ''
+              }
+            }
+            return item.value
+          } else {
+            return {}
+          }
+        } else {
+          return {}
+        }
       } else if (item.formType == 'single_user') {
         if (type === 'update') {
           return isObject(item.value) && item.value.userId
@@ -74,7 +93,7 @@ export default {
             return isEmpty(item.defaultValue) ? undefined : item.defaultValue
           }
         } else if (item.formType == 'detail_table') {
-          const baseFieldList = item.value || [item.fieldExtendList]
+          const baseFieldList = isEmpty(item.value) ? [item.fieldExtendList] : item.value
           // 二维数组
           const tableValue = []
           baseFieldList.forEach(bigItem => {
@@ -94,9 +113,9 @@ export default {
           return tableValue
         } else {
           if (type == 'update') {
-            return item.value || ''
+            return item.value === null || item.value === undefined ? '' : item.value
           } else {
-            return item.defaultValue || ''
+            return item.defaultValue === null || item.defaultValue === undefined ? '' : item.defaultValue
           }
         }
       }
@@ -230,9 +249,13 @@ export default {
     itemsForEach(array, callback) {
       for (let index = 0; index < array.length; index++) {
         const children = array[index]
-        for (let childIndex = 0; childIndex < children.length; childIndex++) {
-          const element = children[childIndex]
-          callback(element, index, childIndex, children)
+        if (isArray(children)) {
+          for (let childIndex = 0; childIndex < children.length; childIndex++) {
+            const element = children[childIndex]
+            callback(element, index, childIndex, children)
+          }
+        } else {
+          callback(children, index)
         }
       }
     },
@@ -241,6 +264,7 @@ export default {
      * 获取字段是否可编辑
      */
     getItemIsCanEdit(item, type) {
+      if (isEmpty(item.authLevel)) return true
       // authLevel 1 不能查看不能编辑 2可查看  3 可编辑可查看
       return (type === 'update' && item.authLevel == 3) || type !== 'update'
     },
@@ -298,8 +322,9 @@ export default {
 
     /**
      * 获取提交参数
+     * otherKeys 该值也增加到对象里
      */
-    getSubmiteParams(array, data) {
+    getSubmiteParams(array, data, otherKeys) {
       var params = { entity: {}, field: [] }
       for (let index = 0; index < array.length; index++) {
         const field = array[index]
@@ -317,14 +342,20 @@ export default {
           const fieldValue = this.getRealParams(field, dataValue)
           params.entity[field.fieldName] = isEmpty(fieldValue) ? '' : fieldValue
         } else if (field.formType !== 'desc_text') { //  描述文字忽略
-          params.field.push({
+          const valueObj = {
             fieldName: field.fieldName,
             fieldType: field.fieldType,
             name: field.name,
             type: field.type,
             fieldId: field.fieldId,
             value: this.getRealParams(field, dataValue)
-          })
+          }
+          if (isArray(otherKeys)) {
+            otherKeys.forEach(key => {
+              valueObj[key] = field[key]
+            })
+          }
+          params.field.push(valueObj)
         }
       }
       return params
@@ -385,11 +416,13 @@ export default {
         field.fieldName == 'businessId' ||
         field.fieldName == 'leadsId' ||
         field.fieldName == 'contractId') {
-        if (dataValue && dataValue.length) {
+        if (isEmpty(dataValue)) return ''
+        if (isArray(dataValue) && dataValue.length > 0 && isObject(dataValue[0])) {
           return dataValue[0][field.fieldName]
-        } else {
-          return ''
         }
+        if (isArray(dataValue)) return dataValue[dataValue.length - 1]
+        if (['string', 'number'].includes(typeof dataValue)) return dataValue
+        return ''
       } else if (
         field.formType == 'user' ||
         field.formType == 'structure'
@@ -402,13 +435,15 @@ export default {
               : valueItem.id)
           }
         }
-        return newDataValue.join(',')
+        return isArray(newDataValue) ? newDataValue.join(',') : newDataValue
       } else if (field.formType == 'file') {
         if (dataValue && dataValue.length > 0) {
           return dataValue[0].batchId
         }
         return ''
       } else if (field.formType == 'category') {
+        if (isEmpty(dataValue)) return ''
+        if (!isArray(dataValue)) return dataValue
         if (dataValue && dataValue.length > 0) {
           return dataValue[dataValue.length - 1]
         }
@@ -453,11 +488,7 @@ export default {
       for (let index = 0; index < fieldList.length; index++) {
         const field = fieldList[index]
         const value = valueObj[field.fieldName]
-        if (field.formType === 'select' || field.formType === 'checkbox') {
-          if (isObject(value) && !isEmpty(value.select)) {
-            return false
-          }
-        } else if (field.formType === 'location') {
+        if (field.formType === 'location') {
           if (isObject(value) && (!isEmpty(value.lat) || !isEmpty(value.lng) || !isEmpty(value.address))) {
             return false
           }
@@ -473,19 +504,18 @@ export default {
      */
     getFormAssistIds(list, valueObj) {
       let allIds = []
-      list.forEach(items => {
-        items.forEach(item => {
-          if ([
-            'select',
-            'checkbox'
-          ].includes(item.formType) &&
-          item.remark === 'options_type' &&
-          item.optionsData) {
-            for (const key in item.optionsData) {
-              allIds = allIds.concat(item.optionsData[key] || [])
-            }
+      this.itemsForEach(list, item => {
+        if ([
+          'select',
+          'checkbox'
+        ].includes(item.formType) &&
+        item.remark === 'options_type' &&
+        item.optionsData) {
+          console.log('逻辑表单', item.name)
+          for (const key in item.optionsData) {
+            allIds = allIds.concat(item.optionsData[key] || [])
           }
-        })
+        }
       })
 
       allIds = allIds.filter(o => Boolean(o))
@@ -502,50 +532,61 @@ export default {
     getFormAssistData(list, valueObj, allIds, ignoreIds) {
       // let ignorIds = []
       const ignoreLength = ignoreIds.length
-      list.forEach(items => {
-        items.forEach(item => {
-          if ([
-            'select',
-            'checkbox'
-          ].includes(item.formType) &&
-          item.remark === 'options_type' &&
-          item.optionsData) {
-            let value = valueObj ? valueObj[item.field || item.fieldName] : item.value
-            if (!allIds.includes(item.formAssistId)) {
-              if (item.formType === 'select') {
-                if (isEmpty(value)) {
-                  value = []
+      this.itemsForEach(list, item => {
+        if ([
+          'select',
+          'checkbox'
+        ].includes(item.formType) &&
+        item.remark === 'options_type' &&
+        item.optionsData) {
+          let value = valueObj ? valueObj[item.field || item.fieldName] : item.value
+          if (!allIds.includes(item.formAssistId)) {
+            if (item.formType === 'select') {
+              if (isEmpty(value)) {
+                value = []
+              } else {
+                const findRes = item.setting.find(o => {
+                  return isObject(o) ? o.value === value : o === value
+                })
+                if (findRes) {
+                  const _val = isObject(findRes) ? findRes.value : findRes
+                  value = [_val]
                 } else {
-                  value = item.setting.includes(value) ? [value] : ['其他']
+                  value = ['其他']
                 }
-              } else if (item.formType === 'checkbox') {
-                if (isArray(value)) {
-                  const copyValue = objDeepCopy(value)
-                  const otherItem = copyValue.filter((name) => !item.setting.includes(name))
-                  if (otherItem.length > 0) {
-                    const newValue = copyValue.filter((name) => !otherItem.includes(name))
-                    newValue.push('其他')
-                    value = newValue
-                  }
-                } else {
-                  value = []
-                }
+                // value = item.setting.includes(value) ? [value] : ['其他']
               }
+            } else if (item.formType === 'checkbox') {
+              if (isArray(value)) {
+                const copyValue = objDeepCopy(value)
+                const otherItem = copyValue.filter((name) => !item.setting.includes(name))
+                if (otherItem.length > 0) {
+                  const newValue = copyValue.filter((name) => !otherItem.includes(name))
+                  newValue.push('其他')
+                  value = newValue
+                }
+              } else {
+                value = []
+              }
+            }
 
-              for (const key in item.optionsData) {
-                if (value && value.includes(key)) {
-                  const keyValue = item.optionsData[key] || []
-                  for (let index = 0; index < keyValue.length; index++) {
-                    const id = keyValue[index]
-                    if (!ignoreIds.includes(id)) {
-                      ignoreIds.push(id)
-                    }
+            for (const key in item.optionsData) {
+              // if (value && value.includes(key)) {
+              if (value) {
+                const findIndex = value.findIndex(o => o == key)
+                if (findIndex === -1) continue
+
+                const keyValue = item.optionsData[key] || []
+                for (let index = 0; index < keyValue.length; index++) {
+                  const id = keyValue[index]
+                  if (!ignoreIds.includes(id)) {
+                    ignoreIds.push(id)
                   }
                 }
               }
             }
           }
-        })
+        }
       })
 
       if (ignoreLength !== ignoreIds.length) {
@@ -569,6 +610,8 @@ export default {
 
       // 依据最新的值，获取隐藏的ids
       const assistIds = this.getFormAssistIds(fieldList, formObj)
+      console.log('assistIds', actionData)
+
       this.itemsForEach(fieldList, fieldItem => {
         fieldItem.show = !assistIds.includes(fieldItem.formAssistId)
         // 展示 并且 允许编辑，加入验证规则
@@ -582,10 +625,10 @@ export default {
 
         // 值获取
         if (fieldItem.show) {
-          if (formObj[fieldItem.field]) {
-            fieldForm[fieldItem.field] = formObj[fieldItem.field]
-          } else {
+          if (isEmpty(formObj[fieldItem.field])) {
             fieldForm[fieldItem.field] = this.getItemValue(fieldItem, actionData, actionType)
+          } else {
+            fieldForm[fieldItem.field] = formObj[fieldItem.field]
           }
         }
       })

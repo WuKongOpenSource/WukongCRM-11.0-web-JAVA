@@ -37,12 +37,12 @@
           tag="div">
           <wk-dep
             v-loading="loading"
+            v-if="initView"
             v-model="dataValue"
-            :options="optionsList"
-            :props="props"
-            :radio="radio"
             :disabled="disabled"
-            :max="limit"
+            :options="options"
+            :props="config"
+            :radio="radio"
             @change="wkDepChange"
             @close="visible = false" />
         </el-scrollbar>
@@ -52,14 +52,25 @@
 </template>
 
 <script>
-import { depListAPI } from '@/api/common'
-
 import WkSelectDropdown from './src/SelectDropdown.vue'
 import WkDep from './src/WkDep.vue'
 
 import Emitter from 'element-ui/lib/mixins/emitter'
 import { valueEquals } from 'element-ui/lib/utils/util'
 import { objDeepCopy } from '@/utils'
+import merge from '@/utils/merge'
+import { mapGetters } from 'vuex'
+
+const DefaultWkDepSelect = {
+  value: 'deptId',
+  label: 'name',
+  // 主列表请求和参数 会和 props 内的合并（如果有值的情况下）
+  request: null,
+  params: null,
+  dataType: 'manage', // 部门的 value label 一致，用 dataType 区分
+  isList: false // 默认是树形接口，如果是列需设置为true
+}
+
 
 export default {
   name: 'WkDepSelect',
@@ -87,9 +98,6 @@ export default {
         }
       }
     },
-
-    // 选择限制
-    limit: Number,
     placeholder: {
       type: String,
       default() {
@@ -120,11 +128,20 @@ export default {
       dataValue: [], // 校准传入值
       loading: false,
 
-      optionsList: []
+      initView: false
     }
   },
 
   computed: {
+    ...mapGetters(['deptList', 'hrmDeptList']),
+    optionsList() {
+      if (this.config.dataType === 'manage') {
+        // 以缓存中的全部数据为id转对象的源
+        return this.deptList
+      } else if (this.config.dataType === 'hrm') {
+        return this.hrmDeptList
+      }
+    },
     // 实际展示的数据
     showSelects() {
       if (this.selects && this.selects.length > this.max) {
@@ -140,6 +157,19 @@ export default {
       }
 
       return this.getSelectList()
+    },
+
+    // 合并 props
+    config() {
+      const props = merge({ ...DefaultWkDepSelect }, this.props || {})
+      if (this.request) {
+        props.request = this.request
+      }
+
+      if (this.params) {
+        props.params = this.params
+      }
+      return props
     }
   },
 
@@ -157,25 +187,23 @@ export default {
       this.verifyValue()
     },
 
-    options: {
+    props: {
       handler() {
-        this.verifyOptions()
+        this.requestDepList()
       },
       immediate: true
-    }
+    },
 
-    // /**
-    //  * 更新值
-    //  */
-    // dataValue(newValue, oldValue) {
-    //   if (!valueEquals(newValue, oldValue)) {
-    //     if (this.radio) {
-    //       this.$emit('input', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
-    //     } else {
-    //       this.$emit('input', this.dataValue)
-    //     }
-    //   }
-    // }
+    /**
+     * 更新值
+     */
+    dataValue(newValue, oldValue) {
+      if (this.radio) {
+        this.$emit('input', this.dataValue && this.dataValue.length ? this.dataValue[0] : '')
+      } else {
+        this.$emit('input', this.dataValue)
+      }
+    }
   },
 
   created() {
@@ -195,7 +223,7 @@ export default {
 
     recursionOptions(options, selects, list) {
       options.forEach(item => {
-        if (selects.includes(item[this.props.value])) {
+        if (selects.includes(item[this.config.value])) {
           list.push(item)
         }
 
@@ -230,8 +258,8 @@ export default {
         if (!valueEquals(this.value, this.dataValue)) {
           if (this.value && this.value.length) {
             const firstItem = this.value[0]
-            if (firstItem[this.props.value]) {
-              this.dataValue = this.value.map(item => item[this.props.value])
+            if (firstItem[this.config.value]) {
+              this.dataValue = this.value.map(item => item[this.config.value])
             } else {
               this.dataValue = objDeepCopy(this.value)
             }
@@ -243,41 +271,15 @@ export default {
     },
 
     /**
-     * 处理options
-     */
-    verifyOptions() {
-      if (!this.options) {
-        this.requestDepList()
-      } else {
-        this.optionsList = this.options
-      }
-    },
-
-    /**
      * 获取请求
      */
     requestDepList() {
-      this.loading = true
-      let request = depListAPI
-      if (this.request) {
-        request = this.request
-      } else if (this.props.request) {
-        request = this.props.request
+      if (this.config.dataType === 'manage') {
+        // 以缓存中的全部数据为id转对象的源
+        this.$store.dispatch('debounceGetDeptList')
+      } else if (this.config.dataType === 'hrm') {
+        this.$store.dispatch('debounceGetHrmDeptList')
       }
-
-      let params = { type: 'tree' }
-      if (this.params) {
-        params = this.params
-      }
-
-      request(params)
-        .then(res => {
-          this.optionsList = res.data || []
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
 
     handleClose() {
@@ -331,6 +333,7 @@ export default {
 
     containerClick() {
       if (!this.disabled) {
+        this.initView = true
         this.visible = !this.visible
       }
     }

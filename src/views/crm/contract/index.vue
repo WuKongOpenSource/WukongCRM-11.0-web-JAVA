@@ -4,6 +4,7 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="合同管理"
       placeholder="请输入客户名称/合同编号/合同名称"
       main-title="新建合同"
@@ -29,6 +30,7 @@
         :data="list"
         :height="tableHeight"
         :cell-class-name="cellClassName"
+        :class="[{'no-all-selection': config.radio}]"
         :header-cell-class-name="headerCellClassName"
         :row-key="`${crmType}Id`"
         class="n-table--border"
@@ -157,8 +159,13 @@ export default {
   },
   computed: {
     moneyDes() {
+      // 选择数据，隐藏金额信息
+      if (this.config.isSelect) {
+        return ''
+      }
+
       if (!this.moneyData || JSON.stringify(this.moneyData) == '{}') {
-        return null
+        return ''
       }
 
       const canCheckMoney = this.moneyData.hasOwnProperty('contractMoney')

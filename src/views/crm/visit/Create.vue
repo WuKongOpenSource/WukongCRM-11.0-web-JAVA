@@ -185,17 +185,20 @@ export default {
               }
 
               // 处理关联
-              if (this.action.type == 'relative' || this.action.type == 'update') {
-                const customerItem = this.getItemRelatveInfo(list, 'customer')
-                if (customerItem) {
+              if (item.formType == 'contacts' || item.formType == 'contract') {
+                const customerObj = this.getItemRelatveInfo(list, 'customer')
+                if (customerObj) {
+                  const customerItem = objDeepCopy(customerObj)
                   if (item.formType == 'contacts') {
                     customerItem['moduleType'] = 'customer'
                     temp['relation'] = customerItem
                   } else if (item.formType == 'contract') {
                     customerItem['moduleType'] = 'customer'
-                    customerItem['params'] = { checkStatus: 1 }
+                    customerItem['params'] = { checkStatus: [1, 10] }
                     temp['relation'] = customerItem
                   }
+                } else {
+                  temp['relation'] = {}
                 }
               }
 
@@ -314,8 +317,11 @@ export default {
           if (fieldItem.formType === 'contract' || fieldItem.formType === 'contacts') {
             if (data.value.length > 0) {
               fieldItem.disabled = false
-              const customerItem = data.value[0]
+              const customerItem = objDeepCopy(data.value[0])
               customerItem['moduleType'] = 'customer'
+              if (fieldItem.formType === 'contract') {
+                customerItem['params'] = { checkStatus: [1, 10] }
+              }
               fieldItem['relation'] = customerItem
             } else {
               fieldItem.disabled = true

@@ -281,7 +281,7 @@ export default {
         priority: this.priority,
         dueDate: this.dueDate,
         status: this.showDone ? '' : '1',
-        mainUserId: this.userList && this.userList.length ? this.userList[0].userId : ''
+        mainUserIds: this.userList && this.userList.length > 0 ? this.userList.map(item => item.userId) : []
       }
 
       if (this.search) {

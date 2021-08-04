@@ -56,10 +56,10 @@
               placeholder="选择日期"/>
           </el-form-item>
           <el-form-item label="参与人员" prop="ownerUserIds">
-            <xh-user-cell
-              :value="checkedUser"
+            <wk-user-select
+              v-model="form.ownerUserIds"
               :radio="false"
-              @value-change="selectUser"/>
+              style="display: inline-block;width: 430px;"/>
           </el-form-item>
           <el-form-item v-if="!choseMore" style="margin-top: -10px">
             <el-button
@@ -135,7 +135,7 @@
 
 </template>
 <script>
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import RelatedBusiness from '@/components/RelatedBusiness'
 import Repeat from './Repeat'
 import { mapGetters } from 'vuex'
@@ -146,7 +146,7 @@ import {
 } from '@/api/calendar'
 export default {
   components: {
-    XhUserCell,
+    WkUserSelect,
     RelatedBusiness,
     Repeat
   },
@@ -196,7 +196,7 @@ export default {
       form: {
         title: '',
         typeId: '', // 日程类型
-        ownerUserIds: 0,
+        ownerUserIds: [],
         repetitionType: 1,
         startTime: '',
         endTime: ''
@@ -214,7 +214,6 @@ export default {
       colorItem: '',
       choseMore: false,
       // 选中的参与人员
-      checkedUser: [],
       repeatList: [
         { label: '从不重复', value: 1 }
         // { label: '每天', value: 2 },
@@ -262,7 +261,7 @@ export default {
         this.form = {
           title: '',
           typeId: '', // 日程类型
-          ownerUserIds: '',
+          ownerUserIds: [],
           repetitionType: 1,
           startTime: '',
           endTime: ''
@@ -273,10 +272,7 @@ export default {
             type: 1
           }
         ]
-        this.checkedUser = [
-          { userId: this.userInfo.userId, realname: this.userInfo.realname }
-        ]
-        this.form.ownerUserIds = this.userInfo.userId
+        this.form.ownerUserIds = [this.userInfo.userId]
         if (this.selectDiv) {
           this.form.startTime = this.selectDiv + ' 08:00:00'
           this.changeStartTime(this.form.startTime)
@@ -330,7 +326,7 @@ export default {
         this.form = {
           title: this.todayDetailData.title,
           typeId: this.todayDetailData.typeId, // 日程类型
-          ownerUserIds: this.todayDetailData.ownerUserIds,
+          ownerUserIds: this.todayDetailData.ownerUserList ? this.todayDetailData.ownerUserList.map(item => item.userId) : [],
           repetitionType: this.todayDetailData.repetitionType || '',
           startTime: this.todayDetailData.startTime || '',
           endTime: this.todayDetailData.endTime || '',
@@ -368,7 +364,6 @@ export default {
         this.form.repeatRate = this.todayDetailData.repeatRate
         this.form.endTypeConfig = this.todayDetailData.endTypeConfig
         this.form.endType = this.todayDetailData.endType || ''
-        this.checkedUser = this.todayDetailData.ownerUserList
         this.cusCheck.forEach(item => {
           if (item.typeId === this.form.typeId) {
             this.colorItem = item.color
@@ -392,21 +387,6 @@ export default {
      */
     changeType(data) {
       this.colorItem = data.color
-    },
-
-    /**
-     * 选择员工
-     */
-    selectUser(data) {
-      this.checkedUser = []
-      this.checkedUser = data.value
-      if (data.value.length) {
-        this.form.ownerUserIds = data.value.map(item => {
-          return item.userId
-        }).join(',')
-      } else {
-        this.form.ownerUserIds = ''
-      }
     },
 
     /**
@@ -478,6 +458,7 @@ export default {
             }
             this.form = {
               ...this.form,
+              ownerUserIds: this.form.ownerUserIds.join(','),
               ...this.repeatForm
             }
             this.showRepeat = false
@@ -509,7 +490,8 @@ export default {
       const request = this.getRequest()
       params.notice = this.notice
       params.event = {
-        ...this.form
+        ...this.form,
+        ownerUserIds: this.form.ownerUserIds.join(',')
       }
       if (length) {
         params.time = new Date(this.todayDetailData.startTime).getTime()

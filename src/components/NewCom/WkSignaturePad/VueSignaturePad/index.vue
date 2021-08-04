@@ -69,14 +69,17 @@ export default {
       ...options
     })
     this.signaturePad = signaturePad
-    this.onResizeHandler = this.resizeCanvas.bind(this)
-    window.addEventListener('resize', this.onResizeHandler, false)
+    // if (options.resizeHandler) {
+    //   this.resizeCanvas = options.resizeHandler.bind(this)
+    // }
+    // this.onResizeHandler = this.resizeCanvas.bind(this)
+    // window.addEventListener('resize', this.onResizeHandler, false)
     this.resizeCanvas()
   },
   beforeDestroy() {
-    if (this.onResizeHandler) {
-      window.removeEventListener('resize', this.onResizeHandler, false)
-    }
+    // if (this.onResizeHandler) {
+    //   window.removeEventListener('resize', this.onResizeHandler, false)
+    // }
   },
   methods: {
     resizeCanvas() {

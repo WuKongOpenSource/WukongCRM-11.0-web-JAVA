@@ -90,6 +90,10 @@
 
 <script>
 import {
+  hrmEmployeeQueryByDeptAPI,
+  hrmEmployeeQueryInAPI
+} from '@/api/hrm/employee'
+import {
   adminUserQueryByDeptAPI
 } from '@/api/admin/user'
 import { userListAPI } from '@/api/common'
@@ -144,6 +148,7 @@ export default {
         canSelectDep: true,
         userOptions: null,
         radio: false, // 仅员工
+        isHrm: false,
         request: null,
         searchParams: null
       }
@@ -190,7 +195,7 @@ export default {
           cb(searchUserList)
         }
       } else {
-        const request = userListAPI
+        const request = this.config.isHrm ? hrmEmployeeQueryInAPI : userListAPI
         let params = { pageType: 0 }
         if (this.config.searchParams) {
           params = { ...params, ...this.config.searchParams }
@@ -210,13 +215,15 @@ export default {
      * 搜索选择
      */
     searchSelect(item) {
-      console.log(item)
       const name = this.config.value
       const selectIds = this.selectUsers.map(item => item[name])
       const value = item[name]
-      console.log(value)
       if (!selectIds.includes(value)) {
-        this.selectUsers.push(item)
+        if (this.config.radio) {
+          this.selectUsers = [item]
+        } else {
+          this.selectUsers.push(item)
+        }
 
         for (let index = 0; index < this.showDataList.length; index++) {
           const element = this.showDataList[index]
@@ -233,7 +240,7 @@ export default {
      */
     getDepUserList(deptId, depInfo) {
       this.loading = true
-      let request = adminUserQueryByDeptAPI
+      let request = this.config.isHrm ? hrmEmployeeQueryByDeptAPI : adminUserQueryByDeptAPI
       if (this.config.request) {
         request = this.config.request
       }
@@ -245,6 +252,7 @@ export default {
         })
         this.handleArrayCheckValue('dep', deptList, this.selectDeps)
 
+        // employeeList 人资  userList 系统管理
         const employeeList = data.employeeList || data.userList || []
         this.handleArrayCheckValue('user', employeeList, this.selectUsers)
 
@@ -481,7 +489,6 @@ export default {
 
     .dep {
       &-name {
-        flex: 1px;
         flex: 1;
         padding-right: 8px;
       }

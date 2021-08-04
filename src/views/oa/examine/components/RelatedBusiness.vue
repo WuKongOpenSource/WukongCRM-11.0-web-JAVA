@@ -1,26 +1,19 @@
 <template>
   <div>
-    <el-popover
-      v-model="showPopover"
-      placement="right-end"
-      width="800"
-      popper-class="no-padding-popover"
-      trigger="click">
-      <crm-relative
-        v-if="showRelative"
-        ref="crmrelative"
-        :radio="false"
-        :selected-data="selectedData"
-        :show-types="showTypes"
-        @close="crmrelativeClose"
-        @changeCheckout="checkInfos"/>
-      <span
-        slot="reference"
-        class="add-btn" @click="showRelative = true">
-        <i class="wk wk-l-plus" />
-        <span class="label">关联业务</span>
-      </span>
-    </el-popover>
+    <crm-relative
+      v-if="showRelative"
+      ref="crmrelative"
+      :visible.sync="showRelative"
+      :radio="false"
+      :selected-data="selectedData"
+      :show-types="showTypes"
+      @changeCheckout="checkInfos"/>
+    <span
+      slot="reference"
+      class="add-btn" @click="showRelative = true">
+      <i class="wk wk-l-plus" />
+      <span class="label">关联业务</span>
+    </span>
     <div class="related-business">
       <div
         v-for="(items, key) in selectedData"
@@ -62,7 +55,6 @@ export default {
       showTypes: ['customer', 'contacts', 'business', 'contract'],
       // 业务弹窗
       showRelative: false,
-      showPopover: false,
       // 编辑时勾选
       selectedData: {}
     }
@@ -102,11 +94,7 @@ export default {
         return '合同'
       }
     },
-    crmrelativeClose() {
-      this.showPopover = false
-    },
     checkInfos(val) {
-      this.showPopover = false
       this.selectedData = val.data
       this.submitValueChange()
     },

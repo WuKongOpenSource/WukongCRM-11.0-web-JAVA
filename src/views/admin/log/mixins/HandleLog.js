@@ -86,52 +86,6 @@ export default {
           label: '考核计划',
           value: 69
         }]
-      }, {
-        label: '进销存',
-        value: 'jxc',
-        list: [{
-          label: '供应商',
-          value: 81
-        }, {
-          label: '采购订单',
-          value: 82
-        }, {
-          label: '采购退货',
-          value: 83
-        }, {
-          label: '产品管理',
-          value: 84
-        }, {
-          label: '销售订单',
-          value: 85
-        }, {
-          label: '销售退货',
-          value: 86
-        }, {
-          label: '仓库管理',
-          value: 87
-        }, {
-          label: '产品库存',
-          value: 88
-        }, {
-          label: '产品入库',
-          value: 89
-        }, {
-          label: '产品出库',
-          value: 90
-        }, {
-          label: '库存调拨',
-          value: 91
-        }, {
-          label: '库存盘点',
-          value: 92
-        }, {
-          label: '回款',
-          value: 93
-        }, {
-          label: '付款',
-          value: 93
-        }]
       }],
       sysOptions: [{
         label: '企业首页',
@@ -211,7 +165,6 @@ export default {
         oa: '办公管理',
         work: '项目管理',
         hrm: '人力资源',
-        jxc: '进销存',
         admin: '系统管理'
       }[model]
     }

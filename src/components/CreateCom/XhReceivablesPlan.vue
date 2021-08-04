@@ -9,7 +9,7 @@
       v-for="(item, index) in option"
       :key="index"
       :label="item.num"
-      :value="item.planId"/>
+      :value="item.receivablesPlanId"/>
   </el-select>
 </template>
 <script type="text/javascript">
@@ -75,7 +75,7 @@ export default {
         index: this.index,
         value: val,
         data: this.option.find(item => {
-          return item.planId == val
+          return item.receivablesPlanId == val
         })
       })
     }

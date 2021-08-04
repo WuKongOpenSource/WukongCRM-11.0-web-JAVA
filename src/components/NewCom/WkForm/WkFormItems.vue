@@ -12,11 +12,11 @@
         :index="index"
         :field-from="fieldFrom"
         :ignore-fields="ignoreFields"
-        :disabled="disabled"
+        :disabled="item.disabled || disabled"
         @change="fieldChange"
       >
         <template slot-scope="{ data, index }">
-          <slot :data="item" :index="index" />
+          <slot :data="data" :index="index" />
         </template>
       </wk-form-item>
     </template>

@@ -592,6 +592,8 @@ export default {
         return false
       } else if (this.crmType == 'receivables' && ['contract', 'customer', 'receivables_plan'].includes(item.formType)) {
         return false
+      } else if (this.crmType == 'receivablesPlan' && ['contract', 'customer'].includes(item.formType)) {
+        return false
       } else if (this.crmType == 'invoice' && ['contract', 'customer'].includes(item.formType)) {
         return false
       } else if (this.crmType == 'visit' && ['business', 'contract', 'contacts', 'customer'].includes(item.formType)) {

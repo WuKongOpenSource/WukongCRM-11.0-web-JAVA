@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :visible.sync="visible"
+    :visible="visible"
     :append-to-body="true"
     :close-on-click-modal="false"
     title="自定义展示数据"
@@ -46,6 +46,9 @@ export default {
     }
   },
   computed: {
+    employeeDepartment() {
+      return this.$refs.employeeDepartment
+    }
   },
   watch: {
   },
@@ -54,12 +57,8 @@ export default {
     handleConfirm() {
       this.$emit(
         'confirm',
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'user'
-        }),
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'dep'
-        })
+        this.employeeDepartment.userObjArray,
+        this.employeeDepartment.depObjArray
       )
 
       this.handleCancel()
@@ -70,12 +69,9 @@ export default {
      */
     handleCancel() {
       this.$emit('close',
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'user'
-        }),
-        this.$refs.employeeDepartment.checkedUserDepList.filter(item => {
-          return item.type == 'dep'
-        }))
+        this.employeeDepartment.userObjArray,
+        this.employeeDepartment.depObjArray
+      )
       this.$emit('update:visible', false)
     }
 

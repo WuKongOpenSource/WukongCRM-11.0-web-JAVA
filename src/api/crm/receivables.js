@@ -148,7 +148,7 @@ export function crmReceivablesTransferAPI(data) {
  * @param {*} data
  */
 export function crmReceivablesPlanSaveAPI(data) {
-  const url = data.entity && data.entity.planId ? 'update' : 'add'
+  const url = data.entity && data.entity.receivablesPlanId ? 'update' : 'add'
   return request({
     url: 'crmReceivablesPlan/' + url,
     method: 'post',

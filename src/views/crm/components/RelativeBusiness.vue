@@ -10,6 +10,7 @@
       class="rc-head"
       direction="row-reverse">
       <el-button
+        v-if="businessnSave"
         class="xr-btn--orange rc-head-item"
         icon="el-icon-plus"
         type="primary"
@@ -93,6 +94,7 @@ import {
 } from '@/api/crm/contacts'
 import CrmRelative from '@/components/CreateCom/CrmRelative'
 import { separator } from '@/filters/vueNumeralFilter/filters'
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeBusiness', // 相关联系人商机  可能再很多地方展示 放到客户管理目录下（新建时仅和客户进行关联）
@@ -151,6 +153,9 @@ export default {
     // 是否能关联
     canRelation() {
       return this.crmType == 'contacts'
+    },
+    businessnSave() {
+      return !!getPermissionByKey('crm.business.save')
     }
   },
   watch: {

@@ -1,46 +1,39 @@
 <template>
-  <el-popover
-    v-model="showPopover"
-    :disabled="disabled"
-    placement="right-end"
-    width="700"
-    popper-class="no-padding-popover"
-    trigger="click">
+  <flexbox
+    slot="reference"
+    :class="[disabled ? 'is_disabled' : 'is_valid']"
+    wrap="wrap"
+    class="user-container xh-form-border"
+    @click.native="contentClick">
+    <div
+      v-for="(aitem, aindex) in dataValue"
+      :key="aindex"
+      class="user-item"
+      @click.stop="deleteinfo(aindex)">{{ getShowName(aitem) }}
+      <i class="delete-icon el-icon-close"/>
+    </div>
+    <div
+      v-if="dataValue.length == 0"
+      class="add-item">+添加</div>
+
     <crm-relative
-      v-if="!disabled&&showSelectView"
+      v-if="!disabled&&viewLoaded"
       ref="crmrelative"
+      :visible.sync="showSelectView"
       :crm-type="crmType"
       :action="relationAction"
       :selected-data="selectedData"
-      @close="showPopover=false"
       @changeCheckout="checkInfos"/>
-    <flexbox
-      slot="reference"
-      :class="[disabled ? 'is_disabled' : 'is_valid']"
-      wrap="wrap"
-      class="user-container xh-form-border"
-      @click.native="contentClick">
-      <div
-        v-for="(aitem, aindex) in dataValue"
-        :key="aindex"
-        class="user-item"
-        @click.stop="deleteinfo(aindex)">{{ getShowName(aitem) }}
-        <i class="delete-icon el-icon-close"/>
-      </div>
-      <div
-        v-if="dataValue.length == 0"
-        class="add-item">+添加</div>
-    </flexbox>
-  </el-popover>
+  </flexbox>
 </template>
 <script type="text/javascript">
-import CrmRelative from './CrmRelative'
 import ArrayMixin from './ArrayMixin'
 
 export default {
   name: 'CrmRelativeCell', // 相关模块CRMCell 单类型 自定义字段用
   components: {
-    CrmRelative
+    CrmRelative: () =>
+      import('./CrmRelative')
   },
   mixins: [ArrayMixin],
   props: {
@@ -55,8 +48,8 @@ export default {
   },
   data() {
     return {
-      showPopover: false, // 展示popover
       showSelectView: false, // 内容
+      viewLoaded: false,
       radio: true, // 是否单选
       relationAction: { type: 'default' }
     }
@@ -108,7 +101,7 @@ export default {
       if (this.disabled) return
       if (this.radio && this.$refs.crmrelative) {
         // 如果单选告知删除
-        this.$refs.crmrelative.clearAll()
+        this.$refs.crmrelative.setSelections([])
       }
       if (this.dataValue.length === 1) {
         this.dataValue = []
@@ -122,6 +115,7 @@ export default {
       })
     },
     contentClick() {
+      this.viewLoaded = true
       this.showSelectView = true
     },
     getShowName(data) {

@@ -13,6 +13,7 @@
           <div class="name">标识名</div>
           <el-input
             v-model="field.name"
+            :maxlength="250"
             :disabled="!fieldAuth.nameEdit"/>
           <div class="input-tips"><span>*</span>标识名不能为空</div>
         </div>
@@ -22,6 +23,8 @@
           <el-input
             v-model="field.inputTips"
             :rows="3"
+            :maxlength="60"
+            :disabled="!fieldAuth.nameEdit"
             type="textarea"
             resize="none"/>
           <div class="input-tips"><span>*</span>显示在标识名右侧的说明文字</div>

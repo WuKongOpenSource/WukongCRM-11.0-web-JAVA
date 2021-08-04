@@ -102,7 +102,7 @@ export default {
      * 值更新
      */
     valueChange() {
-      const dataValue = this.showDetail && isEmpty(this.detailAddress) ? this.distpickerValue : this.distpickerValue.concat([{
+      const dataValue = (this.showDetail && isEmpty(this.detailAddress)) || !this.showDetail ? this.distpickerValue : this.distpickerValue.concat([{
         code: '',
         name: this.detailAddress,
         id: 4

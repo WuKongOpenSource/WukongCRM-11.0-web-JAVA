@@ -124,6 +124,7 @@ import RelativeInvoice from '../components/RelativeInvoice' // 发票
 
 import CRMAllCreate from '../components/CRMAllCreate' // 新建页面
 import DetailMixin from '../mixins/Detail'
+import { mapGetters } from 'vuex'
 
 export default {
   // 客户管理 的 客户详情
@@ -198,6 +199,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['isCall']),
     /**
      * 活动操作
      */
@@ -257,7 +259,7 @@ export default {
       if (this.crm.contract && this.crm.contract.index) {
         tempsTabs.push({ label: this.getTabName('合同', this.tabsNumber.contractCount), name: 'RelativeContract' })
       }
-      if (this.crm.receivables && this.crm.receivables.index) {
+      if ((this.crm.receivables && this.crm.receivables.index) || (this.crm.receivablesPlan && this.crm.receivablesPlan.index)) {
         tempsTabs.push({ label: this.getTabName('回款', this.tabsNumber.receivablesCount), name: 'RelativeReturnMoney' })
       }
       if (this.crm.visit && this.crm.visit.index) {

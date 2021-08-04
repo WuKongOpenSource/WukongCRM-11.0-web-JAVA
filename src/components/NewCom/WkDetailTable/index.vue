@@ -19,7 +19,7 @@
           @change="formChange"
         />
         <div class="add-btn">
-          <el-button type="text" @click="addClick">
+          <el-button v-if="!disabled" type="text" @click="addClick">
             <i class="wk wk-l-plus" />
             {{ btnName }}
           </el-button>
@@ -38,7 +38,7 @@
         @change="formChange"
       />
       <div class="add-btn">
-        <el-button type="text" @click="addClick">
+        <el-button v-if="!disabled" type="text" @click="addClick">
           <i class="wk wk-l-plus" />
           {{ btnName }}
         </el-button>

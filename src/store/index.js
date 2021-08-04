@@ -4,6 +4,7 @@ import user from './modules/user'
 import permission from './modules/permission'
 import app from './modules/app'
 import crm from './modules/crm'
+import hrm from './modules/hrm'
 import getters from './getters'
 
 Vue.use(Vuex)
@@ -13,7 +14,8 @@ const store = new Vuex.Store({
     app,
     permission,
     user,
-    crm
+    crm,
+    hrm
   },
   getters
 })

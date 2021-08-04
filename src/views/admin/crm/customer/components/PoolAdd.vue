@@ -54,10 +54,10 @@
                     </el-tooltip>
                   </div>
                 </div>
-                <xh-user-cell
+                <wk-user-select
                   :radio="false"
-                  :value="baseFrom.adminUsers"
-                  @value-change="userChange" />
+                  v-model="baseFrom.adminUsers"
+                  style="width: 100%;" />
               </el-form-item>
               <el-form-item
                 prop="memberUsers"
@@ -74,9 +74,10 @@
                     </el-tooltip>
                   </div>
                 </div>
-                <xh-struc-user-cell
-                  :value="baseFrom.memberUsers"
-                  @value-change="strcUserChange" />
+                <wk-user-dep-select
+                  :user-value.sync="baseFrom.memberUsers.users"
+                  :dep-value.sync="baseFrom.memberUsers.strucs"
+                  style="width: 100%;" />
               </el-form-item>
             </el-form>
           </flexbox>
@@ -206,10 +207,10 @@ import {
 import CreateView from '@/components/CreateView'
 import CreateSections from '@/components/CreateSections'
 import {
-  XhInput,
-  XhUserCell,
-  XhStrucUserCell
+  XhInput
 } from '@/components/CreateCom'
+import WkUserDepSelect from '@/components/NewCom/WkUserDepSelect'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import RecycleRule from './RecycleRule'
 
 export default {
@@ -219,8 +220,8 @@ export default {
     CreateView,
     CreateSections,
     XhInput,
-    XhUserCell,
-    XhStrucUserCell,
+    WkUserSelect,
+    WkUserDepSelect,
     RecycleRule
   },
   props: {
@@ -323,8 +324,8 @@ export default {
         poolName: data.poolName,
         adminUsers: data.adminUser,
         memberUsers: {
-          users: data.memberUser,
-          strucs: data.memberDept
+          users: (data.memberUser || []).map(item => item.userId),
+          strucs: (data.memberDept || []).map(item => item.id)
         },
         preOwnerSetting: data.preOwnerSetting, // 前负责人领取规则 0不限制 1限制
         preOwnerSettingDay: data.preOwnerSettingDay,
@@ -454,20 +455,6 @@ export default {
       return list
     },
 
-
-    /**
-     * 员工选择
-     */
-    userChange(data) {
-      this.baseFrom.adminUsers = data.value
-      this.$refs.ruleForm.validateField('adminUsers')
-    },
-
-    strcUserChange(data) {
-      this.baseFrom.memberUsers = data.value
-      this.$refs.ruleForm.validateField('memberUsers')
-    },
-
     /**
      * 保存数据
      */
@@ -544,19 +531,13 @@ export default {
         } else {
           if (key == 'adminUsers') {
             const adminUsers = this.baseFrom.adminUsers || []
-            params.adminUserId = adminUsers.map(item => {
-              return item.userId
-            }).join(',')
+            params.adminUserId = adminUsers.join(',')
           } else if (key == 'memberUsers') {
             const memberUserObj = this.baseFrom.memberUsers || {}
             const adminUsers = memberUserObj.users || []
             const adminStrucs = memberUserObj.strucs || []
-            params.memberUserId = adminUsers.map(item => {
-              return item.userId
-            }).join(',')
-            params.memberDeptId = adminStrucs.map(item => {
-              return item.id
-            }).join(',')
+            params.memberUserId = adminUsers.join(',')
+            params.memberDeptId = adminStrucs.join(',')
           } else {
             params[key] = this.baseFrom[key]
           }

@@ -88,7 +88,7 @@
 
 <script>
 import draggable from 'vuedraggable'
-import { isEmpty, isArray } from '@/utils/types'
+import { isEmpty, isArray, isObject } from '@/utils/types'
 import { getFieldAuth } from '../../utils'
 import { guid } from '@/utils'
 
@@ -143,11 +143,21 @@ export default {
           this.$set(this.field, 'setting', ['选1', '选2', '选3'])
         }
         if (!oldVal || newVal.options !== oldVal.options) {
-          this.optionsList = this.field.setting
-            .filter(o => o !== '其他')
-            .map(o => {
-              return { value: o }
+          const setting = this.field.setting
+          const isObjectValue = setting.length > 0 && isObject(setting[0])
+          if (isObjectValue) {
+            this.optionsList = setting.map(o => {
+              return {
+                value: o.name
+              }
             })
+          } else {
+            this.optionsList = setting
+              .filter(o => o !== '其他')
+              .map(o => {
+                return { value: o }
+              })
+          }
         }
       },
       deep: true,

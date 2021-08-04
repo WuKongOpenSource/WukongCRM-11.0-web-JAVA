@@ -5,7 +5,7 @@
     :prop="`${propPrefix || ''}${item.field}`"
     :rules="item.rules"
     :class="[item.className || '', `is-${item.formType}`]"
-    :style="{width: item.stylePercent ? `${item.stylePercent}%` : 'auto'}"
+    :style="{width: stylePercent ? stylePercent : (item.stylePercent ? `${item.stylePercent}%` : 'auto')}"
     class="wk-form-item">
     <template slot="label">
       {{ item.name }}
@@ -25,7 +25,7 @@
       :index="index"
       :field-from="fieldFrom"
       :ignore-fields="ignoreFields"
-      :disabled="disabled"
+      :disabled="item.disabled || disabled"
       @change="fieldChange"
     >
       <template slot-scope="{ data, index }">
@@ -71,6 +71,7 @@ export default {
         return []
       }
     },
+    stylePercent: String,
     disabled: Boolean
   },
 

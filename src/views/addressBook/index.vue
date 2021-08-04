@@ -19,11 +19,10 @@
     <div class="container container-hook">
       <flexbox class="filter">
         <span class="filter__label">选择部门</span>
-        <xh-structure-cell
-          :value="initStrucValue"
+        <wk-dep-select
+          v-model="deptIdValue"
           radio
-          class="xh-structure-cell"
-          @value-change="structureChange" />
+          @change="deptChange" />
       </flexbox>
       <el-table
         v-loading="loading"
@@ -95,17 +94,17 @@ import {
   toggleAttentionAPI
 } from '@/api/oa/addressBook'
 
-import XhStructureCell from '@/components/CreateCom/XhStructureCell'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
 
 export default {
   name: 'AddressBookIndex',
   components: {
-    XhStructureCell
+    WkDepSelect
   },
   data() {
     return {
       bookType: '', // all 全部 attention 关注的
-      initStrucValue: [], // 切换我的 和 我关注的 重置选择的值
+      deptIdValue: '', // 切换我的 和 我关注的 重置选择的值
 
       listData: [],
       tableMap: [
@@ -137,7 +136,7 @@ export default {
   beforeRouteUpdate(to, from, next) {
     this.bookType = to.params.type
     this.params = this.getDefaultParams(this.bookType)
-    this.initStrucValue = []
+    this.deptIdValue = ''
     this.listData = []
     this.getList()
     next()
@@ -263,10 +262,9 @@ export default {
     /**
      * 部门修改
      */
-    structureChange(data) {
-      this.initStrucValue = data.value
+    deptChange() {
       this.params.page = 1
-      this.params.deptId = data.value.length ? data.value[0].id : ''
+      this.params.deptId = this.deptIdValue
       this.getList()
     }
   }

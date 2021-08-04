@@ -137,7 +137,6 @@ export default {
      * 组change
      */
     groupChange() {
-      console.log(2222)
       if (this.checkList.length === this.allIds.length) {
         if (!this.allChecked) {
           this.allChecked = true

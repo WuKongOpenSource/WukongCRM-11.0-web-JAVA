@@ -89,6 +89,7 @@ import { crmBusinessFileListAPI } from '@/api/crm/business'
 import { crmContractFileListAPI } from '@/api/crm/contract'
 import { crmProductFileListAPI } from '@/api/crm/product'
 import { crmReceivablesFileListAPI } from '@/api/crm/receivables'
+import { crmReceivablesPlanFileListAPI } from '@/api/crm/receivablesPlan'
 import { crmReturnVisitFileAPI } from '@/api/crm/visit'
 import { crmInvoiceFileListAPI } from '@/api/crm/invoice'
 
@@ -177,6 +178,7 @@ export default {
         contract: crmContractFileListAPI,
         product: crmProductFileListAPI,
         receivables: crmReceivablesFileListAPI,
+        receivablesPlan: crmReceivablesPlanFileListAPI,
         visit: crmReturnVisitFileAPI,
         invoice: crmInvoiceFileListAPI
       }[this.crmType]

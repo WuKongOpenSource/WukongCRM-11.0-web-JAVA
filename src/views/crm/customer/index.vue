@@ -4,6 +4,7 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="客户管理"
       placeholder="请输入客户名称/手机/电话"
       main-title="新建客户"
@@ -11,6 +12,7 @@
       @on-search="crmSearch"
       @on-export="exportInfos">
       <el-menu
+        v-if="config.showModuleName"
         slot="icon"
         ref="elMenu"
         :default-active="crmType"
@@ -46,6 +48,7 @@
         :height="tableHeight"
         :cell-class-name="cellClassName"
         :row-key="`${crmType}Id`"
+        :class="[{'no-all-selection': config.radio}]"
         class="n-table--border"
         use-virtual
         stripe

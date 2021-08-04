@@ -11,12 +11,10 @@
         v-model="filterForm.search"
         placeholder="关键字搜索"
         prefix-icon="el-icon-search"/>
-      <xh-user-cell
+      <wk-user-select
         v-if="userSelectShow"
-        radio
-        class="xh-user-cell"
-        placeholder="选择人员"
-        @value-change="userChange" />
+        v-model="filterForm.userIds"
+        placeholder="选择人员"/>
       <time-type-select
         :width="190"
         :default-type="timeSelect.value"
@@ -115,7 +113,7 @@ import {
 } from '@/api/admin/employeeDep'
 
 import RecordTabHead from './components/RecordTabHead'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import TimeTypeSelect from '@/components/TimeTypeSelect'
 import LogCell from '@/views/crm/components/Activity/LogCell'
 import LogEditDialog from '@/views/crm/components/Activity/LogEditDialog'
@@ -129,7 +127,7 @@ export default {
   name: 'FollowIndex',
   components: {
     RecordTabHead,
-    XhUserCell,
+    WkUserSelect,
     TimeTypeSelect,
     LogCell,
     LogEditDialog,
@@ -180,7 +178,7 @@ export default {
       filterForm: {
         crmType: '',
         isUser: 1,
-        userId: '',
+        userIds: [],
         subUser: '',
         queryType: 0 // 0 全部 1 跟进记录 4 外勤签到
       },
@@ -335,13 +333,6 @@ export default {
       this.relationID = id
       this.relationCrmType = convert ? crmTypeModel.convertTypeToKey(type) : type
       this.showFullDetail = true
-    },
-
-    /**
-     * 筛选条件人员选择
-     */
-    userChange(data) {
-      this.filterForm.userId = data.value.length > 0 ? data.value[0].userId : ''
     },
 
     /**

@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { isObject, isEmpty } from '@/utils/types'
+import { isObject, isEmpty, isArray } from '@/utils/types'
 import Emitter from 'element-ui/lib/mixins/emitter'
 
 export default {
@@ -92,6 +92,12 @@ export default {
         this.validValue()
       },
       immediate: true
+    },
+    options: {
+      handler(newVal, oldVal) {
+        this.validValue()
+      },
+      deep: true
     }
   },
 
@@ -108,6 +114,10 @@ export default {
      * 验证值
      */
     validValue() {
+      if (!isArray(this.options) || this.options.length === 0) {
+        return
+      }
+
       if (this.value !== this.dataValue.select && this.value !== this.dataValue.otherValue) {
         if (isEmpty(this.value)) {
           this.dataValue = {
@@ -137,6 +147,13 @@ export default {
               select: this.value,
               otherValue: ''
             }
+          }
+        }
+      } else {
+        if (isEmpty(this.value)) {
+          this.dataValue = {
+            select: '',
+            otherValue: ''
           }
         }
       }

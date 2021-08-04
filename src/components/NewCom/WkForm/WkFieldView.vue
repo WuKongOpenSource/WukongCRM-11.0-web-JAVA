@@ -188,5 +188,9 @@ export default {
 	&.is-website {
 		display: inline;
 	}
+
+  &.is-file {
+    line-height: 1;
+  }
 }
 </style>

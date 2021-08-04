@@ -58,9 +58,11 @@
             <div class="sections__title">四、请选择负责人（负责人为必填字段，若不填写，则会导致导入失败）</div>
             <div class="content">
               <div class="user-cell">
-                <xh-user-cell
-                  :value="user"
-                  @value-change="userSelect"/>
+                <wk-user-select
+                  v-model="user"
+                  radio
+                  style="width: 100%;"
+                  @change="userSelect"/>
               </div>
             </div>
           </div>
@@ -176,11 +178,10 @@ import {
   crmProductDownloadExcelAPI
 } from '@/api/crm/product'
 
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import ImportHistory from './ImportHistory'
 import XrImport from './XrImport'
 
-// import { mapGetters } from 'vuex'
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import { downloadExcelWithResData, verifyFileTypeWithFileName } from '@/utils'
 import Lockr from 'lockr'
@@ -206,7 +207,7 @@ const DefaultProps = {
 export default {
   name: 'WkCRMImport', // 文件导入
   components: {
-    XhUserCell,
+    WkUserSelect,
     ImportHistory,
     XrImport
   },
@@ -243,7 +244,7 @@ export default {
       fieldList: [],
       repeatHandling: 1, // 	1 覆盖，2跳过
       file: { name: '' },
-      user: [],
+      user: '',
 
       // 公海数据
       poolId: '',
@@ -360,7 +361,7 @@ export default {
           // 阶段一展示 需要获取的信息
           if (this.stepsActive == 1) {
             if (this.config.userInfo) {
-              this.user = [this.config.userInfo]
+              this.user = this.config.userInfo.userId
             }
 
             if (this.config.poolSelectShow) {
@@ -451,8 +452,7 @@ export default {
           if (!this.file.name) {
             this.$message.error('请选择导入文件')
           } else if (
-            this.config.ownerSelectShow &&
-            (!this.user || this.user.length == 0)
+            this.config.ownerSelectShow && !this.user
           ) {
             this.$message.error('请选择负责人')
           }
@@ -471,7 +471,7 @@ export default {
       params.repeatHandling = this.repeatHandling
       params.file = this.file
       if (this.config.ownerSelectShow) {
-        params.ownerUserId = this.user.length > 0 ? this.user[0].userId : ''
+        params.ownerUserId = this.user
       }
       if (this.config.poolSelectShow) {
         params.poolId = this.poolId
@@ -613,12 +613,6 @@ export default {
     },
     // 用户选择
     userSelect(data) {
-      if (data.value && data.value.length > 0) {
-        this.user = data.value
-      } else {
-        this.user = []
-      }
-
       // 阶段一状态
       this.getFirstStepStatus()
     },
@@ -626,7 +620,7 @@ export default {
     getFirstStepStatus() {
       // 阶段一状态
       const hasFile = this.file && this.file.size
-      const hasUser = this.user && this.user.length > 0
+      const hasUser = !!this.user
 
       if (this.config.ownerSelectShow) {
         this.stepList[0].status = hasFile && hasUser ? 'finish' : 'wait'
@@ -666,7 +660,7 @@ export default {
     resetData() {
       this.repeatHandling = 1
       this.file = { name: '' }
-      this.user = []
+      this.user = ''
 
       this.stepsActive = 1
       this.stepList = [

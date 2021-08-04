@@ -282,3 +282,18 @@ export function crmContractQueryListByProductIdAPI(data) {
     }
   })
 }
+
+/**
+ * 分页查询发票
+ * @param {*} data
+ */
+export function crmContractInvoiceAPI(data) {
+  return request({
+    url: 'crmContract/queryInvoiceByContractId',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    }
+  })
+}

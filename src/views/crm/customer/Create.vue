@@ -55,9 +55,7 @@ import { crmCustomerSaveAPI } from '@/api/crm/customer'
 import XrCreate from '@/components/XrCreate'
 import CreateSections from '@/components/CreateSections'
 import WkFormItems from '@/components/NewCom/WkForm/WkFormItems'
-import {
-  XhCustomerAddress
-} from '@/components/CreateCom'
+
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CustomFieldsMixin from '@/mixins/CustomFields'
@@ -75,7 +73,7 @@ export default {
     XrCreate,
     CreateSections,
     WkFormItems,
-    XhCustomerAddress,
+    XhCustomerAddress: () => import('@/components/CreateCom/XhCustomerAddress'),
     ContactsCreate
   },
 

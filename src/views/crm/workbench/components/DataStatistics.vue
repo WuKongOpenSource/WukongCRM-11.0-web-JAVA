@@ -91,6 +91,7 @@ export default {
   .content {
     width: 100%;
     height: 300px;
+    overflow-y: auto;
     .list-item {
       border-bottom: 1px dashed #EFEFEF;
       padding: 10px 20px;

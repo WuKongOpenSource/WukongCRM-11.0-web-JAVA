@@ -132,15 +132,15 @@
             </flexbox>
           </flexbox-item>
           <flexbox-item>
-            <xh-user-cell
-              :value="taskData.mainUser ? [taskData.mainUser] : []"
-              :info-request="ownerListRequest"
-              :info-params="ownerListParams"
+            <wk-user-select
+              :value="taskData.mainUser ? taskData.mainUser.userId : ''"
+              :request="ownerListRequest"
+              :params="ownerListParams"
+              :props="{isList: !!ownerListRequest}"
               :disabled="!getPermission('setTaskMainUser')"
               style="width: 100%;"
-              placement="top"
               radio
-              @value-change="mainUserChange">
+              @change="mainUserChange">
               <flexbox
                 slot="reference"
                 class="head-btn">
@@ -164,7 +164,7 @@
                   class="el-icon-close head-btn__close"
                   @click="submiteMainUser(null)" />
               </flexbox>
-            </xh-user-cell>
+            </wk-user-select>
           </flexbox-item>
           <flexbox-item>
             <flexbox class="head-btn">
@@ -596,7 +596,7 @@ import SubTask from './SubTask'
 import Emoji from '@/components/Emoji'
 // 相关信息 - 选中列表
 import RelatedBusiness from '@/components/RelatedBusiness'
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import FileCell from '@/views/oa/components/FileCell'
 import { mapGetters } from 'vuex'
 import CommentList from '@/components/CommentList'
@@ -617,7 +617,7 @@ export default {
       import('@/components/CRMFullScreenDetail'),
     SubTask,
     FileCell,
-    XhUserCell,
+    WkUserSelect,
     CommentList,
     ReplyComment
   },
@@ -1180,8 +1180,8 @@ export default {
     /**
      * 编辑负责人
      */
-    mainUserChange(data) {
-      const mainUser = data.value.length > 0 ? data.value[0] : null
+    mainUserChange(data, dataArray) {
+      const mainUser = dataArray.length > 0 ? dataArray[0] : null
       this.submiteMainUser(mainUser)
     },
 

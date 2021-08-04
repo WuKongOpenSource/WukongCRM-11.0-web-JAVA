@@ -54,27 +54,18 @@
 
     <create-sections title="发票信息">
       <div style="padding: 10px 20px; text-align: right;">
-        <el-popover
-          v-model="showPopover"
-          placement="top"
-          width="700"
-          style="padding: 0 !important;"
-          trigger="click">
-          <crm-relative
-            v-if="showSelectView"
-            ref="crmrelative"
-            :show="showPopover"
-            :action="titleAction"
-            radio
-            crm-type="invoiceTitle"
-            @close="showPopover=false"
-            @changeCheckout="titleSelectChange"/>
-          <el-button
-            slot="reference"
-            :disabled="!(fieldForm.customerId && fieldForm.customerId.length > 0)"
-            type="primary"
-            @click="showSelectView=true">选择发票信息</el-button>
-        </el-popover>
+        <el-button
+          :disabled="!(fieldForm.customerId && fieldForm.customerId.length > 0)"
+          type="primary"
+          @click="showSelectView=true">选择发票信息</el-button>
+        <crm-relative
+          v-if="showSelectView"
+          ref="crmrelative"
+          :visible.sync="showSelectView"
+          :action="titleAction"
+          crm-type="invoiceTitle"
+          radio
+          @changeCheckout="titleSelectChange"/>
       </div>
       <el-form
         ref="otherFrom"
@@ -172,7 +163,6 @@ import {
   XhReceivablesPlan,
   CrmRelativeCell
 } from '@/components/CreateCom'
-import CrmRelative from '@/components/CreateCom/CrmRelative'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
 import CustomFieldsMixin from '@/mixins/CustomFields'
@@ -189,7 +179,7 @@ export default {
     XhSelect,
     XhDate,
     CrmRelativeCell,
-    CrmRelative,
+    CrmRelative: () => import('@/components/CreateCom/CrmRelative'),
     WkApprovalFlowApply,
     XhReceivablesPlan,
     WkFormItems
@@ -226,6 +216,15 @@ export default {
   data() {
     return {
       loading: false,
+      titleFieldList: [
+        { fieldName: 'titleType', formType: 'text', name: '抬头类型' },
+        { fieldName: 'invoiceTitle', formType: 'text', name: '开票抬头' },
+        { fieldName: 'taxNumber', formType: 'text', name: '纳税人识别号' },
+        { fieldName: 'depositBank', formType: 'text', name: '开户行' },
+        { fieldName: 'depositAccount', formType: 'text', name: '开户账号' },
+        { fieldName: 'depositAddress', formType: 'text', name: '开票地址' },
+        { fieldName: 'telephone', formType: 'text', name: '电话' }
+      ],
       invoiceTypeOptions: [{
         name: '增值税专用发票',
         value: 1
@@ -355,11 +354,14 @@ export default {
                 if (this.action.type === 'save') {
                   temp.disabled = item.formType === 'contract'
                 } else if (this.action.type == 'relative') {
-                  const customerObj = this.action.data.customer
                   if (temp.formType == 'customer') {
+                    // 客户下填充客户，禁止修改
+                    const customerObj = this.action.data.customer
                     temp.disabled = !!customerObj
                   } else {
-                    temp.disabled = !customerObj
+                    // 合同下填充合同，禁止修改客户和合同
+                    const contractObj = this.action.data.contract
+                    temp.disabled = !!contractObj
                   }
                 }
               }
@@ -373,10 +375,11 @@ export default {
               if (this.action.type == 'update' ||
               this.action.type == 'relative') {
                 if (item.formType == 'contract') { // 合同 需要客户信息
-                  const customerItem = this.getItemRelatveInfo(list, 'customer')
-                  if (customerItem) {
+                  const customerObj = this.getItemRelatveInfo(list, 'customer')
+                  if (customerObj) {
+                    const customerItem = objDeepCopy(customerObj)
                     customerItem['moduleType'] = 'customer'
-                    customerItem['params'] = { checkStatus: 1 }
+                    customerItem['params'] = { checkStatus: [1, 10] }
                     temp['relation'] = customerItem
 
                     this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
@@ -384,12 +387,15 @@ export default {
                     this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
 
                     this.titleAction = {
-                      type: 'default',
+                      type: 'invoiceTitle',
+                      name: '关联发票抬头',
+                      isCommon: true, // 是统一效果
+                      fieldList: this.titleFieldList,
                       request: crmCustomerInvoiceInfoAPI,
-                      showScene: false,
-                      showSearch: false,
-                      showCreate: false,
-                      canShowDetail: true,
+                      showHeader: false,
+                      rowKey: 'infoId',
+                      radio: true,
+                      tableFormatter: this.titleTableFormatter,
                       params: {
                         customerId: customerItem.customerId
                       }
@@ -414,6 +420,16 @@ export default {
             })
             fieldList.push(fields)
           })
+
+          // 处理相关新建金额值的填充
+          if (this.action.type == 'relative') {
+            const contractItem = this.getItemRelatveInfo(list, 'contract')
+            // 关联新建填充金额
+            if (contractItem) {
+              fieldForm.contractMoney = contractItem ? contractItem.money : ''
+              fieldForm.invoiceMoney = contractItem ? contractItem.money : ''
+            }
+          }
 
           this.baseFields = baseFields
           this.fieldList = fieldList
@@ -557,7 +573,7 @@ export default {
     //       contractItem.disabled = false
     //       const customerItem = dataValue[0]
     //       customerItem['moduleType'] = 'customer'
-    //       customerItem['params'] = { checkStatus: 1 }
+    //       customerItem['params'] = { checkStatus: [1, 10] }
     //       contractItem['relation'] = customerItem
 
     //       this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
@@ -719,9 +735,9 @@ export default {
             // 如果是合同 改变合同样式和传入客户ID
             if (data.value.length > 0) {
               fieldItem.disabled = false
-              const customerItem = data.value[0]
+              const customerItem = objDeepCopy(data.value[0])
               customerItem['moduleType'] = 'customer'
-              customerItem['params'] = { checkStatus: 1 }
+              customerItem['params'] = { checkStatus: [1, 10] }
               fieldItem['relation'] = customerItem
 
               this.$set(this.mailFrom, 'contactsName', customerItem.contactsName)
@@ -729,12 +745,15 @@ export default {
               this.$set(this.mailFrom, 'contactsAddress', customerItem.contactsAddress)
 
               this.titleAction = {
-                type: 'default',
+                type: 'invoiceTitle',
+                name: '关联发票抬头',
+                isCommon: true, // 是统一效果
+                fieldList: this.titleFieldList,
                 request: crmCustomerInvoiceInfoAPI,
-                showScene: false,
-                showSearch: false,
-                showCreate: false,
-                canShowDetail: true,
+                showHeader: false,
+                rowKey: 'infoId',
+                radio: true,
+                tableFormatter: this.titleTableFormatter,
                 params: {
                   customerId: customerItem.customerId
                 }
@@ -766,6 +785,19 @@ export default {
       }
       this.$set(this.fieldForm, field.field, data.value)
       this.$refs.crmForm.validateField(field.field)
+    },
+
+    /**
+     * 抬头表格
+     */
+    titleTableFormatter(row, column, cellValue) {
+      if (column.property == 'titleType') {
+        return {
+          1: '单位',
+          2: '个人'
+        }[row[column.property]]
+      }
+      return row[column.property] === '' || row[column.property] === null ? '--' : row[column.property]
     }
   }
 }

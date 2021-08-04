@@ -6,7 +6,7 @@ export default {
   business: 5,
   contract: 6,
   receivables: 7,
-  receivables_plan: 8,
+  receivablesPlan: 8,
   pool: 9,
   visit: 17,
   invoice: 18,
@@ -19,7 +19,7 @@ export default {
     business: 5,
     contract: 6,
     receivables: 7,
-    receivables_plan: 8,
+    receivablesPlan: 8,
     pool: 9,
     visit: 17,
     invoice: 18
@@ -33,7 +33,7 @@ export default {
     5: 'business',
     6: 'contract',
     7: 'receivables',
-    8: 'receivables_plan',
+    8: 'receivablesPlan',
     9: 'pool',
     17: 'visit',
     18: 'invoice'
@@ -61,7 +61,7 @@ export default {
     business: '商机',
     contract: '合同',
     receivables: '回款',
-    receivables_plan: '回款计划',
+    receivablesPlan: '回款计划',
     pool: '公海',
     visit: '回访',
     invoice: '发票'

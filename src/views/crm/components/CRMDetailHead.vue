@@ -133,6 +133,7 @@ import {
   crmContractCancelAPI
 } from '@/api/crm/contract'
 import { crmReceivablesDeleteAPI } from '@/api/crm/receivables'
+import { crmReceivablesPlanDeleteAPI } from '@/api/crm/receivablesPlan'
 import { crmReturnVisitDeleteAPI } from '@/api/crm/visit'
 import {
   crmProductStatusAPI,
@@ -207,6 +208,7 @@ export default {
           business: '商机',
           contract: '合同',
           receivables: '回款',
+          receivablesPlan: '回款计划',
           visit: '回访',
           invoice: '发票'
         }[this.crmType] || ''
@@ -223,6 +225,8 @@ export default {
         return this.detail.visitNumber
       } else if (this.crmType === 'invoice') {
         return this.detail.invoiceApplyNumber
+      } else if (this.crmType === 'receivablesPlan') {
+        return this.detail.num
       }
       return this.detail.name
     },
@@ -415,6 +419,7 @@ export default {
           business: crmBusinessDeleteAPI,
           contract: crmContractDeleteAPI,
           receivables: crmReceivablesDeleteAPI,
+          receivablesPlan: crmReceivablesPlanDeleteAPI,
           visit: crmReturnVisitDeleteAPI,
           product: crmProductDeleteAPI,
           invoice: crmInvoiceDeleteIdsAPI
@@ -593,6 +598,10 @@ export default {
         return this.forSelectionHandleItems(handleInfos, [
           'delete'
         ])
+      } else if (this.crmType == 'receivablesPlan') {
+        return this.forSelectionHandleItems(handleInfos, [
+          'delete'
+        ])
       }
       return []
     },
@@ -656,8 +665,8 @@ export default {
         // 客户状态修改
         return this.crm[this.crmType].dealStatus
       } else if (type == 'cancel') {
-        // 合同作废
-        if (this.crm[this.crmType].discard && this.detail.checkStatus === 1) {
+        // 合同作废 1 通过 10 正常
+        if (this.crm[this.crmType].discard && (this.detail.checkStatus === 1 || this.detail.checkStatus === 10)) {
           return true
         }
         return false

@@ -1,7 +1,7 @@
 import { isArray, isObject, isEmpty } from '@/utils/types'
 import CheckStatusMixin from '@/mixins/CheckStatusMixin'
 import CustomFieldsMixin from '@/mixins/CustomFields'
-import { separator } from '@/filters/vueNumeralFilter/filters'
+// import { separator } from '@/filters/vueNumeralFilter/filters'
 import { getWkDateTime } from '@/utils'
 
 /**
@@ -15,9 +15,10 @@ import { getWkDateTime } from '@/utils'
 export function getFormFieldShowName(formType, value, placeholder = '--', item) {
   if (formType === 'position') {
     return isArray(value) ? value.map(item => item.name).join() : placeholder
-  } else if (formType === 'floatnumber') {
-    return isEmpty(value) ? '' : separator(value)
-  } else if (formType === 'date') {
+  // eslint-disable-next-line brace-style
+  } /* else if (formType === 'floatnumber') {
+    return isEmpty(value) ? '' : (isNaN(value) ? value : separator(value))
+  }*/ else if (formType === 'date') {
     return getWkDateTime(value)
   } else if (formType === 'location') {
     return isObject(value) ? value.address : placeholder
@@ -46,12 +47,12 @@ export function getFormFieldShowName(formType, value, placeholder = '--', item) 
     }
   } else if (formType === 'structure') {
     if (isArray(value)) {
-      return value.map(item => item.name).join() || placeholder
+      return value.map(item => item.name || item.deptName).join() || placeholder
     }
     return value || placeholder
   } else if (formType === 'user') {
     if (isArray(value)) {
-      return value.map(item => item.realname).join() || placeholder
+      return value.map(item => item.realname || item.employeeName).join() || placeholder
     }
     return value || placeholder
   } else if (formType === 'check_status') {

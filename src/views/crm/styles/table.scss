@@ -58,6 +58,19 @@
   }
 }
 
+/deep/.el-table {
+  // 单选时，去掉全选勾选框
+  &.no-all-selection {
+     thead {
+      .el-table-column--selection {
+        .cell {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
 /deep/  .el-menu {
   display: inline-block;
   background-color: initial;
@@ -69,6 +82,7 @@
     font-weight: bold;
     color: #2a304d;
 
+    &:focus,
     &:hover {
       background: initial;
     }

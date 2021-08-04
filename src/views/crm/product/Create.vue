@@ -24,6 +24,7 @@
             <el-select
               v-if="data && data.field == 'status'"
               v-model="fieldForm[data.field]"
+              :disabled="data.disabled"
               style="width: 100%;"
               @change="formChange(data, index, $event)">
               <el-option
@@ -35,6 +36,7 @@
             <xh-prouct-cate
               v-else-if="data && data.formType == 'category'"
               :value="fieldForm[data.field]"
+              :disabled="data.disabled"
               @value-change="otherChange($event, data)"
             />
           </template>

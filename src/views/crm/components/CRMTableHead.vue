@@ -151,6 +151,10 @@ import {
   crmReceivablesExcelExportAPI
 } from '@/api/crm/receivables'
 import {
+  crmReceivablesPlanDeleteAPI,
+  crmReceivablesPlanExcelExportAPI
+} from '@/api/crm/receivablesPlan'
+import {
   crmProductStatusAPI,
   crmProductExcelExportAPI,
   crmProductDeleteAPI
@@ -243,7 +247,7 @@ export default {
       return this.showScene ? 'arrow-up' : 'arrow-down'
     },
     sceneName() {
-      return this.sceneData.name || this.getDefaultSceneName()
+      return this.sceneData.name || '全部'
     },
     // 展示场景
     showSceneView() {
@@ -354,6 +358,9 @@ export default {
     },
     /** 操作 */
     selectionBarClick(type) {
+      // action 动作 handle 偏向结果
+      this.$emit('action', { type: type, selection: this.selectionList })
+
       // 传出selection操作
       if (this.handleFun) {
         this.handleFun(type)
@@ -380,6 +387,7 @@ export default {
             business: crmBusinessExcelExportAPI,
             contract: crmContractExcelExportAPI,
             receivables: crmReceivablesExcelExportAPI,
+            receivablesPlan: crmReceivablesPlanExcelExportAPI,
             product: crmProductExcelExportAPI
           }[this.crmType]
           params = this.selectionList
@@ -506,6 +514,7 @@ export default {
           business: crmBusinessDeleteAPI,
           contract: crmContractDeleteAPI,
           receivables: crmReceivablesDeleteAPI,
+          receivablesPlan: crmReceivablesPlanDeleteAPI,
           visit: crmReturnVisitDeleteAPI,
           product: crmProductDeleteAPI
         }[this.crmType]
@@ -628,6 +637,11 @@ export default {
           name: '重置开票信息',
           type: 'reset_invoice_status',
           icon: 'reset'
+        },
+        update: {
+          name: '编辑',
+          type: 'update',
+          icon: 'edit'
         }
       }
       if (this.crmType == 'leads') {
@@ -689,6 +703,12 @@ export default {
           'delete',
           'add_user',
           'delete_user'
+        ])
+      } else if (this.crmType == 'receivablesPlan') {
+        return this.forSelectionHandleItems(handleInfos, [
+          'export',
+          'update',
+          'delete'
         ])
       } else if (this.crmType == 'product') {
         return this.forSelectionHandleItems(handleInfos, [
@@ -798,6 +818,9 @@ export default {
       } else if (type == 'reset_invoice_status') {
         // 重置开票信息
         return this.crm[this.crmType].resetInvoiceStatus && this.selectionList.length == 1
+      } else if (type == 'update') {
+        // 编辑
+        return this.crm[this.crmType].update && this.selectionList.length == 1
       }
 
       return true
@@ -805,28 +828,6 @@ export default {
     // 子组件 回调的 结果
     handleCallBack(data) {
       this.$emit('handle', { type: data.type })
-    },
-    // 获取默认场景名字
-    getDefaultSceneName() {
-      if (this.crmType == 'leads') {
-        return '全部线索'
-      } else if (this.crmType == 'customer') {
-        return '全部客户'
-      } else if (this.crmType == 'contacts') {
-        return '全部联系人'
-      } else if (this.crmType == 'business') {
-        return '全部商机'
-      } else if (this.crmType == 'contract') {
-        return '全部合同'
-      } else if (this.crmType == 'receivables') {
-        return '全部回款'
-      } else if (this.crmType == 'product') {
-        return '全部产品'
-      } else if (this.crmType === 'invoice') {
-        return '全部发票'
-      } else if (this.crmType === 'visit') {
-        return '全部回访'
-      }
     }
   }
 }

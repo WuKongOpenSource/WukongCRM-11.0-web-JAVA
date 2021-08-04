@@ -109,6 +109,7 @@ export default {
               5: 'crm_business',
               6: 'crm_contract',
               7: 'crm_receivables',
+              8: 'crm_receivables_plan',
               17: 'crm_visit',
               18: 'crm_invoice'
             }[item.label],
@@ -137,6 +138,8 @@ export default {
         return require('@/assets/img/crm/product.png')
       } else if (label === 7) {
         return require('@/assets/img/crm/receivables.png')
+      } else if (label === 8) {
+        return require('@/assets/img/crm/receivablesPlan.png')
       } else if (label === 17) {
         return require('@/assets/img/crm/visit.png')
       } else if (label === 18) {

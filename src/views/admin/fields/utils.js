@@ -2,7 +2,7 @@ export function getFieldAuth(operating) {
   const binaryStr = operating.toString(2).padStart(8, '0')
   // console.log('binaryStr: ', operating, binaryStr)
   return {
-    nameEdit: Boolean(Number(binaryStr.charAt(0))), // 是否可编辑字段名
+    nameEdit: Boolean(Number(binaryStr.charAt(0))), // 是否可编辑字段名/提示文字
     deleteEdit: Boolean(Number(binaryStr.charAt(1))), // 是否可删除字段
     defaultEdit: Boolean(Number(binaryStr.charAt(2))), // 可编辑
     percentEdit: Boolean(Number(binaryStr.charAt(3))), // 是否允许修改字段占比
@@ -59,8 +59,8 @@ export function typeToComponent(item) {
       return 'FieldDateInterval'
     case 'desc_text': // 描述文字
       return 'FieldDescText'
-    // case 'form':
-    //   return 'FieldTextarea'
+    case 'pic': // 图片
+      return 'FieldFile'
     default:
       return 'FieldInput'
   }

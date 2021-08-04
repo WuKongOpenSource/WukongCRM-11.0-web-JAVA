@@ -4,6 +4,7 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="产品管理"
       placeholder="请输入产品名称"
       main-title="新建产品"
@@ -30,6 +31,7 @@
         :height="tableHeight"
         :cell-class-name="cellClassName"
         :row-key="`${crmType}Id`"
+        :class="[{'no-all-selection': config.radio}]"
         class="n-table--border"
         use-virtual
         stripe

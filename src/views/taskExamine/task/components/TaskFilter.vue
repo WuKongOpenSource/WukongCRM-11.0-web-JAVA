@@ -6,10 +6,10 @@
     <div class="task-filter__body">
       <el-form ref="form" label-width="80px">
         <el-form-item label="负责人">
-          <xh-user-cell
-            :value="users"
+          <wk-user-select
+            :value="users.map(item => item.userId)"
             class="handle-item-content"
-            @value-change="userChage"/>
+            @change="userChage"/>
         </el-form-item>
         <el-form-item label="截止时间">
           <el-date-picker
@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 
 import { objDeepCopy } from '@/utils'
 
@@ -58,7 +58,7 @@ export default {
   // 任务筛选
   name: 'TaskFilter',
   components: {
-    XhUserCell
+    WkUserSelect
   },
   props: {
     dueDate: String,
@@ -97,8 +97,8 @@ export default {
       this.$emit('close')
     },
 
-    userChage(data) {
-      this.usersList = data.value
+    userChage(_, data) {
+      this.usersList = data
     },
 
     saveClick() {

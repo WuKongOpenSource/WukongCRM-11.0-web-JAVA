@@ -13,10 +13,10 @@
           range-separator="-"
           start-placeholder="开始时间"
           end-placeholder="结束时间"/>
-        <xh-user-cell
+        <wk-user-select
           :radio="false"
-          placeholder="选择人员"
-          @value-change="userChange" />
+          v-model="userList"
+          placeholder="选择人员" />
         <el-select
           v-model="subModelLabels"
           multiple
@@ -73,7 +73,7 @@ import {
 } from '@/api/admin/log'
 
 import XrHeader from '@/components/XrHeader'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { Loading } from 'element-ui'
 
 import HandleLogMixin from './mixins/HandleLog'
@@ -84,7 +84,7 @@ export default {
   name: 'SysHandleLog',
   components: {
     XrHeader,
-    XhUserCell
+    WkUserSelect
   },
   mixins: [HandleLogMixin],
   data() {
@@ -113,10 +113,6 @@ export default {
     this.getList()
   },
   methods: {
-    userChange(data) {
-      this.userList = data.value || []
-    },
-
     refreshList() {
       this.currentPage = 1
       this.getList()
@@ -132,7 +128,7 @@ export default {
         type: 2 //  1 数据操作日志 2 系统操作日志
       }
       if (this.userList && this.userList.length) {
-        params.userIds = this.userList.map(item => item.userId)
+        params.userIds = this.userList
       }
 
       if (this.dateTime && this.dateTime.length) {
@@ -215,11 +211,7 @@ export default {
     margin: 0 20px;
   }
 
-  /deep/ .user-container {
-    width: 200px;
-    margin-right: 20px;
-  }
-
+  .wk-user-select,
   .el-select {
     margin-right: 20px;
   }

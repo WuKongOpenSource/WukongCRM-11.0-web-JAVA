@@ -89,6 +89,7 @@ import RelativeProduct from '../components/RelativeProduct' // 团队成员
 import RelativeReturnMoney from '../components/RelativeReturnMoney' // 相关回款
 import RelativeFiles from '../components/RelativeFiles' // 相关附件
 import RelativeVisit from '../components/RelativeVisit' // 回访
+import RelativeInvoice from '../components/RelativeInvoice' // 发票
 import RelativePrint from '../components/RelativePrint' // 相关打印
 import ExamineInfo from '@/components/Examine/ExamineInfo'
 
@@ -111,6 +112,7 @@ export default {
     RelativeReturnMoney,
     RelativeFiles,
     RelativeVisit,
+    RelativeInvoice,
     RelativePrint,
     ExamineInfo,
     CRMAllCreate
@@ -198,11 +200,15 @@ export default {
       if (this.crm.product && this.crm.product.index) {
         tempsTabs.push({ label: this.getTabName('产品', this.tabsNumber.productCount), name: 'RelativeProduct' })
       }
-      if (this.crm.receivables && this.crm.receivables.index) {
+      if ((this.crm.receivables && this.crm.receivables.index) || (this.crm.receivablesPlan && this.crm.receivablesPlan.index)) {
         tempsTabs.push({ label: this.getTabName('回款', this.tabsNumber.receivablesCount), name: 'RelativeReturnMoney' })
       }
       if (this.crm.visit && this.crm.visit.index) {
         tempsTabs.push({ label: this.getTabName('回访', this.tabsNumber.returnVisitCount), name: 'RelativeVisit' })
+      }
+
+      if (this.crm.invoice && this.crm.invoice.index) {
+        tempsTabs.push({ label: this.getTabName('发票', this.tabsNumber.invoiceCount), name: 'RelativeInvoice' })
       }
       tempsTabs.push({ label: this.getTabName('团队成员', this.tabsNumber.memberCount), name: 'RelativeTeam' })
       tempsTabs.push({ label: this.getTabName('附件', this.tabsNumber.fileCount), name: 'RelativeFiles' })

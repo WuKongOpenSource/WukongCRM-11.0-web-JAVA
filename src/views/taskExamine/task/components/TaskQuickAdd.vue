@@ -28,11 +28,11 @@
         type="date"
         value-format="yyyy-MM-dd"
         placeholder="" />
-      <xh-user-cell
-        :value="mainUser"
+      <wk-user-select
+        :value="mainUser ? mainUser.userId : ''"
         radio
-        placement="top"
-        @value-change="selectMainUser">
+        style="height: auto !important;"
+        @change="selectMainUser">
         <div
           slot="reference"
           class="select-user">
@@ -46,7 +46,7 @@
             :src="createMainUser.img"
             class="add-info__interval" />
         </div>
-      </xh-user-cell>
+      </wk-user-select>
 
       <i
         class="el-icon-more add-info__btn add-info__interval"
@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { setTaskAPI } from '@/api/task/task'
 
 import TaskCreate from '../Create'
@@ -92,7 +92,7 @@ export default {
   // 任务快捷添加
   name: 'TaskQuickAdd',
   components: {
-    XhUserCell,
+    WkUserSelect,
     TaskCreate
   },
   props: {
@@ -150,8 +150,8 @@ export default {
     /**
      * 选择负责人
      */
-    selectMainUser(data) {
-      this.mainUser = data.value
+    selectMainUser(_, dataArray) {
+      this.mainUser = dataArray
     },
 
     /**

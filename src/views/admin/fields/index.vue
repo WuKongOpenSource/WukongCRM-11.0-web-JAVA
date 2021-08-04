@@ -4,7 +4,7 @@
     align="flex-start"
     justify="flex-start"
     class="fields-index body">
-    <flexbox-item class="body-left">
+    <div class="body-left">
       <div class="body-left_title">字段库</div>
       <ul>
         <draggable
@@ -24,7 +24,7 @@
             <span>{{ item.name }}</span>
         </div></draggable>
       </ul>
-    </flexbox-item>
+    </div>
 
     <div class="body-content">
       <flexbox
@@ -73,7 +73,7 @@
       </flexbox>
     </div>
 
-    <flexbox-item style="margin-left: 0" class="body-right">
+    <div style="margin-left: 0" class="body-right">
       <setting-field
         v-if="selectedField"
         :field="selectedField"
@@ -83,7 +83,7 @@
         :transform-data="transformData"
         @child-edit="handleChildEdit"
         @update-width="handleUpdateFieldWidth" />
-    </flexbox-item>
+    </div>
   </flexbox>
 </template>
 
@@ -94,6 +94,11 @@ import {
   customFieldListAPI,
   oaExamineFieldListAPI
 } from '@/api/admin/crm'
+import {
+  hrmConfigQueryFieldByLabelAPI,
+  hrmConfigSaveFieldAPI
+} from '@/api/admin/hrm'
+
 import { filedGetFieldAPI } from '@/api/crm/common'
 import { isEmpty } from '@/utils/types'
 
@@ -206,11 +211,14 @@ export default {
         crm_product: '产品',
         crm_receivables: '回款',
         crm_visit: '客户回访',
-        crm_marketing: '市场活动'
+        crm_marketing: '市场活动',
+        crm_receivables_plan: '回款计划',
+        crm_invoice: '发票'
       }[this.moduleType] || ''
     }
   },
   created() {
+    console.log('ddd', this.$route)
     this.moduleType = this.$route.params.type || ''
     this.initCom()
 
@@ -233,7 +241,7 @@ export default {
           ].includes(item.formType)
         })
       } else {
-        this.fieldLibList = FieldTypeLib
+        this.fieldLibList = FieldTypeLib.filter(item => item.formType !== 'pic')
       }
       this.getFieldList()
     },
@@ -247,30 +255,47 @@ export default {
       const params = {}
       const config = this.$route.params
 
-      if (this.moduleType === 'oa_examine') {
-        request = oaExamineFieldListAPI
-        params.categoryId = config.id
+      if (this.moduleType === 'hrm_employee') {
+        hrmConfigQueryFieldByLabelAPI(config.id)
+          .then(res => {
+            this.fieldArr = res.data || []
+
+            if (res.data.length > 0) {
+              this.handleSelect([0, 0])
+            }
+            this.rejectHandle = false
+            this.loading = false
+          })
+          .catch(() => {
+            this.loading = false
+          })
       } else {
-        request = customFieldListAPI
+        if (this.moduleType === 'oa_examine') {
+          request = oaExamineFieldListAPI
+          params.categoryId = config.id
+        } else {
+          request = customFieldListAPI
+        }
+
+
+        if (config.label) {
+          params.label = config.label
+        }
+
+        request(params)
+          .then(res => {
+            this.fieldArr = res.data || []
+
+            if (res.data.length > 0) {
+              this.handleSelect([0, 0])
+            }
+            this.rejectHandle = false
+            this.loading = false
+          })
+          .catch(() => {
+            this.loading = false
+          })
       }
-
-      if (config.label) {
-        params.label = config.label
-      }
-
-      request(params)
-        .then(res => {
-          this.fieldArr = res.data || []
-
-          if (res.data.length > 0) {
-            this.handleSelect([0, 0])
-          }
-          this.rejectHandle = false
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
 
     /**
@@ -323,7 +348,8 @@ export default {
         if ([
           'detail_table',
           'desc_text',
-          'handwriting_sign'
+          'handwriting_sign',
+          'pic'
         ].includes(newField.formType)) {
           this.$message.error('此字段内部不能添加该类型的字段')
           return
@@ -506,6 +532,10 @@ export default {
       delete copyField.relevant
       copyField.fieldType = 0
       copyField.operating = 255
+      if (copyField.formType === 'pic') {
+        // 11101011
+        copyField.operating = 235
+      }
       if (copyField.formType === 'desc_text') {
         copyField.name = ''
       }
@@ -745,16 +775,18 @@ export default {
       }
       if (this.moduleType === 'oa_examine') {
         params.categoryId = routerParams.id
-      }
-      if (this.moduleType === 'crm_marketing') {
+      } else if (this.moduleType === 'crm_marketing') {
         params.formId = routerParams.id
+      } else if (this.moduleType === 'hrm_employee') {
+        params.labelGroup = routerParams.id
       }
       console.log('save, ', params)
       // this.loading = false
       // return
 
       const request = {
-        oa_examine: oaFieldHandleAPI
+        oa_examine: oaFieldHandleAPI,
+        hrm_employee: hrmConfigSaveFieldAPI
       }[this.moduleType] || customFieldHandleAPI
 
       request(params)
@@ -840,7 +872,8 @@ export default {
 
     .body-left {
       width: 265px;
-      max-width: 265px;
+      // max-width: 265px;
+      flex-shrink: 0;
       height: 100%;
       overflow-y: auto;
       background-color: white;
@@ -887,7 +920,7 @@ export default {
       height: 100%;
 
       .body-content-warp {
-        max-width: 900px;
+        width: 900px;
         margin: 0 auto;
         height: 100%;
         box-shadow: 0 2px 12px 0 rgba($color: #000, $alpha: 0.1);
@@ -924,7 +957,8 @@ export default {
 
     .body-right {
       width: 280px;
-      max-width: 280px;
+      // max-width: 280px;
+      flex-shrink: 0;
       height: 100%;
       overflow-y: auto;
       background-color: white;

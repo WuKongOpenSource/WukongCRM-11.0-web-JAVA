@@ -167,9 +167,10 @@ export function usersEditStatusAPI(data) {
 export const userImportTemplateURL = 'https://www.72crm.com/npm/static/user_import.xlsx'
 export function userImportTemplateAPI(data) {
   return request({
-    url: 'user_import.xlsx',
+    url: 'adminUser/downloadExcel',
     method: 'post',
-    data: data
+    data: data,
+    responseType: 'blob'
   })
 }
 

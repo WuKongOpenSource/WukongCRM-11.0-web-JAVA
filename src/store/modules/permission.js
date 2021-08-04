@@ -151,7 +151,8 @@ const perfectRouter = function(authInfo, result) {
               book: 'addressBook',
               project: 'project',
               bi: 'bi',
-              calendar: 'calendar'
+              calendar: 'calendar',
+              hrm: 'hrm'
             }[authInfo.wkFirstModel]
             if (modelName == mainRouter.type) {
               topRedirect = element.redirect
@@ -228,7 +229,8 @@ const permission = {
     addressBookRouters: [],
     projectRouters: [],
     biRouters: [],
-    manageRouters: []
+    manageRouters: [],
+    hrmRouters: []
   },
   mutations: {
     SET_ROUTERS: (state, data) => {
@@ -240,6 +242,7 @@ const permission = {
       state.projectRouters = data.router.project || []
       state.biRouters = data.router.bi || []
       state.manageRouters = data.router.manage || []
+      state.hrmRouters = data.router.hrm || []
     },
 
     /**

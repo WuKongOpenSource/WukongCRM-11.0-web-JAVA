@@ -34,13 +34,11 @@
             <div class="list-item-name">{{ item.name }}</div>
             <div class="list-item-handle">
               <el-dropdown
-                trigger="click"
-                @command="defaultHandle">
+                @command="defaultHandle(arguments[0], item)">
                 <i
-                  class="el-icon-arrow-down"
-                  @click="itemHandle('default', item, index)"/>
+                  class="el-icon-arrow-down"/>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>设置为默认标签</el-dropdown-item>
+                  <el-dropdown-item command="default">设置为默认标签</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -71,12 +69,11 @@
                 <i
                   class="el-icon-delete"
                   @click="itemHandle('delete', item, index)"/>
-                <el-dropdown @command="defaultHandle">
+                <el-dropdown @command="defaultHandle(arguments[0], item)">
                   <i
-                    class="el-icon-arrow-down"
-                    @click="itemHandle('default', item, index)"/>
+                    class="el-icon-arrow-down"/>
                   <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item>设置为默认标签</el-dropdown-item>
+                    <el-dropdown-item command="default">设置为默认标签</el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
               </div>
@@ -260,6 +257,7 @@ export default {
         })
         .catch(() => {})
     },
+
     /**
      * 确定选择
      */
@@ -288,7 +286,10 @@ export default {
         })
         .catch(() => {})
     },
-    /** 事项操作 */
+
+    /**
+     * 事项操作
+     */
     itemHandle(type, item, index) {
       if (type == 'edit') {
         this.addAndEditScene('edit', item)
@@ -314,25 +315,29 @@ export default {
               .catch(() => {})
           })
           .catch(() => {})
-      } else if (type == 'default') {
-        this.handlDefaultItem = item
       }
     },
-    /** 操作默认 */
-    defaultHandle() {
+
+    /**
+     * 操作默认
+     */
+    defaultHandle(_, item) {
       crmSceneDefaultsAPI({
-        sceneId: this.handlDefaultItem.sceneId
+        sceneId: item.sceneId
       })
         .then(res => {
           this.$message({
             type: 'success',
             message: '操作成功'
           })
-          this.defaultId = this.handlDefaultItem.sceneId
+          this.defaultId = item.sceneId
         })
         .catch(() => {})
     },
-    /** 添加编辑场景 */
+
+    /**
+     * 添加编辑场景
+     */
     addAndEditScene(type, data) {
       filterIndexfieldsAPI({
         label: crmTypeModel[this.crmType]
@@ -354,6 +359,7 @@ export default {
         })
         .catch(() => {})
     },
+
     /**
      * 取消选择
      */
@@ -361,7 +367,10 @@ export default {
       this.visible = false
       this.$emit('update:dialogVisible', false)
     },
-    /** 拖拽操作 */
+
+    /**
+     * 拖拽操作
+     */
     rightMoveEnd(evt) {
       this.moveItem.check = false
       this.leftCheckItemChange()

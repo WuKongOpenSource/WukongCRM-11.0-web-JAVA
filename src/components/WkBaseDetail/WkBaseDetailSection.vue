@@ -77,15 +77,16 @@ export default {
       font-size: 13px;
       flex-shrink: 0;
       color: #777;
-      line-height: 40px;
+      line-height: 1.5;
     }
     .item-value {
       font-size: 13px;
       color: #333;
-      line-height: 40px;
+      line-height: 1.5;
       white-space: pre-wrap;
       word-wrap: break-word;
       word-break: break-all;
+      overflow: hidden;
     }
   }
 

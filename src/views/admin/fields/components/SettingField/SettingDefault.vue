@@ -34,6 +34,7 @@
     <el-select
       v-else-if="type === 'select'"
       v-model="field.defaultValue"
+      :key="field.formType"
       :clearable="canClearable"
       :multiple="field.formType === 'checkbox'"
       :disabled="disabled"
@@ -41,7 +42,7 @@
       <el-option
         v-for="item in options"
         :key="item.value"
-        :label="item.label"
+        :label="item.label || item.name"
         :value="item.value" />
     </el-select>
 
@@ -85,7 +86,7 @@
 <script>
 import WkDistpicker from '@/components/NewCom/WkDistpicker'
 
-import { isEmpty, isArray } from '@/utils/types'
+import { isObject, isEmpty, isArray } from '@/utils/types'
 import { regexIsCRMMobile, regexIsCRMEmail, objDeepCopy } from '@/utils'
 import { getFieldAuth } from '../../utils'
 
@@ -158,9 +159,13 @@ export default {
         'select',
         'checkbox'
       ].includes(formType)) {
-        return this.field.setting.map(o => {
-          return { label: o, value: o }
-        })
+        if (this.field.setting && this.field.setting.length > 0 && this.itemIsObject(this.field.setting[0])) {
+          return this.field.setting
+        } else {
+          return this.field.setting.map(o => {
+            return { label: o, value: o }
+          })
+        }
       }
       switch (formType) {
         case 'boolean_value':
@@ -343,6 +348,13 @@ export default {
         index++
       } while (index <= value.length)
       return res
+    },
+
+    /**
+     * 是对象
+     */
+    itemIsObject(item) {
+      return isObject(item)
     }
   }
 }

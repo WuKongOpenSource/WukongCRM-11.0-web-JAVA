@@ -163,7 +163,7 @@ export default {
      * 保存
      */
     save() {
-      if (!this.companyName) {
+      if (!this.companyName || !this.companyName.trim()) {
         this.$message.error('企业名称不能为空')
       } else {
         this.loading = true

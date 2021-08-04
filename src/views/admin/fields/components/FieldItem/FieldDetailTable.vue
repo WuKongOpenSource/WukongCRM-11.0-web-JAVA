@@ -43,8 +43,10 @@
               :key="index"
               :prop="field.fieldName"
               :label="field.name">
-              <template slot-scope="scope">
-                <div class="input-box" />
+              <template slot-scope="{ row, column }">
+                <div class="input-box" >
+                  {{ row[column.property] }}
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="操作" fixed="right">
@@ -115,9 +117,7 @@ export default {
         fallbackClass: 'draggingStyle',
         filter: '.empty-box'
       },
-      selectedPoint: [null, null],
-
-      tableData: [{}]
+      selectedPoint: [null, null]
     }
   },
   computed: {
@@ -129,6 +129,13 @@ export default {
     },
     list() {
       return this.isEmpty ? [] : this.field.fieldExtendList
+    },
+    tableData() {
+      const obj = {}
+      this.list.forEach(item => {
+        obj[item.fieldName] = this.formatterDefaultValue(item)
+      })
+      return [obj]
     }
   },
   methods: {
@@ -144,6 +151,19 @@ export default {
       this.$nextTick(() => {
         this.selectedPoint = [evt.newIndex, 0]
       })
+    },
+
+    formatterDefaultValue(data) {
+      if (!data.defaultValue) return ''
+      if (data.formType === 'boolean_value') {
+        return { 0: '不选中', 1: '选中' }[data.defaultValue]
+      } else if (data.formType === 'date_interval') {
+        return data.defaultValue.join('-')
+      } else if (data.formType === 'checkbox') {
+        return data.defaultValue.join(',')
+      } else if (typeof data.defaultValue === 'string') {
+        return data.defaultValue
+      }
     }
   }
 }

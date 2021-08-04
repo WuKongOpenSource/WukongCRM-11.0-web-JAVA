@@ -90,12 +90,13 @@ service.interceptors.response.use(
     if (response.status === 200 && response.config.responseType === 'blob') { // 文件类型特殊处理
       if (response.headers['content-disposition'] || (response.headers['content-type'] && response.headers['content-type'].indexOf('application/pdf') != -1)) {
         return response
-      } else {
+      } else if (response.data) {
         const resultBlob = new Blob([response.data], { type: 'application/json' })
         const fr = new FileReader()
         fr.onload = function() {
           const result = JSON.parse(this.result)
-          if (result.msg) {
+          // 附件下载反馈的302 忽略
+          if (result.msg && result.code !== 302) {
             errorMessage(result.msg, result.code == 1 ? 'success' : 'error')
           }
         }

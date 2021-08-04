@@ -4,41 +4,64 @@
       员工
     </div>
     <div class="xh-user__bd">
-      <el-input
+      <el-autocomplete
         v-model="searchInput"
         :disabled="disabled"
-        placeholder="搜索成员"
-        size="small"
-        prefix-icon="el-icon-search"
-        class="search-input"/>
+        :popper-append-to-body="false"
+        :fetch-suggestions="searchListUser"
+        placeholder="请输入内容"
+        @select="searchSelect"
+      >
+        <template slot-scope="{ item }">
+          <span>{{ item[config.label] }}</span>
+          <span style="color: #999;">{{ `(${ item.deptName || ''}${item.deptName ? '-' : ''}${item.post || '无'})` }}</span>
+        </template>
+      </el-autocomplete>
       <div
         class="search-list">
-        <el-checkbox
-          :indeterminate="isIndeterminate"
-          :disabled="radio || disabled"
-          v-model="checkAll"
-          class="all-check"
-          @change="handleCheckAllChange">全选</el-checkbox>
-        <el-checkbox-group
-          ref="checkboxGroup"
-          v-model="dataValue"
-          :max="max"
-          :disabled="disabled"
-          @change="checkboxChange">
+        <el-breadcrumb
+          v-if="breadcrumbList.length > 0 && !config.isList"
+          style="padding: 5px 0;"
+          separator-class="el-icon-arrow-right">
+          <el-breadcrumb-item
+            v-for="(item, index) in breadcrumbList"
+            :key="index">
+            <a
+              href="javascript:;"
+              @click="breadcrumbBtn(item, index)">{{ item.label }}</a>
+          </el-breadcrumb-item>
+        </el-breadcrumb>
+
+        <div v-if="currentBreadcrumbItem" class="xh-user__list">
           <el-checkbox
-            v-for="(item, i) in showOptions"
-            v-show="!item.isHide"
-            :key="i"
-            :label="item[props.value]"
-            class="colleagues-list">
-            <xr-avatar
-              :name="item[props.label]"
-              :size="24"
-              :src="item.img"
-              class="user-img" />
-            <span>{{ item[props.label] }}</span>
-          </el-checkbox>
-        </el-checkbox-group>
+            v-if="!radio"
+            v-model="allChecked"
+            :disabled="disabled"
+            style="line-height: 30px;"
+            @change="handleCheckAllChange">全选</el-checkbox>
+          <wk-dep-checkbox
+            :radio="radio"
+            :data="currentBreadcrumbItem.deptList"
+            :props="props"
+            :disabled="disabled"
+            only-show
+            @next="nextDebounceClick"
+          />
+
+          <wk-user-checkbox
+            ref="userCheckbox"
+            :radio="radio"
+            :data="currentBreadcrumbItem.employeeList"
+            :props="props"
+            :value="value"
+            :disabled="disabled"
+            @input="$emit('input', $event)"
+            @change="checkboxChange"
+            @all-select="userAllSelect"
+          />
+
+        </div>
+
       </div>
     </div>
     <div class="xh-user__ft">
@@ -48,33 +71,66 @@
   </div>
 </template>
 <script type="text/javascript">
+import {
+  adminUserQueryByDeptAPI
+} from '@/api/admin/user'
+import {
+  hrmEmployeeQueryInAPI,
+  hrmEmployeeQueryByDeptAPI
+} from '@/api/hrm/employee'
+import { userListAPI } from '@/api/common'
+
+import WkDepCheckbox from './WkDepCheckbox'
+import WkUserCheckbox from './WkUserCheckbox'
+
 import PinyinMatch from 'pinyin-match'
-import { valueEquals } from 'element-ui/lib/utils/util'
-import { objDeepCopy } from '@/utils'
+import merge from '@/utils/merge'
+import { debounce } from 'throttle-debounce'
+import { getSearchRequestWithRequest } from './utils'
+
+const DefaultWkUser = {
+  value: 'userId',
+  label: 'realname',
+  // 搜索
+  // 请求和参数 暂时通过 request name 匹配对应的搜索请求
+  searchRequest: null,
+  searchParams: null,
+  // 树结构请求和参数
+  request: null,
+  params: null,
+  // 默认的搜索人资和管理端人员请求
+  dataType: 'manage', // 部门的 value label 一致，用 dataType 区分 manage hrm,
+  // userOptions: null, // 固定数据，后可以放入 props options
+  isList: false // 默认是树形接口，如果是列需设置为true
+}
+
 
 export default {
   name: 'WkUser', // 新建 user
-  components: {},
+  components: {
+    WkDepCheckbox,
+    WkUserCheckbox
+  },
+  inheritAttrs: false,
   props: {
     radio: Boolean,
     headerShow: {
       type: Boolean,
       default: true
     },
-    // isHide 可不显示 但数据源里包含
     options: Array,
     value: Array,
+    type: {
+      type: String,
+      default: 'user' // user  dep  用户和部门
+    },
     // 取值字段
     props: {
       type: Object,
       default: () => {
-        return {
-          value: 'userId',
-          label: 'realname'
-        }
+        return {}
       }
     },
-    max: Number,
     disabled: {
       type: Boolean,
       default: false
@@ -82,41 +138,107 @@ export default {
   },
   data() {
     return {
-      dataValue: [],
       searchInput: '',
-      checkAll: false,
-      isIndeterminate: false
+      searchUserList: [],
+
+      // 面包头
+      breadcrumbList: [],
+
+      // 当前面包屑
+      currentBreadcrumbItem: null,
+      // 全选
+      allChecked: false,
+      requstOptions: null // props options 传入数据， requstOptions 请求获取的数据
     }
   },
   computed: {
-    showOptions() {
-      return this.options.filter(item => {
-        return PinyinMatch.match(item[this.props.label], this.searchInput)
-      })
+    config() {
+      return merge({ ...DefaultWkUser }, this.props || {})
+    },
+
+    // 暂时一维数组数据源
+    userOptions() {
+      return this.requstOptions || this.options
     }
   },
   watch: {
-    value() {
-      if (this.options && !this.radio) {
-        const optionsLength = this.options.filter(item => !item.isHide).length
-        if (this.value.length == optionsLength && (this.value.length > 0 || optionsLength > 0)) {
-          this.checkAll = true
-        } else {
-          this.checkAll = false
+    breadcrumbList() {
+      if (!this.config.isList) {
+        this.currentBreadcrumbItem = this.breadcrumbList[this.breadcrumbList.length - 1]
+      }
+    },
+
+    options: {
+      handler() {
+        if (this.config.isList) {
+          this.currentBreadcrumbItem = {
+            employeeList: this.options
+          }
         }
-
-        this.isIndeterminate = !!(!this.checkAll && this.value.length)
-      }
-
-      if (!valueEquals(this.value, this.dataValue)) {
-        this.dataValue = objDeepCopy(this.value)
-      }
+      },
+      immediate: true
     }
   },
   created() {
-    this.dataValue = objDeepCopy(this.value || [])
+    if (!this.config.isList) {
+      this.getDepUserList(0)
+      this.nextDebounceClick = debounce(300, this.nextClick)
+    } else {
+      if (this.config.request) {
+        this.getUserOptions()
+      }
+      this.nextDebounceClick = () => {}
+    }
   },
   methods: {
+    /**
+     * 列效果进行搜索
+     */
+    searchListUser(queryString, cb) {
+      if (this.searchUserList && this.searchUserList.length || this.userOptions) {
+        const searchUserList = this.userOptions || this.searchUserList
+        if (queryString) {
+          cb(searchUserList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString) || PinyinMatch.match(item.deptName || '', queryString)))
+        } else {
+          cb(searchUserList)
+        }
+      } else {
+        const request = this.getSearchRequest()
+        let params = { pageType: 0 }
+        if (this.config.searchParams) {
+          params = { ...params, ...this.config.searchParams }
+        }
+        request(params).then(res => {
+          const resData = res.data
+          this.searchUserList = resData.hasOwnProperty('list') ? (resData.list || []) : (resData || [])
+          if (queryString) {
+            cb(this.searchUserList.filter(item => PinyinMatch.match(item[this.config.label] || '', queryString)))
+          } else {
+            cb(this.searchUserList)
+          }
+        }).catch(() => {})
+      }
+    },
+
+    /**
+     * 获取搜索请求
+     * 根据列表请求对应获取，如果 props searchParams 有值，以 searchParams 为准
+     */
+    getSearchRequest() {
+      // 人资的默认搜索接口
+      if (this.config.dataType === 'hrm') {
+        return hrmEmployeeQueryInAPI
+      }
+
+      return getSearchRequestWithRequest(this.config.request) || userListAPI
+    },
+
+    /**
+     * 搜索选择
+     */
+    searchSelect(item) {
+      this.$refs.userCheckbox.searchSelect(item)
+    },
 
     /**
      * 勾选
@@ -130,25 +252,28 @@ export default {
       } else {
         this.$emit('input', val)
       }
-      this.$emit('change', val)
+
+      this.$nextTick(() => {
+        this.$emit('change', val)
+      })
     },
 
     /**
      * 全部勾选
      */
     handleCheckAllChange(val) {
-      if (val) {
-        const ids = []
-        this.options.forEach(item => {
-          if (!item.isHide) {
-            ids.push(item[this.props.value])
-          }
-        })
-        this.$emit('input', ids)
-      } else {
-        this.$emit('input', [])
+      if (this.$refs.userCheckbox) {
+        this.$refs.userCheckbox.handleCheckAllChange(val)
       }
-      this.$emit('change', val)
+    },
+
+    /**
+     * 用户全选
+     */
+    userAllSelect(allChecked) {
+      if (this.allChecked != allChecked) {
+        this.allChecked = allChecked
+      }
     },
 
     /**
@@ -156,30 +281,84 @@ export default {
      */
     clearAll() {
       this.$emit('input', [])
+    },
+
+    /**
+     * 获取部门员工数据
+     */
+    getDepUserList(deptId, depInfo) {
+      this.loading = true
+      const request = this.config.dataType === 'hrm' ? hrmEmployeeQueryByDeptAPI : (this.config.request || adminUserQueryByDeptAPI)
+      request(deptId).then(res => {
+        const data = res.data || {}
+        const deptList = data.deptList || []
+
+        // employeeList 人资  userList 系统管理
+        const employeeList = data.employeeList || data.userList || []
+
+        if (deptId == 0) {
+          this.breadcrumbList = [{ label: '全部', deptList: deptList, employeeList: employeeList }]
+        } else {
+          this.breadcrumbList.push({ label: depInfo.name, deptList: deptList, employeeList: employeeList })
+        }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
+      })
+    },
+
+    /**
+     * 获取 isList 并且有 request 的数据
+     */
+    getUserOptions() {
+      this.loading = true
+      this.config.request(this.config.params).then(res => {
+        const data = res.data || []
+        this.requstOptions = data
+        this.currentBreadcrumbItem = {
+          employeeList: data
+        }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
+      })
+    },
+
+    /**
+     * 下一级
+     */
+    nextClick(item) {
+      if (!this.radio) {
+        this.allChecked = false
+      }
+      this.getDepUserList(item.deptId, item)
+    },
+
+
+    /**
+     * 面包屑点击
+     */
+    breadcrumbBtn(item, index) {
+      if (index + 1 <= this.breadcrumbList.length - 1) {
+        this.breadcrumbList.splice(index + 1, this.breadcrumbList.length - 1)
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
 /* 选择员工 */
-.user-img {
-  margin-right: 8px;
-  vertical-align: middle;
-}
+
 .search-list {
   padding: 5px 0;
-  height: 200px;
+  height: 248px;
   overflow: auto;
-}
-.colleagues-list {
-  padding: 5px 0;
-  display: block;
-  margin-left: 0;
 }
 
 .xh-user {
   color: #333;
-  font-size: 12px;
+  font-size: 13px;
+
   &__hd {
     padding: 0 15px;
     height: 40px;
@@ -198,6 +377,12 @@ export default {
     .el-button {
       font-size: 12px;
     }
+  }
+
+  &__list {
+    height: calc(100% - 24px);
+    overflow-y: auto;
+    padding-left: 5px;
   }
 }
 
@@ -227,7 +412,8 @@ export default {
   padding: 5px 0;
 }
 
-.search-input {
+.el-autocomplete {
+  width: 100%;
   /deep/ .el-input__inner {
     background-color: #F4F4F4;
     border: none;

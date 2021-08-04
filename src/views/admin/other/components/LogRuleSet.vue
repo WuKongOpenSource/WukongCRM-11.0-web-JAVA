@@ -36,10 +36,10 @@
                 <i class="wk wk-help wk-help-tips"/>
               </el-tooltip>
             </template>
-            <xh-user-cell
-              :value="dayForm.memberUser"
+            <wk-user-select
+              v-model="dayForm.memberUserId"
               :radio="false"
-              @value-change="dayUserChage"/>
+              style="width: 100%;"/>
           </el-form-item>
 
           <el-form-item label="需要统计的日志">
@@ -91,10 +91,10 @@
                 <i class="wk wk-help wk-help-tips"/>
               </el-tooltip>
             </template>
-            <xh-user-cell
-              :value="weekForm.memberUser"
+            <wk-user-select
+              v-model="weekForm.memberUserId"
               :radio="false"
-              @value-change="weekUserChage"/>
+              style="width: 100%;"/>
           </el-form-item>
 
           <el-form-item>
@@ -158,10 +158,10 @@
                 <i class="wk wk-help wk-help-tips"/>
               </el-tooltip>
             </template>
-            <xh-user-cell
-              :value="monthForm.memberUser"
+            <wk-user-select
+              v-model="monthForm.memberUserId"
               :radio="false"
-              @value-change="monthUserChage"/>
+              style="width: 100%;"/>
           </el-form-item>
 
           <el-form-item>
@@ -216,7 +216,8 @@ import {
 } from '@/api/admin/other'
 
 import CreateSections from '@/components/CreateSections'
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
+import { objDeepCopy } from '@/utils'
 
 
 export default {
@@ -224,7 +225,7 @@ export default {
 
   components: {
     CreateSections,
-    XhUserCell
+    WkUserSelect
   },
 
   data() {
@@ -265,13 +266,13 @@ export default {
       monthTimeOptions: [],
       dayForm: {
         effectiveDay: ['1', '2', '3', '4', '5'],
-        memberUser: []
+        memberUserId: []
       },
       weekForm: {
-        memberUser: []
+        memberUserId: []
       },
       monthForm: {
-        memberUser: []
+        memberUserId: []
       }
     }
   },
@@ -304,7 +305,7 @@ export default {
             type: dayData.type,
             status: dayData.status,
             ruleId: dayData.ruleId,
-            memberUser: dayData.memberUser || [],
+            memberUserId: (dayData.memberUser || []).map(item => item.userId),
             effectiveDay: dayData.effectiveDay ? dayData.effectiveDay.split(',') : [],
             startTime: dayData.startTime,
             endTime: dayData.endTime
@@ -314,7 +315,7 @@ export default {
             type: weekData.type,
             status: weekData.status,
             ruleId: weekData.ruleId,
-            memberUser: weekData.memberUser || [],
+            memberUserId: (weekData.memberUser || []).map(item => item.userId),
             startDay: weekData.startDay,
             endDay: weekData.endDay
           }
@@ -323,7 +324,7 @@ export default {
             type: monthData.type,
             status: monthData.status,
             ruleId: monthData.ruleId,
-            memberUser: monthData.memberUser || [],
+            memberUserId: (monthData.memberUser || []).map(item => item.userId),
             startDay: monthData.startDay,
             endDay: monthData.endDay
           }
@@ -331,27 +332,6 @@ export default {
         .catch(() => {
           this.loading = false
         })
-    },
-
-    dayUserChage(data) {
-      this.dayForm.memberUser = data.value || []
-      this.dayForm.memberUserId = this.dayForm.memberUser.map(item => {
-        return item.userId
-      }).join(',')
-    },
-
-    weekUserChage(data) {
-      this.weekForm.memberUser = data.value || []
-      this.weekForm.memberUserId = this.weekForm.memberUser.map(item => {
-        return item.userId
-      }).join(',')
-    },
-
-    monthUserChage(data) {
-      this.monthForm.memberUser = data.value || []
-      this.monthForm.memberUserId = this.monthForm.memberUser.map(item => {
-        return item.userId
-      }).join(',')
     },
 
     /**
@@ -404,9 +384,16 @@ export default {
       }
 
       this.loading = true
-      const dayForm = { ...this.dayForm }
+      const dayForm = objDeepCopy(this.dayForm)
+      dayForm.memberUserId = dayForm.memberUserId.join(',')
       dayForm.effectiveDay = dayForm.effectiveDay.join(',')
-      oaLogRuleSetAPI([dayForm, this.weekForm, this.monthForm])
+
+      const weekForm = objDeepCopy(this.weekForm)
+      weekForm.memberUserId = weekForm.memberUserId.join(',')
+      const monthForm = objDeepCopy(this.monthForm)
+      monthForm.memberUserId = monthForm.memberUserId.join(',')
+
+      oaLogRuleSetAPI([dayForm, weekForm, monthForm])
         .then(res => {
           this.loading = false
           this.getDetail()

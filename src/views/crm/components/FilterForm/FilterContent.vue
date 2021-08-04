@@ -175,7 +175,7 @@ export default {
         } else {
           return `“${data.value}”`
         }
-      } else if (data.formType == 'user') {
+      } else if (data.formType == 'user' || data.formType == 'single_user') {
         const dataValue = data.valueContent || data.value
         return `“${dataValue.map(o => o.realname).join('，')}”`
       } else if (data.formType == 'structure') {

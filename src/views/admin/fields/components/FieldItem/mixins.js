@@ -1,5 +1,6 @@
 import { getFieldAuth } from '../../utils'
-import { isEmpty } from '@/utils/types'
+import { isObject, isEmpty } from '@/utils/types'
+
 
 export default {
   props: {
@@ -127,6 +128,13 @@ export default {
      */
     handleAction(action, evt) {
       this.$emit('action', action, this.point, evt)
+    },
+
+    /**
+     * 是对象
+     */
+    itemIsObject(item) {
+      return isObject(item)
     }
   }
 }

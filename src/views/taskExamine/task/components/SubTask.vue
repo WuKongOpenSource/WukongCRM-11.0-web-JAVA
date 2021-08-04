@@ -36,45 +36,34 @@
             @click="subtasksDateFun"/>
         </div>
         <!-- 选择负责人 -->
-        <el-popover
-          v-model="showUserPopover"
-          placement="bottom-end"
-          width="280"
-          popper-class="no-padding-popover"
-          trigger="click">
-          <xh-user
-            ref="xhuser"
-            :info-request="ownerListRequest"
-            :info-params="ownerListParams"
-            :selected-data="xhUserData"
-            radio
-            @changeCheckout="xhUserCheckout"/>
+        <wk-user-select
+          :value="mainUser ? mainUser.userId : ''"
+          :request="ownerListRequest"
+          :params="ownerListParams"
+          :props="{isList: !!workId}"
+          radio
+          style="height: auto !important;"
+          @change="xhUserCheckout">
           <div
             slot="reference"
             class="select-box">
-            <template v-if="xhUserData && xhUserData.length">
-              <span
-                v-for="(item, index) in xhUserData"
-                :key="index">
-                <el-tooltip
-                  placement="bottom"
-                  effect="light"
-                  popper-class="tooltip-change-border">
-                  <div slot="content">
-                    <span @click="showUserPopover = true">{{ item.realname }}</span>
-                  </div>
-                  <xr-avatar
-                    :name="item.realname"
-                    :size="24"
-                    :src="item.img" />
-                </el-tooltip>
-              </span>
+            <template v-if="mainUser">
+              <el-tooltip
+                placement="bottom"
+                popper-class="tooltip-change-border">
+                <template slot="content">{{ mainUser.realname }}</template>
+                <xr-avatar
+                  :name="mainUser.realname"
+                  :size="24"
+                  :src="mainUser.img" />
+              </el-tooltip>
             </template>
             <i
               v-else
-              class="wukong wukong-user"/>
+              class="wukong wukong-user" />
           </div>
-        </el-popover>
+        </wk-user-select>
+
       </flexbox>
     </div>
   </div>
@@ -82,14 +71,14 @@
 
 <script>
 import { workSubTaskAddAPI, workSubTaskUpdateAPI } from '@/api/pm/projectTask'
-import XhUser from '@/components/CreateCom/XhUser'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { workWorkOwnerListAPI } from '@/api/pm/project'
 
 import { mapGetters } from 'vuex'
 
 export default {
   components: {
-    XhUser
+    WkUserSelect
   },
   props: {
     taskData: {
@@ -125,11 +114,17 @@ export default {
       xhUserData: [],
       // 子任务人员
       isRequesting: false, // 是请求中
-      subtasksTextarea: '',
-      showUserPopover: false
+      subtasksTextarea: ''
     }
   },
   computed: {
+    /**
+     * 负责人
+     */
+    mainUser() {
+      return this.xhUserData && this.xhUserData.length ? this.xhUserData[0] : null
+    },
+
     ownerListRequest() {
       return this.workId ? workWorkOwnerListAPI : null
     },
@@ -271,9 +266,8 @@ export default {
         }
       }
     },
-    xhUserCheckout(data) {
-      this.xhUserData = data
-      this.showUserPopover = false
+    xhUserCheckout(_, dataArray) {
+      this.xhUserData = dataArray
     },
     // 子任务 -- 时间弹框
     subtasksDateFun() {

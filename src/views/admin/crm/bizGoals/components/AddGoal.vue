@@ -12,19 +12,17 @@
         <flexbox-item class="select-item">
           <flexbox>
             <span class="select-label">{{ rangeLabel }}</span>
-            <xh-user-cell
+            <wk-user-select
               v-if="type == 'user'"
               :radio="false"
-              :value="selectDepOrUser"
+              v-model="selectDepOrUser"
               class="select-condition"
-              placeholder="选择人员"
-              @value-change="userChange" />
-            <xh-structure-cell
+              placeholder="选择人员" />
+            <wk-dep-select
               v-else
               :radio="false"
-              :value="selectDepOrUser"
-              class="select-condition"
-              @value-change="structureChange" />
+              v-model="selectDepOrUser"
+              class="select-condition" />
           </flexbox>
         </flexbox-item>
         <flexbox-item class="select-item">
@@ -118,8 +116,8 @@ import {
   crmAchievementAdd
 } from '@/api/admin/crm'
 
-import XhStructureCell from '@/components/CreateCom/XhStructureCell'
-import XhUserCell from '@/components/CreateCom/XhUserCell'
+import WkDepSelect from '@/components/NewCom/WkDepSelect'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 
 import moment from 'moment'
 import { floatAdd } from '@/utils'
@@ -128,8 +126,8 @@ export default {
   // 新建目标
   name: 'AddGoal',
   components: {
-    XhStructureCell,
-    XhUserCell
+    WkDepSelect,
+    WkUserSelect
   },
   props: {
     visible: {
@@ -169,20 +167,6 @@ export default {
   beforeDestroy() {},
   methods: {
     /**
-     * 部门选择
-     */
-    structureChange(data) {
-      this.selectDepOrUser = data.value || []
-    },
-
-    /**
-     * 员工
-     */
-    userChange(data) {
-      this.selectDepOrUser = data.value || []
-    },
-
-    /**
      * 确定
      */
     sureClick() {
@@ -202,15 +186,7 @@ export default {
           params[this.getUploadKey(index, 2)] = element.third
         }
 
-        if (this.type == 'user') {
-          params.objIds = this.selectDepOrUser.map(item => {
-            return item.userId
-          })
-        } else {
-          params.objIds = this.selectDepOrUser.map(item => {
-            return item.id
-          })
-        }
+        params.objIds = this.selectDepOrUser
 
         this.loading = true
         crmAchievementAdd(params).then(res => {

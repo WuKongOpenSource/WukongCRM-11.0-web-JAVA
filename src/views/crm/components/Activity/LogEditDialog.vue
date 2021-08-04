@@ -539,7 +539,7 @@ export default {
 
       params.batchId = this.batchId
       params.businessIds = businessIds.join(',')
-      params.contactsIds = this.contactsId
+      params.contactsIds = this.selectContactsId
 
       params.nextTime = this.nextTime || ''
       params.isEvent = 0

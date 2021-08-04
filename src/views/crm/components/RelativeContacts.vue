@@ -10,6 +10,7 @@
       class="rc-head"
       direction="row-reverse">
       <el-button
+        v-if="contactsSave"
         class="xr-btn--orange rc-head-item"
         icon="el-icon-plus"
         type="primary"
@@ -77,7 +78,7 @@
               class="chief">
             <i class="wk wk-success" />首要联系人</span>
             <el-button
-              v-else
+              v-else-if="!isSeas"
               class="set-chief-btn"
               type="text"
               @click.native="setChieflyContacts(scope)">设为首要联系人</el-button>
@@ -112,6 +113,7 @@ import {
   crmBusinessSetContactsAPI
 } from '@/api/crm/business'
 import CrmRelative from '@/components/CreateCom/CrmRelative'
+import { getPermissionByKey } from '@/utils'
 
 export default {
   name: 'RelativeContacts', // 相关联系人列表  可能再很多地方展示 放到客户管理目录下
@@ -172,6 +174,9 @@ export default {
     // 是否能关联
     canRelation() {
       return this.crmType == 'business'
+    },
+    contactsSave() {
+      return !!getPermissionByKey('crm.contacts.save')
     }
   },
   watch: {

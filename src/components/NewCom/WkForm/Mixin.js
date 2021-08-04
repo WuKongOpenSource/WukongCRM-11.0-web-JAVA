@@ -6,7 +6,11 @@ export default {
      * 判断是否为普通 整句 文本框
      * @param formType 字段类型
      */
-    isTrimInput(formType) {
+    isTrimInput(formType, disabled) {
+      // floatnumber 类型disabled 为true，用input展示，防止掩码被置成0
+      if (formType == 'floatnumber' && disabled) {
+        return true
+      }
       return [
         'mobile',
         'email',

@@ -14,10 +14,10 @@
         <div
           class="handle-item-name"
           style="margin-top: 8px;">请选择：</div>
-        <xh-user-cell
-          :value="usersList"
-          class="handle-item-content"
-          @value-change="userChage"/>
+        <wk-user-select
+          v-model="userId"
+          radio
+          class="handle-item-content"/>
       </flexbox>
     </div>
     <span
@@ -32,14 +32,14 @@
 </template>
 
 <script>
-import { XhUserCell } from '@/components/CreateCom'
+import WkUserSelect from '@/components/NewCom/WkUserSelect'
 import { crmCustomerDistributeAPI } from '@/api/crm/customer'
 
 export default {
   /** 客户管理 的 勾选后的 公海分配 操作*/
   name: 'AllocHandle',
   components: {
-    XhUserCell
+    WkUserSelect
   },
   mixins: [],
   props: {
@@ -66,7 +66,7 @@ export default {
     return {
       loading: true,
       visible: false,
-      usersList: []
+      userId: []
     }
   },
   computed: {},
@@ -75,7 +75,7 @@ export default {
       handler(val) {
         this.visible = val
         if (!val) {
-          this.usersList = []
+          this.userId = ''
         }
       },
       deep: true,
@@ -93,17 +93,14 @@ export default {
       this.visible = false
       this.$emit('update:dialogVisible', false)
     },
-    /** 负责人更改 */
-    userChage(data) {
-      this.usersList = data.value
-    },
+
     handleConfirm() {
       // 移除操作不可移除客户负责人
-      if (this.usersList.length === 0) {
+      if (!this.userId) {
         this.$message.error('请选择负责人')
       } else {
         const params = {
-          userId: this.usersList[0].userId,
+          userId: this.userId,
           poolId: this.poolId
         }
         params.ids = this.selectionList.map(item => item[this.crmType + 'Id'])

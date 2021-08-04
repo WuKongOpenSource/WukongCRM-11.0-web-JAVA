@@ -4,6 +4,7 @@
       :search.sync="search"
       :crm-type="crmType"
       :create-fun="createClick"
+      :show-title="config.showModuleName"
       title="发票管理"
       placeholder="请输入发票号码/客户名称/合同编号"
       main-title="新建发票"
@@ -32,6 +33,7 @@
         :cell-class-name="cellClassName"
         :header-cell-class-name="headerCellClassName"
         :row-key="`${crmType}Id`"
+        :class="[{'no-all-selection': config.radio}]"
         class="n-table--border"
         use-virtual
         stripe
