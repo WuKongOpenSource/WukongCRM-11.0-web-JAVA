@@ -122,7 +122,9 @@ export default {
         }
 
         // 是否可编辑
-        temp.disabled = false
+        if (!temp.hasOwnProperty('disabled')) {
+          temp.disabled = false
+        }
 
         // 特殊字段允许多选
         if (typeof temp.radio !== 'boolean') {

@@ -120,7 +120,6 @@ export default {
                       children.forEach(child => {
                         if (child) {
                           child.value = child.fieldValue
-                          delete child.fieldValue
                         }
                       })
                     }

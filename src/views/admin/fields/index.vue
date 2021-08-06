@@ -868,7 +868,8 @@ export default {
     width: 100%;
     height: calc(100% + 15px);
     user-select: none;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
 
     .body-left {
       width: 265px;

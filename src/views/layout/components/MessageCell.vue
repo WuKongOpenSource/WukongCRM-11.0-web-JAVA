@@ -193,7 +193,29 @@ export default {
         35: `${this.data.realname}拒绝您的`,
         36: `${this.data.realname}已经审核通过您的`,
         37: `${this.data.realname}提交了`,
+        50: `${this.data.realname}导入员工数据${this.data.title}条，${this.getImportContent(this.data)}`,
         77: `${this.data.realname}点赞了您的`,
+        80: `${this.data.realname}更新了您`,
+        81: `${this.data.realname}导入定薪数据${this.data.title}条，${this.getImportContent(this.data)}`,
+        82: `${this.data.realname}导入调薪数据${this.data.title}条，${this.getImportContent(this.data)}`,
+        83: `${this.data.realname}邀请您填写`,
+        84: `${this.data.realname}已经审核通过您的`,
+        85: `${this.data.realname}拒绝您的`,
+        86: `${this.data.realname}提交了`,
+        // 人资绩效考核
+        87: `您有新的绩效目标`,
+        88: `待确认${this.data.realname}的绩效目标`,
+        89: `待评定${this.data.realname}的考核`,
+        90: `待确认考核结果`,
+        91: `您的绩效考核`,
+        92: `您的绩效目标`,
+        93: `您评定的${this.data.realname}的考核`,
+        94: `您发起的考核`,
+        95: `您发起的考核`,
+        96: `您发起的考核`,
+        97: `${this.data.realname}已为您开通`,
+        98: `您的`,
+        99: `您有新的面试安排，${this.data.realname}为${this.data.title}`,
         120: `${this.data.realname}将您添加为联系人`,
         121: `${this.data.realname}将您添加为回款`,
         122: `${this.data.realname}退出了您联系人`,
@@ -214,6 +236,18 @@ export default {
         }
         return ''
       } else {
+        if (this.data.type === 80) {
+          const datas = this.data.content.split(',')
+          if (datas && datas.length > 1) {
+            return `《${datas[0]}年${datas[1]}月的工资条》`
+          }
+        } else if (this.data.type === 83) {
+          return '《我的档案》'
+        } else if (this.data.type === 97) {
+          return '人力资源'
+        } else if (this.data.type === 99) {
+          return ''
+        }
         return `《${this.data.title}》`
       }
     },
@@ -229,9 +263,10 @@ export default {
 
     /**
      * 是导入type
+     * 50 人资导入类型
      */
     isImportType() {
-      return this.data.type >= 14 && this.data.type <= 21
+      return (this.data.type >= 14 && this.data.type <= 21) || this.data.type == 50 || this.data.type == 81 || this.data.type == 82
     },
 
     rightContent() {
@@ -274,6 +309,27 @@ export default {
         36: `发票审批，请及时查看`,
         37: `发票审批，请及时处理`,
         77: `日志，请及时查看`,
+        80: `，有问题请及时与${this.data.realname}反馈`,
+        81: ``,
+        82: ``,
+        83: `，请及时处理`,
+        84: '薪资审批，请及时查看',
+        85: `薪资审批，拒绝理由：“${this.data.content}”，请及时处理`,
+        86: `薪资审批，请及时处理`,
+        // 人资绩效考核
+        87: `待填写，请及时处理`,
+        88: `，请及时处理`,
+        89: `，请及时处理`,
+        90: `，请及时处理`,
+        91: `已完成，请及时查看`,
+        92: `被${this.data.content}驳回，请重新填写`,
+        93: `被${this.data.content}驳回，请重新评定`,
+        94: `已全部完成填写，请及时开启评定`,
+        95: `已全部完成评定，请及时开启结果确认`,
+        96: `已完成结果确认，请及时归档`,
+        97: `员工端，请及时查看`,
+        98: `已生成，请及时查看`,
+        99: `${this.data.content}`,
         120: `的成员`,
         121: `的成员`,
         122: `的团队`,
@@ -338,7 +394,7 @@ export default {
     },
 
     getImportContent({ title, content }) {
-      const countList = [14, 15, 16, 17, 18, 19, 20, 21, 50]
+      const countList = [14, 15, 16, 17, 18, 19, 20, 21, 50, 81, 82]
       if (!countList.includes(this.data.type)) {
         return
       }

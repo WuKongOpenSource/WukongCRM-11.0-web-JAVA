@@ -310,7 +310,6 @@ export default {
         } else {
           item.value = item.fieldValue
         }
-        delete item.fieldValue
       })
 
       if (type === 'base') {
@@ -335,7 +334,6 @@ export default {
                   children.forEach(child => {
                     if (child) {
                       child.value = child.fieldValue
-                      delete child.fieldValue
                     }
                   })
                 }
@@ -421,7 +419,6 @@ export default {
                 children.forEach(child => {
                   if (child) {
                     child.fieldValue = child.value
-                    delete child.value
                   }
                 })
               }
@@ -472,7 +469,6 @@ export default {
             this.handleFieldExtendList(item)
             employField.getCreateFieldDefalutData(item)
             item.value = item.fieldValue
-            delete item.fieldValue
 
             this.handleTableValue(item)
 
@@ -514,7 +510,6 @@ export default {
                   if (child) {
                     employField.getCreateFieldDefalutData(child)
                     child.value = child.fieldValue
-                    delete child.fieldValue
                   }
                 })
               }
@@ -538,11 +533,8 @@ export default {
           if (isArray(fieldExtendList)) {
             fieldExtendList.forEach(child => {
               if (child) {
-                if (child) {
-                  employField.getCreateFieldDefalutData(child)
-                  child.value = child.fieldValue
-                  delete child.fieldValue
-                }
+                employField.getCreateFieldDefalutData(child)
+                child.value = child.fieldValue
               }
             })
           }
@@ -561,7 +553,6 @@ export default {
           this.handleFieldExtendList(item)
           employField.getCreateFieldDefalutData(item)
           item.value = item.fieldValue
-          delete item.fieldValue
 
           this.handleTableValue(item)
 

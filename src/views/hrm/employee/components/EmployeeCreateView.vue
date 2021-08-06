@@ -37,7 +37,18 @@
           :item="item"
           :disabled="item.disabled"
           style-percent="50%"
-        />
+        >
+          <template slot-scope="{ data }">
+            <v-distpicker
+              v-if="data && data.formType == 'city'"
+              :province="baseForm[data.field].province"
+              :city="baseForm[data.field].city"
+              :disabled="data.disabled"
+              hide-area
+              @province="selectProvince($event, data, baseForm)"
+              @city="selectCity($event, data, baseForm)"/>
+          </template>
+        </wk-form-item>
       </el-form>
     </create-sections>
     <create-sections title="入职信息">
@@ -66,9 +77,9 @@
               :city="entryForm[data.field].city"
               :area="entryForm[data.field].area"
               :disabled="data.disabled"
-              @province="selectProvince($event, data)"
-              @city="selectCity($event, data)"
-              @area="selectArea($event, data)"/>
+              @province="selectProvince($event, data, entryForm)"
+              @city="selectCity($event, data, entryForm)"
+              @area="selectArea($event, data, entryForm)"/>
           </template>
         </wk-form-item>
       </el-form>
@@ -89,6 +100,9 @@ import {
   hrmEmployeeFieldVerifyAPI
   // hrmEmployeeAllListAPI
 } from '@/api/hrm/employee'
+import {
+  hrmRecruitChannelQueryAPI
+} from '@/api/hrm/employeePost'
 // import {
 //   hrmDeptQueryTreeListAPI
 // } from '@/api/hrm/dept'
@@ -141,7 +155,8 @@ export default {
       // 入职
       entryFields: [],
       entryRules: {},
-      entryForm: {}
+      entryForm: {},
+      channelList: [] // 招聘渠道数据
     }
   },
   computed: {
@@ -214,6 +229,15 @@ export default {
 
           if (temp.label === 1) {
             baseFields.push(temp)
+
+            // 籍贯
+            if (temp.formType == 'city') {
+              temp.defaultValue = {
+                province: '',
+                city: ''
+              }
+            }
+
             // 是否能编辑权限
             if (temp.show) {
               baseRules[temp.field] = this.getRules(item)
@@ -221,6 +245,15 @@ export default {
             }
           } else {
             entryFields.push(temp)
+
+            if (temp.formType == 'recruit_channel') { // 'recruit_channel' 招聘渠道
+              temp.formType = 'select'
+              if (this.channelList && this.channelList.length > 0) {
+                temp.setting = this.channelList
+              } else {
+                this.getChannelDetail(temp)
+              }
+            }
 
             if (temp.show) {
               entryRules[temp.field] = this.getRules(item)
@@ -239,7 +272,21 @@ export default {
             baseFields.forEach(item => {
               // humpField 用于取值
               const humpField = this.toHump(item.field)
-              baseDetailForm[item.field] = detail[humpField]
+              if (item.field == 'native_place') {
+                // 籍贯
+                const citys = detail[humpField]
+                if (citys) {
+                  const citys = citys.split(',')
+                  baseDetailForm.native_place = {
+                    province: citys[0] || '',
+                    city: citys[1] || ''
+                  }
+                } else {
+                  baseDetailForm.native_place = {}
+                }
+              } else {
+                baseDetailForm[item.field] = detail[humpField]
+              }
             })
             baseForm = { ...baseForm, ...baseDetailForm }
 
@@ -247,6 +294,7 @@ export default {
             entryFields.forEach(item => {
               // humpField 用于取值
               const humpField = this.toHump(item.field)
+              // 工作城市
               if (item.field == 'work_city') {
                 const cityValue = detail[humpField]
                 if (cityValue) {
@@ -421,16 +469,16 @@ export default {
     /**
      * 选择省市
      */
-    selectProvince(data, item) {
-      this.entryForm[item.field].province = data.value
+    selectProvince(data, item, form) {
+      form[item.field].province = data.value
     },
 
-    selectCity(data, item) {
-      this.entryForm[item.field].city = data.value
+    selectCity(data, item, form) {
+      form[item.field].city = data.value
     },
 
-    selectArea(data, item) {
-      this.entryForm[item.field].area = data.value
+    selectArea(data, item, form) {
+      form[item.field].area = data.value
     },
 
     /**
@@ -502,6 +550,7 @@ export default {
         delete entryForm['probation']
       }
 
+      // 工作城市
       if (entryForm.work_city) {
         const keys = Object.keys(entryForm.work_city)
         let work_city = ''
@@ -517,6 +566,20 @@ export default {
         entryForm.work_city = work_city
       } else {
         entryForm.work_city = ''
+      }
+
+      // 籍贯
+      if (baseForm.native_place) {
+        const address = baseForm.native_place
+        const addressList = []
+        for (const key in address) {
+          if (address[key]) {
+            addressList.push(address[key])
+          }
+        }
+        baseForm.native_place = addressList.join(',')
+      } else {
+        baseForm.native_place = ''
       }
 
       const entryFormParams = this.getSubmiteParams([].concat.apply([], this.entryFields), entryForm, ['isFixed', 'labelGroup'])
@@ -539,7 +602,6 @@ export default {
                 children.forEach(child => {
                   if (child) {
                     child.fieldValue = child.value
-                    delete child.value
                   }
                 })
               }
@@ -567,7 +629,6 @@ export default {
                 children.forEach(child => {
                   if (child) {
                     child.fieldValue = child.value
-                    delete child.value
                   }
                 })
               }
@@ -674,16 +735,36 @@ export default {
           if (isArray(fieldExtendList)) {
             fieldExtendList.forEach(child => {
               if (child) {
-                if (child) {
-                  employField.getCreateFieldDefalutData(child)
-                  child.value = child.fieldValue
-                  delete child.fieldValue
-                }
+                employField.getCreateFieldDefalutData(child)
+                child.value = child.fieldValue
               }
             })
           }
         }
       }
+    },
+
+    /**
+     * 获取渠道信息
+     */
+    getChannelDetail(item) {
+      return new Promise((resolve, reject) => {
+        hrmRecruitChannelQueryAPI()
+          .then(res => {
+            const channelList = res.data || []
+            channelList.forEach(item => {
+              if (item.status == 1) {
+                item.label = item.value
+                item.value = item.channelId
+              }
+            })
+            this.channelList = channelList
+            this.$set(item, 'setting', this.channelList)
+            resolve(this.channelList)
+          })
+          .catch(() => {
+          })
+      })
     }
 
   }

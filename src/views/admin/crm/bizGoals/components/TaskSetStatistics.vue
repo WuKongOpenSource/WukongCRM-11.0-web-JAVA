@@ -233,12 +233,11 @@ export default {
     /** 获取部门业绩目标列表 */
     getAhievementList() {
       this.loading = true
-      var id = this.structuresSelectValue[this.structuresSelectValue.length - 1]
       crmAchievementIndex({
         year: this.dateSelect,
         type: 2, // 2部门3员工
         status: this.typeSelect,
-        deptId: id
+        deptId: this.structuresSelectValue
       })
         .then(res => {
           this.list = res.data.map(item => {
