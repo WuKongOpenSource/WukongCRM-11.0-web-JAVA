@@ -7,7 +7,9 @@
       icon-class="wk wk-user"
       icon-color="#19B5F6"
       @search="headerSearch" />
-    <div class="role-box">
+    <div
+      :class="{'is-tabs' : roleTabShow}"
+      class="role-box">
       <!-- 左边导航 -->
       <div
         v-loading="roleMenuLoading"
@@ -21,6 +23,22 @@
             @click="newRoleBtn">创建角色</el-button>
         </div>
         <!-- 角色列表 -->
+        <el-tabs
+          v-if="roleTabShow"
+          v-model="tabType"
+          @tab-click="roleTabChange">
+          <el-tab-pane label="管理员" name="91"/>
+          <el-tab-pane label="上级" name="92">
+            <template slot="label">
+              上级<el-tooltip
+                effect="dark"
+                content="设置上级是否可以查看下属信息"
+                placement="top">
+                <i style="margin-left: 5px;" class="wk wk-help wk-help-tips"/>
+              </el-tooltip>
+            </template>
+          </el-tab-pane>
+        </el-tabs>
         <div class="role-nav-box">
           <div
             v-for="(item, index) in roleList"
@@ -163,7 +181,7 @@
                     class="jurisdiction-content">
                     <div class="jurisdiction-content-checkbox">
                       <el-tree
-                        :data="item.data"
+                        :data="tabType == '92' ? superTree : item.data"
                         :ref="'tree' + item.index"
                         :indent="0"
                         :expand-on-click-node="false"
@@ -194,7 +212,7 @@
                     class="jurisdiction-content">
                     <div class="data-radio">
                       <el-radio-group v-model="item.value">
-                        <el-radio :label="1">本人</el-radio>
+                        <el-radio v-if="!roleTabShow" :label="1">本人</el-radio>
                         <el-radio :label="2">本人及下属</el-radio>
                         <el-radio :label="3">本部门</el-radio>
                         <el-radio :label="4">本部门及下属部门</el-radio>
@@ -259,6 +277,7 @@ import XrHeader from '@/components/XrHeader'
 import EditRoleDialog from '../employeeDep/components/EditRoleDialog'
 
 import crmTypeModel from '@/views/crm/model/crmTypeModel'
+import { objDeepCopy } from '@/utils'
 
 export default {
   components: {
@@ -293,6 +312,7 @@ export default {
       newRoleVisible: false,
       role: {}, // 操作角色的框 关联的信息
       roleList: [], // 角色列表 list属性 是信息
+      allRoleList: [], // 全部 用于区分管理员和上级
 
       mainMenuIndex: 'user', // 角色员工  角色权限 切换 默认左边
       // 权限管理
@@ -323,6 +343,10 @@ export default {
       selectionList: [],
       editRoleType: '',
       editRoleDialogShow: false,
+
+      // 人资角色类型
+      tabType: '91',
+      superTree: [],
 
       // 角色范围设置
       setRoleRangeShow: false
@@ -356,6 +380,11 @@ export default {
       }
 
       return false
+    },
+
+    // 人资角色tab
+    roleTabShow() {
+      return this.pid == 9
     }
   },
 
@@ -375,6 +404,7 @@ export default {
   },
 
   beforeRouteUpdate(to, from, next) {
+    this.tabType = '91'
     this.pid = to.params.pid
     this.title = to.params.title
     this.roleActive = null
@@ -398,23 +428,32 @@ export default {
      */
     getRulesList() {
       systemRuleByTypeAPI(this.pid).then(res => {
-        if (res.data.data) {
+        const resData = res.data || {}
+
+        if (resData.data) {
+          const dataTree = [resData.data]
           this.ruleMenuList = [
             {
               label: '模块功能',
               index: 'data',
               type: 'tree',
               value: [],
-              data: [res.data.data]
+              data: dataTree
             }
           ]
-          if (res.data.bi) {
+
+          if (this.roleTabShow) {
+            const copyTree = objDeepCopy(dataTree)
+            this.addDisabledToTree(copyTree)
+            this.superTree = copyTree
+          }
+          if (resData.bi) {
             this.ruleMenuList.push({
               label: '数据分析',
               index: 'bi',
               type: 'tree',
               value: [],
-              data: [res.data.bi]
+              data: [resData.bi]
             })
           }
         } else {
@@ -426,13 +465,31 @@ export default {
     },
 
     /**
+     * tree 增加disabled
+     */
+    addDisabledToTree(tree) {
+      tree.forEach(item => {
+        item.disabled = item.remarks !== 'label-92'
+        if (item.childMenu) {
+          this.addDisabledToTree(item.childMenu)
+        }
+      })
+    },
+
+    /**
      * 获取角色列表
      */
     getRoleList() {
       this.roleMenuLoading = true
       systemRoleByTypeAPI(this.pid)
         .then(res => {
-          this.roleList = res.data
+          const resData = res.data || []
+          if (this.roleTabShow) {
+            this.allRoleList = resData
+            this.roleList = this.allRoleList.filter(item => item.label == this.tabType)
+          } else {
+            this.roleList = resData
+          }
           /** 判断数据是否存在 */
           let hasActive = false
           if (this.roleActive) {
@@ -507,6 +564,20 @@ export default {
         this.editRoleType = type
         this.editRoleDialogShow = true
       }
+    },
+
+    /**
+     * 角色切换
+     */
+    roleTabChange() {
+      this.roleList = this.allRoleList.filter(item => item.label == this.tabType)
+      if (this.roleList.length) {
+        this.roleActive = this.roleList[0]
+        this.getRoleRulesInfo()
+      } else {
+        this.roleActive = null
+      }
+      this.refreshUserList()
     },
 
     /**
@@ -615,10 +686,15 @@ export default {
         this.$message.error('角色名称不能为空')
       } else {
         if (this.roleTitle == '新建角色') {
-          roleAddAPI({
+          const params = {
             roleName: this.role.title,
             roleType: this.pid
-          }).then(res => {
+          }
+          if (this.roleTabShow) {
+            params.label = this.tabType
+          }
+
+          roleAddAPI(params).then(res => {
             this.getRoleList()
             this.$message.success('添加成功')
             this.newRoleClose()
@@ -657,7 +733,7 @@ export default {
      */
     getRoleRulesInfo() {
       if (this.roleActive && this.ruleMenuList.length) {
-        if (this.pid == 2 || this.pid == 10) {
+        if (this.pid == 2 || this.pid == 10 || (this.pid == 9 && this.tabType == '92')) {
           const lastItem = this.ruleMenuList[this.ruleMenuList.length - 1]
           if (lastItem.type != 'data') {
             this.ruleMenuList.push({
@@ -930,6 +1006,13 @@ export default {
   height: calc(100% - 60px);
   overflow: hidden;
   position: relative;
+
+  &.is-tabs {
+    .role-nav-box {
+      padding-top: 0;
+      height: calc(100% - 100px);
+    }
+  }
 }
 .nav {
   width: 280px;
